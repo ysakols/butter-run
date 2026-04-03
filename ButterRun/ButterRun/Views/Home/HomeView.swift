@@ -90,7 +90,9 @@ struct HomeView: View {
                 .padding(.top)
             }
             .navigationTitle("")
-            .fullScreenCover(isPresented: $showActiveRun) {
+            .fullScreenCover(isPresented: $showActiveRun, onDismiss: {
+                churnConfig = nil
+            }) {
                 ActiveRunView(
                     isButterZeroChallenge: isButterZero,
                     isChurnEnabled: isChurnEnabled,

@@ -240,4 +240,87 @@ final class ActiveRunViewModelTests: XCTestCase {
         // The test verifies the state transitions work;
         // actual pause duration math requires real time elapsed
     }
+
+    // MARK: - Churn Integration Tests
+
+    func test_startChurn_setsChurnEnabled() {
+        viewModel.startRun()
+        let config = ChurnConfiguration(creamType: "heavy", creamCups: 1.0, isRoomTemp: false)
+        viewModel.startChurn(configuration: config)
+        XCTAssertTrue(viewModel.isChurnEnabled)
+    }
+
+    func test_churnStageAdvance_triggersHapticAndVoice() {
+        let churnEstimator = ButterChurnEstimator()
+        viewModel = ActiveRunViewModel(
+            location: mockLocation,
+            motion: mockMotion,
+            voice: mockVoice,
+            haptic: mockHaptic,
+            churnEstimator: churnEstimator
+        )
+        viewModel.startRun()
+        let config = ChurnConfiguration(creamType: "heavy", creamCups: 0.1, isRoomTemp: false)
+        viewModel.startChurn(configuration: config)
+
+        // Feed enough samples to advance past Liquid stage
+        // With 0.1 cups, threshold is 80.0, so we need moderate agitation
+        for _ in 0..<100 {
+            churnEstimator.processSample(x: 2.0, y: 2.0, z: 2.0)
+        }
+
+        // Wait for publisher to deliver
+        let expectation = XCTestExpectation(description: "stage advance")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertGreaterThan(mockHaptic.stageAdvances, 0)
+        XCTAssertTrue(mockVoice.announcements.contains(where: { $0.hasPrefix("churn:") }))
+    }
+
+    func test_stopRun_attachesChurnResult() {
+        let churnEstimator = ButterChurnEstimator()
+        viewModel = ActiveRunViewModel(
+            location: mockLocation,
+            motion: mockMotion,
+            voice: mockVoice,
+            haptic: mockHaptic,
+            churnEstimator: churnEstimator
+        )
+        viewModel.startRun()
+        let config = ChurnConfiguration(creamType: "heavy", creamCups: 1.0, isRoomTemp: false)
+        viewModel.startChurn(configuration: config)
+
+        // Feed a few samples
+        for _ in 0..<20 {
+            churnEstimator.processSample(x: 1.0, y: 1.0, z: 1.0)
+        }
+
+        let run = viewModel.stopRun()
+        XCTAssertNotNil(run.churnResultData)
+        let result = try? JSONDecoder().decode(ChurnResult.self, from: run.churnResultData!)
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.creamType, "heavy")
+    }
+
+    func test_pauseRun_pausesChurnEstimator() {
+        viewModel.startRun()
+        let config = ChurnConfiguration(creamType: "heavy", creamCups: 1.0, isRoomTemp: false)
+        viewModel.startChurn(configuration: config)
+        viewModel.pauseRun()
+        XCTAssertEqual(viewModel.state, .paused)
+        // Churn estimator should be paused (no motion updates accumulating)
+        // Resume should restore it
+        viewModel.resumeRun()
+        XCTAssertEqual(viewModel.state, .running)
+    }
+
+    func test_stopRun_withoutChurn_noChurnResult() {
+        viewModel.startRun()
+        // Don't enable churn
+        let run = viewModel.stopRun()
+        XCTAssertNil(run.churnResultData)
+    }
 }

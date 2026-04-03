@@ -78,7 +78,7 @@ struct ChurnSetupSheet: View {
                 Button {
                     let config = ChurnConfiguration(
                         creamType: creamType,
-                        creamCups: creamCups,
+                        creamCups: max(0.1, creamCups),
                         isRoomTemp: isRoomTemp
                     )
                     onStart(config)

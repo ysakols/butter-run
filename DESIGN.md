@@ -86,11 +86,12 @@ Butter = 343 / 34 = ~10.1 teaspoons 🧈
 1. **GPS Run Tracking** — CoreLocation, background updates
 2. **Real-time Butter Calculation** — MET-based, updates every second
 3. **Butter Zero Challenge** — Log butter eaten, track net balance
-4. **Run History** — All past runs with butter stats
-5. **User Profile** — Weight, preferred units (mi/km), display name
-6. **Split Tracking** — Per-mile or per-km splits
-7. **Voice Feedback** — Butter milestone announcements via AVSpeechSynthesizer
-8. **Share Cards** — Post-run shareable image generation
+4. **Churn Tracker** — CoreMotion accelerometer estimates butter-churning progress through 5 stages (Liquid → Foamy → Whipped → Breaking → Butter)
+5. **Run History** — All past runs with butter stats
+6. **User Profile** — Weight, preferred units (mi/km), display name
+7. **Split Tracking** — Per-mile or per-km splits
+8. **Voice Feedback** — Butter milestone announcements via AVSpeechSynthesizer
+9. **Share Cards** — Post-run shareable image generation
 
 ### Nice-to-Have (v1.1+)
 - **HealthKit Integration** — Sync runs + calories to Apple Health
@@ -372,12 +373,12 @@ class UserProfile {
 
 ### Scoring
 ```
-Score = max(0, 100 - abs(netButterTsp) × 20)
+Score = max(0, 100 - abs(netButterTsp) × 10)
 ```
 - ±0.0 tsp = 💯 Perfect Zero!
-- ±0.5 tsp = 90 — Almost!
-- ±2.5 tsp = 50 — Getting there
-- ±5.0+ tsp = 0 — Try again!
+- ±1.0 tsp = 90 — Almost!
+- ±5.0 tsp = 50 — Getting there
+- ±10.0+ tsp = 0 — Try again!
 
 ### UX Details
 - The balance bar is a horizontal meter centered at zero

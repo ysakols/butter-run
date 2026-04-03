@@ -7,11 +7,12 @@ A fun iOS run-tracking app where the core metric isn't calories — it's **teasp
 ## Features
 
 - **GPS Run Tracking** with real-time butter calculation
+- **Churn Tracker** — run with cream, track butter-churning progress through 5 stages via accelerometer
 - **Butter Zero Challenge** — log butter eaten, aim for net zero calories
 - **Voice Feedback** — "You just melted 5 teaspoons of butter!"
-- **Share Cards** — shareable post-run images
+- **Share Cards** — shareable post-run images with churn results
 - **Run History** — all past runs with butter stats and splits
-- **Cute butter-themed UI** — warm golden design with melting animations
+- **Dark butter-themed UI** — gold-on-dark design with melting animations
 
 ## The Math
 

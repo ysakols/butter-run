@@ -12,7 +12,7 @@ struct ChurnResult: Codable {
     }
 }
 
-enum ChurnStage: Int, CaseIterable {
+enum ChurnStage: Int, CaseIterable, Comparable {
     case liquid = 0
     case foamy = 1
     case whipped = 2

@@ -171,12 +171,12 @@ struct ShareCardContent: View {
                 }
             }
 
-            // Churn result (when churn was active)
-            if let churn = run.churnResult {
+            // Churn result (when churn was active and progress is meaningful)
+            if let churn = run.churnResult, churn.finalProgress >= 0.05 {
                 Spacer(minLength: 12)
                 let stage = ChurnStage(rawValue: churn.finalStage) ?? .liquid
                 VStack(spacing: 4) {
-                    if churn.finalStage >= 4 {
+                    if stage >= .butter {
                         Text("I made butter!")
                             .font(.system(.headline, design: .rounded, weight: .bold))
                             .foregroundStyle(ButterTheme.gold)

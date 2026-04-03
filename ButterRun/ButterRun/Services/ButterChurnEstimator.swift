@@ -1,8 +1,9 @@
 import Foundation
+import Observation
 import CoreMotion
 import Combine
 
-struct ChurnConfiguration {
+struct ChurnConfiguration: Codable {
     let creamType: String  // "heavy" or "whipping"
     let creamCups: Double
     let isRoomTemp: Bool
@@ -32,14 +33,15 @@ struct ChurnConfiguration {
     }
 }
 
-class ButterChurnEstimator: ObservableObject {
+@Observable
+class ButterChurnEstimator {
     private let motionManager = CMMotionManager()
     private let sampleRate: TimeInterval = 1.0 / 20.0  // 20Hz
     private let windowSize = 20  // 1-second window at 20Hz
 
-    @Published private(set) var currentStage: ChurnStage = .liquid
-    @Published private(set) var progress: Double = 0.0
-    @Published private(set) var isActive = false
+    private(set) var currentStage: ChurnStage = .liquid
+    private(set) var progress: Double = 0.0
+    private(set) var isActive = false
 
     private var configuration: ChurnConfiguration?
     private var totalAgitation: Double = 0
@@ -79,6 +81,20 @@ class ButterChurnEstimator: ObservableObject {
         motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let motion = motion, error == nil else { return }
 
+            let accel = motion.userAcceleration
+            self?.processSample(x: accel.x, y: accel.y, z: accel.z)
+        }
+    }
+
+    func pause() {
+        motionManager.stopDeviceMotionUpdates()
+    }
+
+    func resume() {
+        guard isActive, motionManager.isDeviceMotionAvailable else { return }
+        motionManager.deviceMotionUpdateInterval = sampleRate
+        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
+            guard let motion = motion, error == nil else { return }
             let accel = motion.userAcceleration
             self?.processSample(x: accel.x, y: accel.y, z: accel.z)
         }

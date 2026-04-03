@@ -209,6 +209,7 @@ class ActiveRunViewModel {
         state = .paused
         lastPauseDate = .now
         locationService.pauseTracking()
+        if isChurnEnabled { churnEstimator.pause() }
         timer?.invalidate()
     }
 
@@ -220,6 +221,7 @@ class ActiveRunViewModel {
             pausedDuration += Date.now.timeIntervalSince(pauseDate)
         }
         locationService.resumeTracking()
+        if isChurnEnabled { churnEstimator.resume() }
         startTimer()
     }
 
