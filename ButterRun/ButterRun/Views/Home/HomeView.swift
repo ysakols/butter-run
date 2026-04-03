@@ -10,7 +10,7 @@ struct HomeView: View {
     @State private var isChurnEnabled = false
     @State private var showChurnSetup = false
     @State private var churnConfig: ChurnConfiguration?
-    @State private var locationService = LocationService()
+    @StateObject private var locationService = LocationService()
 
     private var profile: UserProfile? { profiles.first }
 

@@ -228,6 +228,13 @@ class ActiveRunViewModel {
 
     func resumeRun() {
         guard state == .paused else { return }
+        // Discard GPS drift if resuming from auto-pause
+        if isAutoPaused {
+            let driftMeters = locationService.totalDistanceMeters - distanceAtAutoPause
+            if driftMeters > 0 {
+                locationService.subtractDistance(driftMeters)
+            }
+        }
         state = .running
         isAutoPaused = false
         if let pauseDate = lastPauseDate {
