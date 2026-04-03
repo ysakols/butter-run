@@ -210,6 +210,7 @@ struct SettingsView: View {
     }
 
     private func recalculateRuns() {
+        let validatedWeight = max(1.0, weightKg)
         for run in runs {
             guard run.durationSeconds > 0 else { continue }
             let durationMinutes = run.durationSeconds / 60.0
@@ -217,7 +218,7 @@ struct SettingsView: View {
             let speedMph = ButterCalculator.metersPerSecondToMph(speedMps)
             let met = ButterCalculator.metValue(forSpeedMph: speedMph)
             let calories = ButterCalculator.caloriesBurned(
-                weightKg: weightKg,
+                weightKg: validatedWeight,
                 met: met,
                 durationMinutes: durationMinutes
             )
