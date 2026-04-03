@@ -85,7 +85,7 @@ struct SettingsView: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
 
-                    Link("National Eating Disorders Association", destination: URL(string: "https://www.nationaleatingdisorders.org")!)
+                    Link("National Eating Disorders Association", destination: URL(string: "https://www.nationaleatingdisorders.org") ?? URL(string: "about:blank")!)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                 }
@@ -100,7 +100,7 @@ struct SettingsView: View {
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
 
-                    Link("Privacy Policy", destination: URL(string: "https://butterrun.app/privacy")!)
+                    Link("Privacy Policy", destination: URL(string: "https://butterrun.app/privacy") ?? URL(string: "about:blank")!)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                 }
@@ -134,7 +134,7 @@ struct SettingsView: View {
             .onChange(of: usesMiles) { _, _ in saveProfile() }
             .onChange(of: voiceFeedback) { _, _ in saveProfile() }
             .onChange(of: autoPause) { _, _ in saveProfile() }
-            .onChange(of: healthKit) { _, _ in saveProfile() }
+
             .confirmationDialog(
                 "Delete All Data?",
                 isPresented: $showDeleteConfirmation,
@@ -189,7 +189,7 @@ struct SettingsView: View {
     private func saveProfile() {
         guard loaded, let p = profile else { return }
         p.displayName = displayName
-        p.weightKg = weightKg
+        p.weightKg = max(1.0, weightKg)
         p.preferredUnit = usesMiles ? "miles" : "kilometers"
         p.splitDistance = usesMiles ? "mile" : "kilometer"
         p.voiceFeedbackEnabled = voiceFeedback
@@ -210,13 +210,15 @@ struct SettingsView: View {
     }
 
     private func recalculateRuns() {
+        let validatedWeight = max(1.0, weightKg)
         for run in runs {
+            guard run.durationSeconds > 0 else { continue }
             let durationMinutes = run.durationSeconds / 60.0
             let speedMps = run.distanceMeters > 0 ? run.distanceMeters / run.durationSeconds : 0
             let speedMph = ButterCalculator.metersPerSecondToMph(speedMps)
             let met = ButterCalculator.metValue(forSpeedMph: speedMph)
             let calories = ButterCalculator.caloriesBurned(
-                weightKg: weightKg,
+                weightKg: validatedWeight,
                 met: met,
                 durationMinutes: durationMinutes
             )

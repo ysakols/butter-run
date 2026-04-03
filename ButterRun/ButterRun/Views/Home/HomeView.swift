@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 struct HomeView: View {
     @Query(sort: \Run.startDate, order: .reverse) private var runs: [Run]
@@ -10,7 +11,8 @@ struct HomeView: View {
     @State private var isChurnEnabled = false
     @State private var showChurnSetup = false
     @State private var churnConfig: ChurnConfiguration?
-    @StateObject private var locationService = LocationService()
+    @State private var locationPermissionRequested = false
+    @State private var butterTrivia = ButterFacts.random
 
     private var profile: UserProfile? { profiles.first }
 
@@ -80,8 +82,8 @@ struct HomeView: View {
                     .padding(.bottom, 8)
                     .accessibilityLabel(isChurnEnabled ? "Set up churn tracker" : "Start run")
 
-                    // Butter trivia
-                    Text(ButterFacts.random)
+                    // Butter trivia (selected once per view appearance via butterTrivia state)
+                    Text(butterTrivia)
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
                         .multilineTextAlignment(.center)
@@ -116,7 +118,10 @@ struct HomeView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             viewModel.load(runs: runs, usesMiles: profile?.usesMiles ?? true)
-            locationService.requestPermission()
+            if !locationPermissionRequested {
+                locationPermissionRequested = true
+                CLLocationManager().requestWhenInUseAuthorization()
+            }
         }
     }
 }

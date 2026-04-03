@@ -150,7 +150,7 @@ struct ActiveRunView: View {
         HStack(spacing: 6) {
             Image(systemName: "location.slash")
                 .font(.caption)
-            Text("GPS signal weak — distance paused")
+            Text("GPS signal weak — distance accuracy reduced")
                 .font(.system(.caption, design: .rounded))
         }
         .foregroundStyle(.white)
@@ -158,9 +158,9 @@ struct ActiveRunView: View {
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .background(ButterTheme.deficit.opacity(0.8))
-        .accessibilityLabel("GPS signal weak, distance tracking paused")
+        .accessibilityLabel("GPS signal weak, distance accuracy reduced")
         .onAppear {
-            UIAccessibility.post(notification: .announcement, argument: "GPS signal weak, distance tracking paused")
+            UIAccessibility.post(notification: .announcement, argument: "GPS signal weak, distance accuracy reduced")
         }
     }
 
