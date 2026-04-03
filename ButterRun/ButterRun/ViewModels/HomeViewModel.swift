@@ -7,7 +7,7 @@ class HomeViewModel {
     var totalRuns: Int = 0
     var lastRunSummary: String? = nil
 
-    func load(runs: [Run]) {
+    func load(runs: [Run], usesMiles: Bool = true) {
         totalRuns = runs.count
 
         // Weekly butter
@@ -18,7 +18,7 @@ class HomeViewModel {
         // Last run
         if let last = runs.sorted(by: { $0.startDate > $1.startDate }).first {
             let butter = String(format: "%.1f tsp", last.totalButterBurnedTsp)
-            let distance = String(format: "%.1f mi", last.distanceMiles)
+            let distance = ButterFormatters.distance(meters: last.distanceMeters, usesMiles: usesMiles)
             lastRunSummary = "\(butter) • \(distance) • \(last.formattedDuration)"
         }
     }

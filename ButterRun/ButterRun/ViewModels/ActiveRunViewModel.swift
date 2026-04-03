@@ -60,6 +60,7 @@ class ActiveRunViewModel {
     private var lastLocationUpdate: Date?
     private var lastRouteUpdate: Date?
     private var previousSplitCount: Int = 0
+    private var distanceAtAutoPause: Double = 0
     private var cancellables = Set<AnyCancellable>()
 
     var weightKg: Double = 70.0
@@ -168,7 +169,6 @@ class ActiveRunViewModel {
         splitTracker = SplitTracker(splitDistanceMeters: max(1.0, splitDistanceMeters), weightKg: weightKg)
         splitTracker?.start()
 
-        voiceService.isEnabled = voiceService.isEnabled
         voiceService.reset()
         autoPauseService.reset()
 
@@ -228,6 +228,13 @@ class ActiveRunViewModel {
 
     func resumeRun() {
         guard state == .paused else { return }
+        // Discard GPS drift if resuming from auto-pause
+        if isAutoPaused {
+            let driftMeters = locationService.totalDistanceMeters - distanceAtAutoPause
+            if driftMeters > 0 {
+                locationService.subtractDistance(driftMeters)
+            }
+        }
         state = .running
         isAutoPaused = false
         if let pauseDate = lastPauseDate {
@@ -439,6 +446,7 @@ class ActiveRunViewModel {
             isAutoPaused = true
             state = .paused
             lastPauseDate = .now
+            distanceAtAutoPause = locationService.totalDistanceMeters
             if isChurnEnabled { churnEstimator.pause() }
             timer?.invalidate()
             // NOTE: Do NOT call locationService.pauseTracking() here.
@@ -452,6 +460,11 @@ class ActiveRunViewModel {
             state = .running
             if let pauseDate = lastPauseDate {
                 pausedDuration += Date.now.timeIntervalSince(pauseDate)
+            }
+            // Discard GPS drift accumulated while auto-paused
+            let driftMeters = locationService.totalDistanceMeters - distanceAtAutoPause
+            if driftMeters > 0 {
+                locationService.subtractDistance(driftMeters)
             }
             if isChurnEnabled { churnEstimator.resume() }
             startTimer()

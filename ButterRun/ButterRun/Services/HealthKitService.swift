@@ -12,7 +12,9 @@ class HealthKitService {
         guard isAvailable else { return false }
 
         let typesToShare: Set<HKSampleType> = [
-            HKObjectType.workoutType()
+            HKObjectType.workoutType(),
+            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
+            HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
         ]
         let typesToRead: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .bodyMass)!
@@ -31,12 +33,6 @@ class HealthKitService {
 
         let weightType = HKQuantityType.quantityType(forIdentifier: .bodyMass)!
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let query = HKSampleQuery(
-            sampleType: weightType,
-            predicate: nil,
-            limit: 1,
-            sortDescriptors: [sortDescriptor]
-        ) { _, _, _ in }
 
         return await withCheckedContinuation { continuation in
             let query = HKSampleQuery(
@@ -61,25 +57,62 @@ class HealthKitService {
 
         let startDate = run.startDate
         let endDate = run.endDate ?? Date()
-        let duration = run.durationSeconds
 
-        let workout = HKWorkout(
-            activityType: .running,
-            start: startDate,
-            end: endDate,
-            duration: duration,
-            totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: run.totalCaloriesBurned),
-            totalDistance: HKQuantity(unit: .meter(), doubleValue: run.distanceMeters),
-            metadata: [
-                "ButterBurnedTsp": run.totalButterBurnedTsp,
-                "Source": "Butter Run"
-            ]
+        let config = HKWorkoutConfiguration()
+        config.activityType = .running
+        config.locationType = .outdoor
+
+        let builder = HKWorkoutBuilder(
+            healthStore: healthStore,
+            configuration: config,
+            device: .local()
         )
 
         do {
-            try await healthStore.save(workout)
+            try await builder.beginCollection(at: startDate)
+
+            // Add energy burned sample
+            let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+            let energySample = HKQuantitySample(
+                type: energyType,
+                quantity: HKQuantity(unit: .kilocalorie(), doubleValue: run.totalCaloriesBurned),
+                start: startDate,
+                end: endDate
+            )
+
+            // Add distance sample
+            let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
+            let distanceSample = HKQuantitySample(
+                type: distanceType,
+                quantity: HKQuantity(unit: .meter(), doubleValue: run.distanceMeters),
+                start: startDate,
+                end: endDate
+            )
+
+            try await builder.addSamples([energySample, distanceSample])
+
+            // Add a pause/resume event to account for paused time so
+            // HealthKit records active duration matching run.durationSeconds
+            let totalElapsed = endDate.timeIntervalSince(startDate)
+            let pausedTime = totalElapsed - run.durationSeconds
+            if pausedTime > 1 {
+                let pauseDate = endDate.addingTimeInterval(-pausedTime)
+                let resumeDate = endDate
+                try await builder.addWorkoutEvents([
+                    HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: pauseDate, duration: 0), metadata: nil),
+                    HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: resumeDate, duration: 0), metadata: nil)
+                ])
+            }
+
+            try await builder.endCollection(at: endDate)
+            try await builder.addMetadata([
+                "ButterBurnedTsp": run.totalButterBurnedTsp,
+                "Source": "Butter Run"
+            ])
+            try await builder.finishWorkout()
             return true
         } catch {
+            builder.discardWorkout()
             return false
         }
     }
