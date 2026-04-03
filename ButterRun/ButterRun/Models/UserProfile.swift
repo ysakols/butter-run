@@ -11,6 +11,10 @@ class UserProfile {
     var splitDistance: String
     var createdAt: Date
 
+    // V2 fields
+    var autoPauseEnabled: Bool = true
+    var healthKitEnabled: Bool = false
+
     init(
         displayName: String,
         weightKg: Double,
@@ -25,6 +29,8 @@ class UserProfile {
         self.voiceFeedbackEnabled = voiceFeedbackEnabled
         self.splitDistance = splitDistance
         self.createdAt = .now
+        self.autoPauseEnabled = true
+        self.healthKitEnabled = false
     }
 
     var usesMiles: Bool {

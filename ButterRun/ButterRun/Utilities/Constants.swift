@@ -1,16 +1,19 @@
 import SwiftUI
 
 enum ButterTheme {
-    static let primary = Color(hex: "F5C542")       // Butter yellow
-    static let secondary = Color(hex: "8B6914")      // Toast brown
-    static let background = Color(hex: "FFF8E7")     // Cream
-    static let surface = Color.white
-    static let textPrimary = Color(hex: "3E2723")    // Dark brown
-    static let textSecondary = Color(hex: "6D4C41")  // Medium brown
-    static let accent = Color(hex: "E8A317")         // Deep amber
-    static let success = Color(hex: "4CAF50")        // Green
-    static let activeRunBg = Color(hex: "1A1A1A")    // Dark charcoal
-    static let deficit = Color(hex: "E57373")        // Warm red
+    static let background = Color(hex: "1A1A1C")
+    static let surface = Color(hex: "2A2A2E")
+    static let gold = Color(hex: "F3BA60")
+    static let goldDim = Color(hex: "C4943F")
+    static let textPrimary = Color(hex: "F5F5F5")
+    static let textSecondary = Color(hex: "A0A0A5")
+    static let success = Color(hex: "5ABF6E")
+    static let deficit = Color(hex: "E57373")
+    // Deprecated aliases for migration
+    static let primary = gold
+    static let activeRunBg = background
+    static let accent = goldDim
+    static let secondary = goldDim
 }
 
 extension Color {

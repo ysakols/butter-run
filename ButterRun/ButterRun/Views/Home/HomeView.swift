@@ -7,6 +7,8 @@ struct HomeView: View {
     @State private var viewModel = HomeViewModel()
     @State private var showActiveRun = false
     @State private var isButterZero = false
+    @State private var isChurnEnabled = false
+    @State private var showChurnSetup = false
 
     private var profile: UserProfile? { profiles.first }
 
@@ -36,26 +38,45 @@ struct HomeView: View {
                     Spacer()
 
                     // Butter Zero toggle
-                    Toggle(isOn: $isButterZero) {
-                        HStack {
-                            Text("🎯")
-                            VStack(alignment: .leading) {
-                                Text("Butter Zero Challenge")
+                    VStack(spacing: 12) {
+                        Toggle(isOn: $isButterZero) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Butter Zero")
                                     .font(.system(.body, design: .rounded, weight: .semibold))
-                                Text("Try to net zero calories")
+                                    .foregroundStyle(ButterTheme.textPrimary)
+                                Text("Eat butter mid-run. Try to net zero.")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(ButterTheme.textSecondary)
                             }
                         }
+                        .tint(ButterTheme.gold)
+                        .accessibilityLabel("Butter Zero mode")
+
+                        Toggle(isOn: $isChurnEnabled) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Churn Tracker")
+                                    .font(.system(.body, design: .rounded, weight: .semibold))
+                                    .foregroundStyle(ButterTheme.textPrimary)
+                                Text("Track butter-churning progress with cream in your pack.")
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundStyle(ButterTheme.textSecondary)
+                            }
+                        }
+                        .tint(ButterTheme.gold)
+                        .accessibilityLabel("Churn tracker mode")
                     }
-                    .tint(ButterTheme.primary)
                     .padding(.horizontal, 24)
 
                     // CHURN button
                     ChurnButton {
-                        showActiveRun = true
+                        if isChurnEnabled {
+                            showChurnSetup = true
+                        } else {
+                            showActiveRun = true
+                        }
                     }
                     .padding(.bottom, 8)
+                    .accessibilityLabel("Start run")
 
                     // Butter trivia
                     Text(ButterFacts.random)
@@ -71,10 +92,23 @@ struct HomeView: View {
             .fullScreenCover(isPresented: $showActiveRun) {
                 ActiveRunView(
                     isButterZeroChallenge: isButterZero,
+                    isChurnEnabled: isChurnEnabled,
+                    churnConfig: nil,
                     profile: profile ?? UserProfile(displayName: "Runner", weightKg: 70)
                 )
             }
+            .sheet(isPresented: $showChurnSetup) {
+                ChurnSetupSheet { config in
+                    showChurnSetup = false
+                    // Small delay to allow sheet dismissal before full screen cover
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showActiveRun = true
+                    }
+                }
+                .presentationDetents([.medium])
+            }
         }
+        .preferredColorScheme(.dark)
         .onAppear {
             viewModel.load(runs: runs)
         }
@@ -93,18 +127,21 @@ struct WeeklyButterCard: View {
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
                     .foregroundStyle(ButterTheme.textSecondary)
                 Spacer()
+                Image("butter-pat")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .accessibilityHidden(true)
             }
 
             HStack(alignment: .firstTextBaseline) {
                 Text(String(format: "%.1f", weeklyTsp))
                     .font(.system(size: 48, weight: .black, design: .rounded))
-                    .foregroundStyle(ButterTheme.primary)
+                    .foregroundStyle(ButterTheme.gold)
                 Text("tsp")
                     .font(.system(.title3, design: .rounded, weight: .medium))
                     .foregroundStyle(ButterTheme.textSecondary)
                 Spacer()
-                Text("🧈")
-                    .font(.system(size: 40))
             }
 
             if let summary = lastRunSummary {
@@ -118,6 +155,5 @@ struct WeeklyButterCard: View {
         }
         .padding(20)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
     }
 }

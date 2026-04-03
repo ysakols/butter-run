@@ -2,12 +2,34 @@ import Foundation
 import CoreLocation
 import Combine
 
-class LocationService: NSObject, ObservableObject {
+enum GPSSignalState {
+    case strong
+    case weak
+    case lost
+}
+
+protocol LocationTracking: AnyObject {
+    var totalDistanceMeters: Double { get }
+    var currentSpeedMps: Double { get }
+    var elevationGainMeters: Double { get }
+    var elevationLossMeters: Double { get }
+    var locationPublisher: AnyPublisher<CLLocation, Never> { get }
+    var gpsSignalState: GPSSignalState { get }
+    func requestPermission()
+    func startTracking()
+    func stopTracking()
+    func pauseTracking()
+    func resumeTracking()
+    func encodeRoute() -> Data?
+}
+
+class LocationService: NSObject, ObservableObject, LocationTracking {
     private let locationManager = CLLocationManager()
 
     @Published var currentLocation: CLLocation?
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var isTracking = false
+    @Published private(set) var gpsSignalState: GPSSignalState = .strong
 
     // Run tracking state
     private(set) var locations: [CLLocation] = []
@@ -18,16 +40,19 @@ class LocationService: NSObject, ObservableObject {
 
     private var previousLocation: CLLocation?
     private var previousAltitude: Double?
+    private var weakSignalStart: Date?
 
-    let locationPublisher = PassthroughSubject<CLLocation, Never>()
+    private let _locationSubject = PassthroughSubject<CLLocation, Never>()
+    var locationPublisher: AnyPublisher<CLLocation, Never> {
+        _locationSubject.eraseToAnyPublisher()
+    }
 
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = 5 // meters — balances accuracy vs battery
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        locationManager.distanceFilter = 5
         locationManager.activityType = .fitness
-        locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = false
     }
 
@@ -43,33 +68,40 @@ class LocationService: NSObject, ObservableObject {
         elevationLossMeters = 0
         previousLocation = nil
         previousAltitude = nil
+        weakSignalStart = nil
+        gpsSignalState = .strong
         isTracking = true
+
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.allowsBackgroundLocationUpdates = true
         locationManager.startUpdatingLocation()
     }
 
     func stopTracking() {
         isTracking = false
         locationManager.stopUpdatingLocation()
+        locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
 
     func pauseTracking() {
         isTracking = false
         locationManager.stopUpdatingLocation()
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
 
     func resumeTracking() {
         isTracking = true
         previousLocation = locations.last
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.startUpdatingLocation()
     }
 
-    /// Encode route as a simple array of lat/lon pairs for persistence.
     func encodeRoute() -> Data? {
         let coords = locations.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
         return try? JSONEncoder().encode(coords)
     }
 
-    /// Decode stored route data back to coordinates.
     static func decodeRoute(_ data: Data) -> [CLLocationCoordinate2D] {
         guard let coords = try? JSONDecoder().decode([[Double]].self, from: data) else {
             return []
@@ -80,54 +112,71 @@ class LocationService: NSObject, ObservableObject {
 
 extension LocationService: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        authorizationStatus = manager.authorizationStatus
+        DispatchQueue.main.async { [weak self] in
+            self?.authorizationStatus = manager.authorizationStatus
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations newLocations: [CLLocation]) {
-        guard isTracking else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isTracking else { return }
 
-        for location in newLocations {
-            // Filter out inaccurate readings
-            guard location.horizontalAccuracy >= 0, location.horizontalAccuracy < 20 else {
-                continue
-            }
-
-            // Calculate distance from previous point
-            if let previous = previousLocation {
-                let delta = location.distance(from: previous)
-                // Sanity check: ignore teleports (> 100m between 5m filter updates)
-                if delta < 100 {
-                    totalDistanceMeters += delta
+            for location in newLocations {
+                // GPS signal quality check
+                if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50 {
+                    if self.weakSignalStart == nil {
+                        self.weakSignalStart = Date()
+                    }
+                    if let start = self.weakSignalStart,
+                       Date().timeIntervalSince(start) > 10 {
+                        self.gpsSignalState = .weak
+                    }
+                    continue
                 }
-            }
 
-            // Speed (use GPS speed if available, else calculate)
-            if location.speed >= 0 {
-                currentSpeedMps = location.speed
-            } else if let previous = previousLocation {
-                let timeDelta = location.timestamp.timeIntervalSince(previous.timestamp)
-                if timeDelta > 0 {
-                    currentSpeedMps = location.distance(from: previous) / timeDelta
-                }
-            }
+                // Signal recovered
+                self.weakSignalStart = nil
+                self.gpsSignalState = .strong
 
-            // Elevation tracking
-            if location.verticalAccuracy >= 0 {
-                if let prevAlt = previousAltitude {
-                    let altDelta = location.altitude - prevAlt
-                    if altDelta > 0 {
-                        elevationGainMeters += altDelta
-                    } else {
-                        elevationLossMeters += abs(altDelta)
+                // Filter out inaccurate readings for distance calculation
+                guard location.horizontalAccuracy < 20 else { continue }
+
+                // Calculate distance from previous point
+                if let previous = self.previousLocation {
+                    let delta = location.distance(from: previous)
+                    if delta < 100 {
+                        self.totalDistanceMeters += delta
                     }
                 }
-                previousAltitude = location.altitude
-            }
 
-            locations.append(location)
-            previousLocation = location
-            currentLocation = location
-            locationPublisher.send(location)
+                // Speed
+                if location.speed >= 0 {
+                    self.currentSpeedMps = location.speed
+                } else if let previous = self.previousLocation {
+                    let timeDelta = location.timestamp.timeIntervalSince(previous.timestamp)
+                    if timeDelta > 0 {
+                        self.currentSpeedMps = location.distance(from: previous) / timeDelta
+                    }
+                }
+
+                // Elevation tracking
+                if location.verticalAccuracy >= 0 {
+                    if let prevAlt = self.previousAltitude {
+                        let altDelta = location.altitude - prevAlt
+                        if altDelta > 0 {
+                            self.elevationGainMeters += altDelta
+                        } else {
+                            self.elevationLossMeters += abs(altDelta)
+                        }
+                    }
+                    self.previousAltitude = location.altitude
+                }
+
+                self.locations.append(location)
+                self.previousLocation = location
+                self.currentLocation = location
+                self._locationSubject.send(location)
+            }
         }
     }
 }

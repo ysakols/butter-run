@@ -1,13 +1,45 @@
 import SwiftUI
+import ImageIO
+import UniformTypeIdentifiers
 
 struct ShareImageRenderer {
-    /// Renders a share card image for a completed run.
     @MainActor
     static func render(run: Run, usesMiles: Bool) -> UIImage? {
         let view = ShareCardContent(run: run, usesMiles: usesMiles)
         let renderer = ImageRenderer(content: view)
-        renderer.scale = 3.0 // high res
-        return renderer.uiImage
+        renderer.scale = 3.0
+
+        guard let uiImage = renderer.uiImage else { return nil }
+
+        // Strip EXIF/GPS metadata
+        return stripMetadata(from: uiImage)
+    }
+
+    /// Remove all metadata (EXIF, GPS, etc.) from the image
+    private static func stripMetadata(from image: UIImage) -> UIImage? {
+        guard let data = image.pngData(),
+              let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            return image
+        }
+
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            mutableData,
+            UTType.png.identifier as CFString,
+            1,
+            nil
+        ) else {
+            return image
+        }
+
+        // Write image without any metadata
+        CGImageDestinationAddImage(destination, cgImage, nil)
+        guard CGImageDestinationFinalize(destination) else {
+            return image
+        }
+
+        return UIImage(data: mutableData as Data)
     }
 }
 
@@ -18,8 +50,6 @@ struct ShareCardContent: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack {
-                Text("🧈")
-                    .font(.title)
                 Text("BUTTER RUN")
                     .font(.system(.title3, design: .rounded, weight: .bold))
                     .foregroundStyle(ButterTheme.textPrimary)
@@ -28,7 +58,7 @@ struct ShareCardContent: View {
 
             Text(String(format: "%.1f tsp", run.totalButterBurnedTsp))
                 .font(.system(size: 48, weight: .black, design: .rounded))
-                .foregroundStyle(ButterTheme.primary)
+                .foregroundStyle(ButterTheme.gold)
 
             Text("of butter melted")
                 .font(.system(.body, design: .rounded))
@@ -54,14 +84,29 @@ struct ShareCardContent: View {
                         .font(.system(.caption, design: .rounded))
                     Text("\(run.butterZeroScore)")
                         .font(.system(.caption, design: .rounded, weight: .bold))
-                    Text("🎯")
                 }
                 .foregroundStyle(ButterTheme.textSecondary)
             }
 
-            Text("butterrun.app")
-                .font(.system(.caption2, design: .rounded))
-                .foregroundStyle(ButterTheme.textSecondary.opacity(0.6))
+            if let churn = run.churnResult {
+                let stage = ChurnStage(rawValue: churn.finalStage) ?? .liquid
+                Text("Churn: \(stage.name) (\(Int(churn.finalProgress * 100))%)")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(ButterTheme.gold)
+            }
+
+            Divider()
+                .overlay(ButterTheme.surface)
+
+            HStack {
+                Text("#ButterRun #ButterZero")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary.opacity(0.6))
+                Spacer()
+                Text("butterrun.app")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary.opacity(0.6))
+            }
         }
         .padding(24)
         .frame(width: 340)
@@ -69,7 +114,7 @@ struct ShareCardContent: View {
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(ButterTheme.primary.opacity(0.3), lineWidth: 2)
+                .stroke(ButterTheme.gold.opacity(0.3), lineWidth: 2)
         )
     }
 

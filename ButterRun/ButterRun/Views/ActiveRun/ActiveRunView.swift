@@ -4,8 +4,11 @@ import SwiftData
 struct ActiveRunView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let isButterZeroChallenge: Bool
+    let isChurnEnabled: Bool
+    let churnConfig: ChurnConfiguration?
     let profile: UserProfile
 
     @State private var viewModel = ActiveRunViewModel()
@@ -13,47 +16,113 @@ struct ActiveRunView: View {
     @State private var showStopConfirmation = false
     @State private var completedRun: Run?
     @State private var showSummary = false
+    @State private var showMap = false
+    @State private var showUndoToast = false
+    @State private var undoTimer: Timer?
 
     var body: some View {
         ZStack {
-            ButterTheme.activeRunBg.ignoresSafeArea()
+            ButterTheme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top: Butter burned (hero metric)
-                butterHeroSection
-                    .padding(.top, 60)
+                // GPS weak banner
+                if viewModel.gpsSignalState == .weak {
+                    gpsBanner
+                }
 
-                // Butter Zero bar (if applicable)
-                if isButterZeroChallenge {
-                    ButterZeroBar(
+                // Auto-pause banner
+                if viewModel.isAutoPaused {
+                    autoPauseBanner
+                }
+
+                // Hero metric
+                butterHeroSection
+                    .padding(.top, 40)
+
+                // Contextual strip (BZ + churn combined)
+                if isButterZeroChallenge || isChurnEnabled {
+                    ContextualStrip(
+                        isButterZero: isButterZeroChallenge,
+                        isChurnEnabled: isChurnEnabled,
                         burnedTsp: viewModel.butterBurnedTsp,
-                        eatenTsp: viewModel.butterEatenTsp
+                        eatenTsp: viewModel.butterEatenTsp,
+                        churnProgress: viewModel.churnProgress,
+                        churnStage: viewModel.churnStage,
+                        onQuickEat: {
+                            viewModel.eatButter(serving: .teaspoon)
+                            showUndoToast = true
+                            startUndoTimer()
+                        }
                     )
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
                 }
 
                 Spacer()
 
-                // Metric grid
-                MetricGridView(viewModel: viewModel)
-                    .padding(.horizontal, 16)
+                // Metric grid or map
+                if showMap {
+                    // Map placeholder — will show route when RunMapView is available
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(ButterTheme.surface)
+                        .frame(height: 200)
+                        .overlay {
+                            Text("Map")
+                                .foregroundStyle(ButterTheme.textSecondary)
+                        }
+                        .padding(.horizontal, 16)
+                } else {
+                    MetricGridView(viewModel: viewModel)
+                        .padding(.horizontal, 16)
+                }
+
+                // Map toggle
+                HStack {
+                    Spacer()
+                    Button {
+                        showMap.toggle()
+                    } label: {
+                        Image(systemName: showMap ? "square.grid.2x2" : "map")
+                            .font(.body)
+                            .foregroundStyle(ButterTheme.textSecondary)
+                            .padding(8)
+                            .background(ButterTheme.surface, in: Circle())
+                    }
+                    .accessibilityLabel(showMap ? "Show metrics" : "Show map")
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
 
                 Spacer()
 
+                // Undo toast
+                if showUndoToast {
+                    undoToastView
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
                 // Controls
                 controlsSection
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 50)
             }
         }
         .onAppear {
             viewModel.configure(profile: profile)
             viewModel.isButterZeroChallenge = isButterZeroChallenge
+            let draftService = RunDraftService(container: modelContext.container)
+            viewModel.setDraftService(draftService)
             viewModel.startRun()
+            if isChurnEnabled, let config = churnConfig {
+                viewModel.startChurn(configuration: config)
+            }
         }
         .sheet(isPresented: $showEatButterSheet) {
             EatButterSheet { serving, customTsp in
                 viewModel.eatButter(serving: serving, customTsp: customTsp)
+                showUndoToast = true
+                startUndoTimer()
             }
             .presentationDetents([.medium])
         }
@@ -72,25 +141,79 @@ struct ActiveRunView: View {
                 )
             }
         }
+        .preferredColorScheme(.dark)
     }
 
     // MARK: - Subviews
 
+    private var gpsBanner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "location.slash")
+                .font(.caption)
+            Text("GPS signal weak — distance paused")
+                .font(.system(.caption, design: .rounded))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(ButterTheme.deficit.opacity(0.8))
+        .accessibilityLabel("GPS signal weak, distance tracking paused")
+    }
+
+    private var autoPauseBanner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "pause.circle")
+                .font(.caption)
+            Text("Auto-paused")
+                .font(.system(.caption, design: .rounded))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(ButterTheme.goldDim.opacity(0.8))
+        .accessibilityLabel("Run auto-paused due to low speed")
+    }
+
     private var butterHeroSection: some View {
         VStack(spacing: 4) {
-            Text("🧈")
-                .font(.system(size: 36))
+            Image("butter-pat")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 36, height: 36)
+                .accessibilityHidden(true)
 
             Text(viewModel.formattedButter)
-                .font(.system(size: 64, weight: .black, design: .rounded))
-                .foregroundStyle(ButterTheme.primary)
+                .font(.system(size: 56, weight: .black, design: .rounded))
+                .foregroundStyle(ButterTheme.gold)
                 .contentTransition(.numericText())
-                .animation(.default, value: viewModel.formattedButter)
+                .animation(reduceMotion ? nil : .default, value: viewModel.formattedButter)
+                .minimumScaleFactor(0.5)
 
             Text("teaspoons melted")
                 .font(.system(.body, design: .rounded))
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(ButterTheme.textSecondary)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(viewModel.formattedButter) teaspoons of butter melted")
+    }
+
+    private var undoToastView: some View {
+        HStack {
+            Text("Added 1 tsp")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(ButterTheme.textPrimary)
+            Spacer()
+            Button("Undo") {
+                _ = viewModel.undoLastButterEntry()
+                withAnimation { showUndoToast = false }
+            }
+            .font(.system(.caption, design: .rounded, weight: .bold))
+            .foregroundStyle(ButterTheme.gold)
+        }
+        .padding(12)
+        .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private var controlsSection: some View {
@@ -106,8 +229,10 @@ struct ActiveRunView: View {
                         Text("Eat")
                             .font(.system(.caption, design: .rounded))
                     }
-                    .foregroundStyle(ButterTheme.primary)
+                    .foregroundStyle(ButterTheme.gold)
+                    .frame(minWidth: 44, minHeight: 44)
                 }
+                .accessibilityLabel("Eat butter")
             }
 
             // Pause / Resume
@@ -127,6 +252,7 @@ struct ActiveRunView: View {
                             .foregroundStyle(.white)
                     }
             }
+            .accessibilityLabel(viewModel.state == .running ? "Pause run" : "Resume run")
 
             // Stop
             Button {
@@ -138,15 +264,31 @@ struct ActiveRunView: View {
                     Text("Stop")
                         .font(.system(.caption, design: .rounded))
                 }
-                .foregroundStyle(.red.opacity(0.8))
+                .foregroundStyle(ButterTheme.deficit)
+                .frame(minWidth: 44, minHeight: 44)
             }
+            .accessibilityLabel("Stop run")
         }
     }
+
+    // MARK: - Actions
 
     private func finishRun() {
         let run = viewModel.stopRun()
         modelContext.insert(run)
+        // Delete draft on successful finish
+        let draftService = RunDraftService(container: modelContext.container)
+        draftService.deleteDraft(context: modelContext)
         completedRun = run
         showSummary = true
+    }
+
+    private func startUndoTimer() {
+        undoTimer?.invalidate()
+        undoTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: false) { _ in
+            DispatchQueue.main.async {
+                withAnimation { showUndoToast = false }
+            }
+        }
     }
 }

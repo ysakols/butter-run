@@ -21,7 +21,7 @@ struct ButterStickView: View {
                         LinearGradient(
                             colors: [
                                 Color(hex: "FFF176"),
-                                ButterTheme.primary,
+                                ButterTheme.gold,
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -36,8 +36,8 @@ struct ButterStickView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    ButterTheme.primary.opacity(0.6),
-                                    ButterTheme.accent.opacity(0.4),
+                                    ButterTheme.gold.opacity(0.6),
+                                    ButterTheme.goldDim.opacity(0.4),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -60,7 +60,7 @@ struct ButterStickMeter: View {
     let maxTsp: Double
 
     private var segments: Int {
-        max(1, Int(ceil(maxTsp / 3.0))) // each segment = 1 tbsp (3 tsp)
+        max(1, Int(ceil(maxTsp / 3.0)))
     }
 
     var body: some View {
@@ -72,10 +72,10 @@ struct ButterStickMeter: View {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(
                         segmentFill >= 1.0
-                            ? ButterTheme.accent
+                            ? ButterTheme.goldDim
                             : segmentFill > 0
-                                ? ButterTheme.primary.opacity(0.5)
-                                : ButterTheme.primary.opacity(0.15)
+                                ? ButterTheme.gold.opacity(0.5)
+                                : ButterTheme.gold.opacity(0.15)
                     )
                     .frame(height: 12)
             }

@@ -3,23 +3,99 @@ import SwiftData
 
 @main
 struct ButterRunApp: App {
+    let container: ModelContainer
+
+    init() {
+        do {
+            let schema = Schema([
+                Run.self,
+                Split.self,
+                ButterEntry.self,
+                UserProfile.self,
+                Achievement.self,
+                RunDraft.self,
+            ])
+            let config = ModelConfiguration(schema: schema)
+            container = try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            fatalError("Failed to create ModelContainer: \(error)")
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: [Run.self, UserProfile.self, Achievement.self])
+        .modelContainer(container)
     }
 }
 
 struct ContentView: View {
     @Query private var profiles: [UserProfile]
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        if profiles.isEmpty {
-            OnboardingView()
-        } else {
-            MainTabView()
+        Group {
+            if profiles.isEmpty {
+                OnboardingView()
+            } else {
+                CrashRecoveryWrapper {
+                    MainTabView()
+                }
+            }
         }
+        .onAppear {
+            // Purge stale drafts on launch
+            let service = RunDraftService(container: modelContext.container)
+            service.purgeStale(context: modelContext)
+        }
+    }
+}
+
+/// Checks for an unfinished run draft on app launch
+struct CrashRecoveryWrapper<Content: View>: View {
+    @Environment(\.modelContext) private var modelContext
+    @State private var showRecoveryPrompt = false
+    @State private var recoveredDraft: RunDraft?
+    let content: () -> Content
+
+    init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
+
+    var body: some View {
+        content()
+            .onAppear(perform: checkForDraft)
+            .alert("Unfinished Run", isPresented: $showRecoveryPrompt) {
+                Button("Discard", role: .destructive) {
+                    discardDraft()
+                }
+                Button("OK") {
+                    // For now, just dismiss — resume could be added later
+                    discardDraft()
+                }
+            } message: {
+                if let draft = recoveredDraft {
+                    let duration = ButterFormatters.duration(draft.elapsedSeconds)
+                    Text("You have an unfinished run from \(draft.startDate.formatted(date: .abbreviated, time: .shortened)) (\(duration)). This draft will be discarded.")
+                } else {
+                    Text("You have an unfinished run.")
+                }
+            }
+    }
+
+    private func checkForDraft() {
+        let service = RunDraftService(container: modelContext.container)
+        if let draft = service.loadDraft(context: modelContext) {
+            recoveredDraft = draft
+            showRecoveryPrompt = true
+        }
+    }
+
+    private func discardDraft() {
+        let service = RunDraftService(container: modelContext.container)
+        service.deleteDraft(context: modelContext)
+        recoveredDraft = nil
     }
 }
 
@@ -41,7 +117,7 @@ struct MainTabView: View {
                     Label("Settings", systemImage: "gearshape")
                 }
         }
-        .tint(ButterTheme.primary)
+        .tint(ButterTheme.gold)
     }
 }
 
@@ -50,20 +126,28 @@ struct OnboardingView: View {
     @State private var weightKg: Double = 70.0
     @State private var displayName: String = ""
     @State private var useMiles: Bool = true
+    @State private var weightError: String?
+
+    private var isFormValid: Bool {
+        !displayName.trimmingCharacters(in: .whitespaces).isEmpty && weightKg > 0
+    }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 32) {
                 Spacer()
 
-                Text("🧈")
-                    .font(.system(size: 80))
+                Image("butter-pat")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 80, height: 80)
+                    .accessibilityHidden(true)
 
                 Text("Butter Run")
                     .font(.system(.largeTitle, design: .rounded, weight: .black))
-                    .foregroundStyle(ButterTheme.primary)
+                    .foregroundStyle(ButterTheme.gold)
 
-                Text("Track your runs in teaspoons of butter.")
+                Text("Run it off. One pat at a time.")
                     .font(.system(.body, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
 
@@ -71,17 +155,35 @@ struct OnboardingView: View {
                     TextField("Your name", text: $displayName)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .rounded))
+                        .accessibilityLabel("Your name")
 
-                    HStack {
-                        Text("Weight")
-                            .font(.system(.body, design: .rounded))
-                        Spacer()
-                        TextField("kg", value: $weightKg, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                            .keyboardType(.decimalPad)
-                        Text("kg")
-                            .foregroundStyle(ButterTheme.textSecondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Weight")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundStyle(ButterTheme.textPrimary)
+                            Spacer()
+                            TextField("kg", value: $weightKg, format: .number)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 80)
+                                .keyboardType(.decimalPad)
+                                .accessibilityLabel("Weight in kilograms")
+                                .onChange(of: weightKg) { _, newValue in
+                                    if newValue <= 0 {
+                                        weightError = "Weight must be greater than zero"
+                                    } else {
+                                        weightError = nil
+                                    }
+                                }
+                            Text("kg")
+                                .foregroundStyle(ButterTheme.textSecondary)
+                        }
+
+                        if let error = weightError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(ButterTheme.deficit)
+                        }
                     }
 
                     Picker("Units", selection: $useMiles) {
@@ -95,23 +197,27 @@ struct OnboardingView: View {
                 Spacer()
 
                 Button(action: createProfile) {
-                    Text("Let's Churn!")
+                    Text("Let's Churn")
                         .font(.system(.title3, design: .rounded, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(ButterTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(ButterTheme.primary, in: RoundedRectangle(cornerRadius: 16))
+                        .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 16))
                 }
                 .padding(.horizontal, 32)
-                .disabled(displayName.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(!isFormValid)
+                .opacity(isFormValid ? 1.0 : 0.5)
+                .accessibilityLabel("Start run")
 
                 Spacer().frame(height: 40)
             }
-            .background(ButterTheme.background)
+            .background(ButterTheme.background.ignoresSafeArea())
         }
+        .preferredColorScheme(.dark)
     }
 
     private func createProfile() {
+        guard weightKg > 0 else { return }
         let profile = UserProfile(
             displayName: displayName.trimmingCharacters(in: .whitespaces),
             weightKg: weightKg,

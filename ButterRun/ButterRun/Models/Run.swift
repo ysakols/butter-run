@@ -3,7 +3,7 @@ import SwiftData
 
 @Model
 class Run {
-    var id: UUID
+    @Attribute(.spotlight) var id: UUID
     var startDate: Date
     var endDate: Date?
     var distanceMeters: Double
@@ -22,6 +22,12 @@ class Run {
     @Relationship(deleteRule: .cascade) var butterEntries: [ButterEntry]
     var isButterZeroChallenge: Bool
     var notes: String?
+
+    // V2 fields
+    var churnResultData: Data?
+    var isManualEntry: Bool = false
+    var targetDistanceMeters: Double?
+    var targetDurationSeconds: Double?
 
     init(
         startDate: Date = .now,
@@ -46,6 +52,10 @@ class Run {
         self.butterEntries = []
         self.isButterZeroChallenge = isButterZeroChallenge
         self.notes = nil
+        self.churnResultData = nil
+        self.isManualEntry = false
+        self.targetDistanceMeters = nil
+        self.targetDurationSeconds = nil
     }
 
     var butterZeroScore: Int {
@@ -65,5 +75,10 @@ class Run {
         let minutes = Int(durationSeconds) / 60
         let seconds = Int(durationSeconds) % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    var churnResult: ChurnResult? {
+        guard let data = churnResultData else { return nil }
+        return try? JSONDecoder().decode(ChurnResult.self, from: data)
     }
 }

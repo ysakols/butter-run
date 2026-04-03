@@ -9,8 +9,11 @@ struct EatButterSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                Text("🧈")
-                    .font(.system(size: 48))
+                Image("butter-pat")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 48, height: 48)
+                    .accessibilityHidden(true)
 
                 Text("How much butter?")
                     .font(.system(.title2, design: .rounded, weight: .bold))
@@ -26,10 +29,9 @@ struct EatButterSheet: View {
                             dismiss()
                         } label: {
                             HStack {
-                                Text(serving.emoji)
-                                    .font(.title2)
                                 Text(serving.displayName)
                                     .font(.system(.body, design: .rounded, weight: .semibold))
+                                    .foregroundStyle(ButterTheme.textPrimary)
                                 Spacer()
                                 Text("\(String(format: "%.0f", serving.teaspoonEquivalent * 34)) cal")
                                     .font(.system(.caption, design: .rounded))
@@ -37,32 +39,35 @@ struct EatButterSheet: View {
                             }
                             .padding(16)
                             .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                         }
                         .buttonStyle(.plain)
+                        .frame(minHeight: 44)
+                        .accessibilityLabel("\(serving.displayName), \(String(format: "%.0f", serving.teaspoonEquivalent * 34)) calories")
                     }
 
                     // Custom amount
                     HStack {
-                        Text("✏️")
-                            .font(.title2)
                         Text("Custom")
                             .font(.system(.body, design: .rounded, weight: .semibold))
+                            .foregroundStyle(ButterTheme.textPrimary)
                         Spacer()
                         TextField("tsp", value: $customTsp, format: .number)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 60)
                             .keyboardType(.decimalPad)
+                            .accessibilityLabel("Custom amount in teaspoons")
+                        Text("tsp")
+                            .foregroundStyle(ButterTheme.textSecondary)
                         Button("Add") {
                             onEat(.custom, customTsp)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(ButterTheme.primary)
+                        .tint(ButterTheme.gold)
+                        .frame(minWidth: 44, minHeight: 44)
                     }
                     .padding(16)
                     .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                    .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
                 }
                 .padding(.horizontal)
 
@@ -74,8 +79,10 @@ struct EatButterSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .foregroundStyle(ButterTheme.textSecondary)
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 }

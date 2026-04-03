@@ -1,6 +1,21 @@
 import AVFoundation
 
-class VoiceFeedbackService {
+protocol VoiceFeedback {
+    var isEnabled: Bool { get set }
+    func reset()
+    func checkMilestones(
+        butterTsp: Double,
+        distanceMiles: Double,
+        pace: String,
+        isButterZero: Bool,
+        netButter: Double
+    )
+    func announceRunEnd(totalButterTsp: Double, netButter: Double?, isButterZero: Bool)
+    func announceChurnStage(_ stageName: String)
+    func announceAutoPause(paused: Bool)
+}
+
+class VoiceFeedbackService: VoiceFeedback {
     private let synthesizer = AVSpeechSynthesizer()
     var isEnabled: Bool = true
 
@@ -24,10 +39,8 @@ class VoiceFeedbackService {
         let currentTsp = Int(butterTsp)
         let currentMile = Int(distanceMiles)
 
-        // Announce every whole teaspoon
         if currentTsp > lastAnnouncedTsp {
             if currentTsp % 3 == 0 {
-                // Every tablespoon
                 let tbsp = currentTsp / 3
                 speak("That's \(tbsp) tablespoon\(tbsp == 1 ? "" : "s") of butter!")
             } else {
@@ -36,14 +49,12 @@ class VoiceFeedbackService {
             lastAnnouncedTsp = currentTsp
         }
 
-        // Announce every mile
         if currentMile > lastAnnouncedMile && currentMile > 0 {
             let tspStr = String(format: "%.1f", butterTsp)
             speak("Mile \(currentMile) complete. Pace: \(pace). \(tspStr) teaspoons burned.")
             lastAnnouncedMile = currentMile
         }
 
-        // Butter Zero crossing
         if isButterZero && abs(netButter) < 0.3 && netButter != 0 {
             speak("You're approaching Butter Zero! Nice churning!")
         }
@@ -61,6 +72,16 @@ class VoiceFeedbackService {
         }
 
         speak(message)
+    }
+
+    func announceChurnStage(_ stageName: String) {
+        guard isEnabled else { return }
+        speak("Churn stage: \(stageName)")
+    }
+
+    func announceAutoPause(paused: Bool) {
+        guard isEnabled else { return }
+        speak(paused ? "Auto paused" : "Resumed")
     }
 
     private func speak(_ text: String) {

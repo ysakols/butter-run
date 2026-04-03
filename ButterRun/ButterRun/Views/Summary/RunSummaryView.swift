@@ -5,10 +5,10 @@ struct RunSummaryView: View {
     let usesMiles: Bool
     let onDismiss: () -> Void
 
-    @State private var viewModel: RunSummaryViewModel?
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
     @State private var meltProgress: Double = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationStack {
@@ -19,15 +19,18 @@ struct RunSummaryView: View {
                         ButterStickView(meltPercentage: meltProgress)
                             .frame(width: 60, height: 120)
                             .onAppear {
-                                withAnimation(.easeOut(duration: 2.0)) {
-                                    // Melt proportional to burn (1 stick = 24 tsp max for visual)
+                                if reduceMotion {
                                     meltProgress = min(1.0, run.totalButterBurnedTsp / 24.0)
+                                } else {
+                                    withAnimation(.easeOut(duration: 2.0)) {
+                                        meltProgress = min(1.0, run.totalButterBurnedTsp / 24.0)
+                                    }
                                 }
                             }
 
                         Text(String(format: "%.1f tsp", run.totalButterBurnedTsp))
                             .font(.system(size: 48, weight: .black, design: .rounded))
-                            .foregroundStyle(ButterTheme.primary)
+                            .foregroundStyle(ButterTheme.gold)
 
                         Text(ButterCalculator.butterDescription(tsp: run.totalButterBurnedTsp))
                             .font(.system(.body, design: .rounded))
@@ -40,6 +43,11 @@ struct RunSummaryView: View {
                         butterZeroSection
                     }
 
+                    // Churn result
+                    if let churn = run.churnResult {
+                        churnResultSection(churn)
+                    }
+
                     // Stats grid
                     statsGrid
 
@@ -47,6 +55,12 @@ struct RunSummaryView: View {
                     if !run.splits.isEmpty {
                         splitsSection
                     }
+
+                    // Calorie disclaimer
+                    Text("Estimates are approximate and for entertainment purposes.")
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                        .padding(.horizontal)
 
                     // Share button
                     Button {
@@ -56,10 +70,11 @@ struct RunSummaryView: View {
                             .font(.system(.body, design: .rounded, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(ButterTheme.primary, in: RoundedRectangle(cornerRadius: 12))
-                            .foregroundStyle(.white)
+                            .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
+                            .foregroundStyle(ButterTheme.background)
                     }
                     .padding(.horizontal)
+                    .accessibilityLabel("Share run results")
                 }
                 .padding(.bottom, 32)
             }
@@ -70,6 +85,7 @@ struct RunSummaryView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { onDismiss() }
                         .font(.system(.body, design: .rounded, weight: .semibold))
+                        .foregroundStyle(ButterTheme.gold)
                 }
             }
             .sheet(isPresented: $showShareSheet) {
@@ -78,6 +94,7 @@ struct RunSummaryView: View {
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 
     private var butterZeroSection: some View {
@@ -85,7 +102,7 @@ struct RunSummaryView: View {
             let score = run.butterZeroScore
             Text("\(score)")
                 .font(.system(size: 36, weight: .black, design: .rounded))
-                .foregroundStyle(score >= 80 ? ButterTheme.success : ButterTheme.accent)
+                .foregroundStyle(score >= 80 ? ButterTheme.success : ButterTheme.goldDim)
 
             Text("Butter Zero Score")
                 .font(.system(.caption, design: .rounded, weight: .semibold))
@@ -96,6 +113,35 @@ struct RunSummaryView: View {
             Text("Net: \(sign)\(String(format: "%.1f", net)) tsp")
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(ButterTheme.textSecondary)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity)
+        .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Butter Zero Score: \(run.butterZeroScore)")
+    }
+
+    private func churnResultSection(_ churn: ChurnResult) -> some View {
+        VStack(spacing: 8) {
+            let stage = ChurnStage(rawValue: churn.finalStage) ?? .liquid
+            Text(stage.name)
+                .font(.system(.title3, design: .rounded, weight: .bold))
+                .foregroundStyle(ButterTheme.gold)
+
+            Text("Churn Result")
+                .font(.system(.caption, design: .rounded, weight: .semibold))
+                .foregroundStyle(ButterTheme.textSecondary)
+
+            Text("\(Int(churn.finalProgress * 100))% complete")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(ButterTheme.textSecondary)
+
+            if churn.finalStage >= ChurnStage.butter.rawValue {
+                Text("You made butter!")
+                    .font(.system(.body, design: .rounded, weight: .bold))
+                    .foregroundStyle(ButterTheme.gold)
+            }
         }
         .padding(20)
         .frame(maxWidth: .infinity)
@@ -152,6 +198,7 @@ struct RunSummaryView: View {
         .frame(maxWidth: .infinity)
         .padding(16)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
     }
 
     private var splitsSection: some View {
@@ -196,10 +243,11 @@ struct SplitRowView: View {
 
             Text(String(format: "%.1f tsp", split.butterBurnedTsp))
                 .font(.system(.body, design: .rounded, weight: .medium))
-                .foregroundStyle(ButterTheme.accent)
+                .foregroundStyle(ButterTheme.gold)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
     }
 }
 

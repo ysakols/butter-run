@@ -4,7 +4,11 @@ import SwiftData
 struct RunHistoryView: View {
     @Query(sort: \Run.startDate, order: .reverse) private var runs: [Run]
     @Query private var profiles: [UserProfile]
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel = RunHistoryViewModel()
+    @State private var showManualEntry = false
+    @State private var runToDelete: Run?
+    @State private var showDeleteConfirmation = false
 
     private var usesMiles: Bool { profiles.first?.usesMiles ?? true }
 
@@ -52,13 +56,53 @@ struct RunHistoryView: View {
                                 }
                                 .listRowBackground(ButterTheme.surface)
                             }
+                            .onDelete { indexSet in
+                                if let index = indexSet.first {
+                                    runToDelete = runs[index]
+                                    showDeleteConfirmation = true
+                                }
+                            }
+                        }
+
+                        // Manual entry button
+                        Section {
+                            Button {
+                                showManualEntry = true
+                            } label: {
+                                Label("Log Manual Run", systemImage: "plus.circle")
+                                    .font(.system(.body, design: .rounded, weight: .semibold))
+                                    .foregroundStyle(ButterTheme.gold)
+                            }
+                            .listRowBackground(ButterTheme.surface)
                         }
                     }
                     .scrollContentBackground(.hidden)
                 }
             }
             .navigationTitle("History")
+            .sheet(isPresented: $showManualEntry) {
+                ManualRunEntryView()
+            }
+            .confirmationDialog(
+                "Delete this run?",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let run = runToDelete {
+                        modelContext.delete(run)
+                        try? modelContext.save()
+                    }
+                    runToDelete = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    runToDelete = nil
+                }
+            } message: {
+                Text("This cannot be undone.")
+            }
         }
+        .preferredColorScheme(.dark)
         .onAppear {
             viewModel.load(runs: runs)
         }
@@ -66,12 +110,15 @@ struct RunHistoryView: View {
 
     private var emptyState: some View {
         VStack(spacing: 16) {
-            Text("🧈")
-                .font(.system(size: 60))
+            Image("butter-pat")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 60, height: 60)
+                .accessibilityHidden(true)
             Text("No runs yet")
                 .font(.system(.title3, design: .rounded, weight: .bold))
                 .foregroundStyle(ButterTheme.textPrimary)
-            Text("Hit that Churn button to melt some butter!")
+            Text("Tap the Run tab to start!")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(ButterTheme.textSecondary)
         }
@@ -103,9 +150,19 @@ struct RunRowView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(run.startDate, format: .dateTime.month().day().year())
-                    .font(.system(.body, design: .rounded, weight: .semibold))
-                    .foregroundStyle(ButterTheme.textPrimary)
+                HStack(spacing: 6) {
+                    Text(run.startDate, format: .dateTime.month().day().year())
+                        .font(.system(.body, design: .rounded, weight: .semibold))
+                        .foregroundStyle(ButterTheme.textPrimary)
+                    if run.isManualEntry {
+                        Text("Manual")
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundStyle(ButterTheme.goldDim)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(ButterTheme.goldDim.opacity(0.2), in: Capsule())
+                    }
+                }
 
                 HStack(spacing: 8) {
                     Text(ButterFormatters.distance(meters: run.distanceMeters, usesMiles: usesMiles))
@@ -121,8 +178,8 @@ struct RunRowView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(String(format: "%.1f", run.totalButterBurnedTsp))
                     .font(.system(.title3, design: .rounded, weight: .bold))
-                    .foregroundStyle(ButterTheme.primary)
-                Text("tsp 🧈")
+                    .foregroundStyle(ButterTheme.gold)
+                Text("tsp")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
             }

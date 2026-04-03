@@ -2,14 +2,23 @@ import Foundation
 import CoreMotion
 import Combine
 
-class MotionService: ObservableObject {
+protocol MotionTracking: AnyObject {
+    var currentCadence: Double { get }
+    var stepCount: Int { get }
+    var isAvailable: Bool { get }
+    func startTracking()
+    func stopTracking()
+}
+
+class MotionService: NSObject, ObservableObject, MotionTracking {
     private let pedometer = CMPedometer()
 
-    @Published var currentCadence: Double = 0  // steps per minute
+    @Published var currentCadence: Double = 0
     @Published var stepCount: Int = 0
     @Published var isAvailable: Bool = false
 
-    init() {
+    override init() {
+        super.init()
         isAvailable = CMPedometer.isPedometerEventMonitoringAvailable()
     }
 
@@ -25,7 +34,6 @@ class MotionService: ObservableObject {
                 self?.stepCount = data.numberOfSteps.intValue
 
                 if let cadence = data.currentCadence {
-                    // CoreMotion cadence is steps/second, convert to steps/minute
                     self?.currentCadence = cadence.doubleValue * 60.0
                 }
             }
