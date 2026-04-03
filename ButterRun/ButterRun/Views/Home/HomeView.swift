@@ -77,7 +77,7 @@ struct HomeView: View {
                         }
                     }
                     .padding(.bottom, 8)
-                    .accessibilityLabel("Start run")
+                    .accessibilityLabel(isChurnEnabled ? "Set up churn tracker" : "Start run")
 
                     // Butter trivia
                     Text(ButterFacts.random)

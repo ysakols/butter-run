@@ -163,7 +163,7 @@ Butter = 343 / 34 = ~10.1 teaspoons 🧈
 | Architecture | MVVM + Services |
 | Persistence | SwiftData |
 | Location | CoreLocation (CLLocationManager) |
-| Motion | CoreMotion (CMPedometer) |
+| Motion | CoreMotion (CMPedometer, CMMotionManager) |
 | Health | HealthKit (optional) |
 | Audio | AVFoundation (voice feedback) |
 | Maps | MapKit |
@@ -173,68 +173,69 @@ Butter = 343 / 34 = ~10.1 teaspoons 🧈
 ### Project Structure
 ```
 ButterRun/
-├── ButterRunApp.swift              # App entry point
+├── ButterRunApp.swift              # App entry, schema migration, onboarding
 ├── Info.plist
 ├── Assets.xcassets/
 │   ├── AppIcon
 │   ├── Colors/                     # Butter palette
-│   └── Images/                     # Butter illustrations
+│   └── Images/                     # butter-pat, illustrations
 │
 ├── Models/
 │   ├── Run.swift                   # SwiftData @Model — core run entity
 │   ├── Split.swift                 # Per-mile/km split data
 │   ├── ButterEntry.swift           # Butter eaten during run
+│   ├── ChurnResult.swift           # Churn result + ChurnStage enum
+│   ├── RunDraft.swift              # Crash recovery draft checkpoint
 │   ├── UserProfile.swift           # Weight, units, preferences
 │   └── Achievement.swift           # Badge definitions & unlocks
 │
 ├── ViewModels/
 │   ├── HomeViewModel.swift         # Home screen state
-│   ├── ActiveRunViewModel.swift    # Live run state + butter calc
-│   ├── RunSummaryViewModel.swift   # Post-run stats
-│   ├── RunHistoryViewModel.swift   # Past runs list
-│   └── SettingsViewModel.swift     # User preferences
+│   └── ActiveRunViewModel.swift    # Live run state + butter calc + churn
 │
 ├── Views/
 │   ├── Home/
-│   │   ├── HomeView.swift          # Main screen with Churn button
-│   │   └── WeeklyButterCard.swift  # Summary widget
+│   │   └── HomeView.swift          # Main screen with Churn button + WeeklyButterCard
 │   ├── ActiveRun/
 │   │   ├── ActiveRunView.swift     # Live run dashboard
 │   │   ├── MetricGridView.swift    # Configurable metric tiles
-│   │   ├── ButterMeterView.swift   # Visual butter stick meter
-│   │   ├── ButterZeroBar.swift     # Net balance progress bar
-│   │   └── EatButterSheet.swift    # Log butter eaten modal
+│   │   ├── ContextualStrip.swift   # BZ balance + churn progress bar
+│   │   ├── ChurnSetupSheet.swift   # Cream type/amount config
+│   │   ├── EatButterSheet.swift    # Log butter eaten modal
+│   │   └── RunMapView.swift        # Live route map + summary thumbnail
 │   ├── Summary/
-│   │   ├── RunSummaryView.swift    # Post-run hero screen
-│   │   ├── SplitTableView.swift    # Mile splits
-│   │   ├── ButterMeltAnimation.swift
-│   │   └── ShareCardView.swift     # Shareable image
+│   │   └── RunSummaryView.swift    # Post-run hero screen + splits + share
 │   ├── History/
 │   │   ├── RunHistoryView.swift    # List of past runs
 │   │   └── RunDetailView.swift     # Individual run detail
 │   ├── Settings/
-│   │   ├── SettingsView.swift
-│   │   └── ProfileEditView.swift
+│   │   └── SettingsView.swift      # Profile, units, voice, NEDA resources
 │   └── Components/
 │       ├── ButterStickView.swift   # Reusable butter stick graphic
-│       ├── ChurnButton.swift       # Animated start button
-│       └── ButterText.swift        # Styled text component
+│       └── ChurnButton.swift       # Animated start button
 │
 ├── Services/
-│   ├── LocationService.swift       # CoreLocation wrapper
+│   ├── LocationService.swift       # CoreLocation wrapper + Douglas-Peucker
 │   ├── MotionService.swift         # CoreMotion pedometer
 │   ├── ButterCalculator.swift      # MET-based calorie→butter math
+│   ├── ButterChurnEstimator.swift  # CoreMotion device motion → churn progress
 │   ├── SplitTracker.swift          # Split detection logic
+│   ├── AutoPauseService.swift      # Speed-based auto-pause/resume
 │   ├── VoiceFeedbackService.swift  # Speech announcements
-│   ├── HealthKitService.swift      # HealthKit read/write
-│   └── ShareImageRenderer.swift    # Render share cards
+│   ├── HapticService.swift         # Haptic feedback (splits, BZ, churn)
+│   ├── RunDraftService.swift       # Crash recovery draft persistence
+│   ├── ShareImageRenderer.swift    # Render share cards (9:16 + 1:1)
+│   └── Protocols/
+│       ├── LocationTracking.swift
+│       ├── MotionTracking.swift
+│       ├── VoiceFeedbackProtocol.swift
+│       └── HapticFeedbackProtocol.swift
 │
 ├── Utilities/
-│   ├── Constants.swift             # Butter calories, MET table
+│   ├── Constants.swift             # ButterTheme colors, MET table
 │   ├── Formatters.swift            # Time, distance, butter formatting
 │   └── Extensions/
-│       ├── CLLocation+Distance.swift
-│       └── Date+Formatting.swift
+│       └── Color+Hex.swift
 │
 └── Preview Content/
     └── PreviewData.swift           # Sample runs for SwiftUI previews
@@ -259,23 +260,37 @@ struct ButterCalculator {
     static let caloriesPerTeaspoon: Double = 34.0
     
     // MET lookup table interpolated by speed (mph)
-    static func metValue(for speedMph: Double) -> Double { ... }
+    static func metValue(forSpeedMph speed: Double) -> Double { ... }
     
-    // Core calculation
-    static func butterBurned(
-        weightKg: Double,
-        met: Double,
-        durationMinutes: Double
-    ) -> Double {
-        let calories = (met * 3.5 * weightKg / 200.0) * durationMinutes
-        return calories / caloriesPerTeaspoon
-    }
+    // Calorie calculation: Cal/min = (MET × 3.5 × weightKg) / 200
+    static func caloriesBurned(weightKg: Double, met: Double, durationMinutes: Double) -> Double
+    
+    // Convert calories to butter teaspoons
+    static func caloriesToButterTsp(_ calories: Double) -> Double
     
     // Net balance for Butter Zero
-    static func netButter(burned: Double, eaten: Double) -> Double {
-        return eaten - burned  // Zero = perfect!
+    static func netButter(burnedTsp: Double, eatenTsp: Double) -> Double {
+        return eatenTsp - burnedTsp  // Zero = perfect!
     }
+    
+    // Butter Zero score: max(0, 100 - abs(net) × 10)
+    static func butterZeroScore(netTsp: Double) -> Int
 }
+```
+
+#### ButterChurnEstimator.swift
+```swift
+// CoreMotion device motion (accelerometer + gyro fusion) at 20Hz
+// Estimates butter-churning progress via RMS agitation analysis:
+// 1. Accumulate 20 samples (1-second window)
+// 2. Compute RMS of acceleration magnitude
+// 3. Accumulate agitation × cream effectiveness multiplier
+// 4. Progress = totalAgitation / agitationThreshold
+// 5. Stage determined by progress thresholds
+//
+// ChurnStage: .liquid(0%) → .foamy(8%) → .whipped(30%) → .breaking(55%) → .butter(85%)
+// Room temperature cream caps at .whipped (55%)
+// Lifecycle: start(config) → pause/resume → stop() → ChurnResult
 ```
 
 #### SplitTracker.swift
@@ -298,7 +313,7 @@ struct ButterCalculator {
 @Model
 class Run {
     var id: UUID
-    var startDate: Date
+    @Attribute(.spotlight) var startDate: Date
     var endDate: Date?
     var distanceMeters: Double
     var durationSeconds: Double
@@ -311,10 +326,14 @@ class Run {
     var elevationGainMeters: Double
     var elevationLossMeters: Double
     var averageCadence: Double?
-    var routeCoordinates: Data?        // Encoded [CLLocationCoordinate2D]
+    var routePolyline: Data?           // Encoded [[lat, lng]] via Douglas-Peucker
     var splits: [Split]
     var butterEntries: [ButterEntry]
     var isButterZeroChallenge: Bool
+    var churnResultData: Data?         // Encoded ChurnResult (V2)
+    var isManualEntry: Bool            // V2
+    var targetDistanceMeters: Double?  // V2
+    var targetDurationSeconds: Double? // V2
     var notes: String?
 }
 ```

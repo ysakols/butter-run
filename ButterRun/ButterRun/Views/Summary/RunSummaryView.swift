@@ -160,6 +160,8 @@ struct RunSummaryView: View {
         .frame(maxWidth: .infinity)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Churn result: \(ChurnStage(rawValue: churn.finalStage)?.name ?? "Unknown"), \(Int(churn.finalProgress * 100)) percent complete")
     }
 
     private var statsGrid: some View {
@@ -184,8 +186,11 @@ struct RunSummaryView: View {
                 label: "Calories"
             )
             if run.elevationGainMeters > 0 {
+                let elevValue = usesMiles
+                    ? String(format: "%.0f ft", run.elevationGainMeters * 3.28084)
+                    : String(format: "%.0f m", run.elevationGainMeters)
                 statCard(
-                    value: String(format: "%.0f m", run.elevationGainMeters),
+                    value: elevValue,
                     label: "Elevation"
                 )
             }

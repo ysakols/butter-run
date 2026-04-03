@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import CoreLocation
 import SwiftData
 import AVFoundation
 import UIKit
@@ -31,6 +32,7 @@ class ActiveRunViewModel {
 
     // GPS
     var gpsSignalState: GPSSignalState = .strong
+    var routeCoordinates: [CLLocationCoordinate2D] = []
 
     // Auto-pause
     var isAutoPaused: Bool = false
@@ -50,11 +52,13 @@ class ActiveRunViewModel {
     var showUndoToast: Bool = false
 
     private var timer: Timer?
+    private var audioDeactivationWork: DispatchWorkItem?
     private var startDate: Date?
     private var pausedDuration: TimeInterval = 0
     private var lastPauseDate: Date?
     private var lastDraftSave: Date?
     private var lastLocationUpdate: Date?
+    private var lastRouteUpdate: Date?
     private var previousSplitCount: Int = 0
     private var cancellables = Set<AnyCancellable>()
 
@@ -124,8 +128,7 @@ class ActiveRunViewModel {
         weightKg = max(1.0, profile.weightKg)
         usesMiles = profile.usesMiles
         splitDistanceMeters = profile.splitDistanceMeters
-        var voice = voiceService
-        voice.isEnabled = profile.voiceFeedbackEnabled
+        voiceService.isEnabled = profile.voiceFeedbackEnabled
         autoPauseService.isEnabled = profile.autoPauseEnabled
     }
 
@@ -138,6 +141,10 @@ class ActiveRunViewModel {
 
         // Clear any previous subscriptions
         cancellables.removeAll()
+
+        // Cancel any pending audio session deactivation from a previous run
+        audioDeactivationWork?.cancel()
+        audioDeactivationWork = nil
 
         // AVAudioSession keep-alive for background execution
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
@@ -161,8 +168,7 @@ class ActiveRunViewModel {
         splitTracker = SplitTracker(splitDistanceMeters: max(1.0, splitDistanceMeters), weightKg: weightKg)
         splitTracker?.start()
 
-        var voice = voiceService
-        voice.isEnabled = voiceService.isEnabled
+        voiceService.isEnabled = voiceService.isEnabled
         voiceService.reset()
         autoPauseService.reset()
 
@@ -246,10 +252,12 @@ class ActiveRunViewModel {
             isButterZero: isButterZeroChallenge
         )
 
-        // Deactivate background audio session after voice announcement queued
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+        // Deactivate background audio session after voice announcement finishes
+        let work = DispatchWorkItem {
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         }
+        audioDeactivationWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: work)
 
         // Build the Run model
         let run = Run(startDate: startDate ?? .now, isButterZeroChallenge: isButterZeroChallenge)
@@ -287,6 +295,11 @@ class ActiveRunViewModel {
             allSplits.append(finalSplit)
         }
         run.splits = allSplits
+        // Best pace from completed (non-partial) splits
+        let completedPaces = allSplits.filter { !$0.isPartial }.map(\.paceSecondsPerKm)
+        if let best = completedPaces.min() {
+            run.bestPaceSecondsPerKm = best
+        }
         run.butterEntries = butterEntries
 
         finishedRun = run
@@ -390,16 +403,25 @@ class ActiveRunViewModel {
             churnStage = churnEstimator.currentStage
         }
 
+        // Update route coordinates for live map (throttled to every 5s)
+        if lastRouteUpdate == nil || Date().timeIntervalSince(lastRouteUpdate!) >= 5 {
+            if let data = locationService.encodeRoute() {
+                routeCoordinates = LocationService.decodeRoute(data)
+            }
+            lastRouteUpdate = Date()
+        }
+
         // Feed auto-pause
         autoPauseService.updateSpeed(locationService.currentSpeedMps)
 
         // Voice milestones
         voiceService.checkMilestones(
             butterTsp: butterBurnedTsp,
-            distanceMiles: distanceMeters / 1609.344,
+            distanceMeters: distanceMeters,
             pace: formattedPace,
             isButterZero: isButterZeroChallenge,
-            netButter: netButterTsp
+            netButter: netButterTsp,
+            usesMiles: usesMiles
         )
     }
 
@@ -438,8 +460,8 @@ class ActiveRunViewModel {
             return try? JSONEncoder().encode(snapshots)
         }()
 
-        // Encode route on background queue to avoid blocking main thread
-        let locationSvc = locationService
+        // Capture route data on main thread (locations array is main-thread-only)
+        let routeData = locationService.encodeRoute()
         let draftSvc = draftService
         let start = startDate ?? .now
         let elapsed = elapsedSeconds
@@ -450,7 +472,6 @@ class ActiveRunViewModel {
         let isBZ = isButterZeroChallenge
 
         DispatchQueue.global(qos: .utility).async {
-            let routeData = locationSvc.encodeRoute()
             draftSvc?.saveDraft(
                 startDate: start,
                 elapsedSeconds: elapsed,

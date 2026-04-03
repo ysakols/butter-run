@@ -115,16 +115,12 @@ struct CrashRecoveryWrapper<Content: View>: View {
                 Button("Discard", role: .destructive) {
                     discardDraft()
                 }
-                Button("OK") {
-                    // For now, just dismiss — resume could be added later
-                    discardDraft()
-                }
             } message: {
                 if let draft = recoveredDraft {
                     let duration = ButterFormatters.duration(draft.elapsedSeconds)
-                    Text("You have an unfinished run from \(draft.startDate.formatted(date: .abbreviated, time: .shortened)) (\(duration)). This draft will be discarded.")
+                    Text("You had an unfinished run from \(draft.startDate.formatted(date: .abbreviated, time: .shortened)) (\(duration)). Unfortunately it cannot be resumed.")
                 } else {
-                    Text("You have an unfinished run.")
+                    Text("You had an unfinished run that cannot be resumed.")
                 }
             }
     }

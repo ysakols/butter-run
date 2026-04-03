@@ -1,14 +1,15 @@
 import Foundation
 
-protocol VoiceFeedback {
+protocol VoiceFeedback: AnyObject {
     var isEnabled: Bool { get set }
     func reset()
     func checkMilestones(
         butterTsp: Double,
-        distanceMiles: Double,
+        distanceMeters: Double,
         pace: String,
         isButterZero: Bool,
-        netButter: Double
+        netButter: Double,
+        usesMiles: Bool
     )
     func announceRunEnd(totalButterTsp: Double, netButter: Double?, isButterZero: Bool)
     func announceChurnStage(_ stageName: String)

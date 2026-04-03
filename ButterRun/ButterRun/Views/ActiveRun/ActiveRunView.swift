@@ -65,15 +65,12 @@ struct ActiveRunView: View {
 
                 // Metric grid or map
                 if showMap {
-                    // Map placeholder — will show route when RunMapView is available
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(ButterTheme.surface)
-                        .frame(height: 200)
-                        .overlay {
-                            Text("Map")
-                                .foregroundStyle(ButterTheme.textSecondary)
-                        }
-                        .padding(.horizontal, 16)
+                    RunMapView(
+                        routeCoordinates: viewModel.routeCoordinates,
+                        isLive: viewModel.state == .running
+                    )
+                    .frame(height: 200)
+                    .padding(.horizontal, 16)
                 } else {
                     MetricGridView(viewModel: viewModel)
                         .padding(.horizontal, 16)
@@ -225,7 +222,7 @@ struct ActiveRunView: View {
 
     private var undoToastView: some View {
         HStack {
-            Text("Added 1 tsp")
+            Text("Added \(String(format: "%.1f", viewModel.butterEntries.last?.teaspoonEquivalent ?? 1.0)) tsp")
                 .font(.system(.caption, design: .rounded))
                 .foregroundStyle(ButterTheme.textPrimary)
             Spacer()

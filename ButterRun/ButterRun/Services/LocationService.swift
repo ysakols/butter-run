@@ -146,7 +146,10 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         guard let coords = try? JSONDecoder().decode([[Double]].self, from: data) else {
             return []
         }
-        return coords.map { CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1]) }
+        return coords.compactMap { pair in
+            guard pair.count >= 2 else { return nil }
+            return CLLocationCoordinate2D(latitude: pair[0], longitude: pair[1])
+        }
     }
 }
 

@@ -7,19 +7,22 @@ class VoiceFeedbackService: VoiceFeedback {
     private var lastAnnouncedTsp: Int = 0
     private var lastAnnouncedMile: Int = 0
     private var announcedHalfTsp: Bool = false
+    private var hasAnnouncedNearZero: Bool = false
 
     func reset() {
         lastAnnouncedTsp = 0
         lastAnnouncedMile = 0
         announcedHalfTsp = false
+        hasAnnouncedNearZero = false
     }
 
     func checkMilestones(
         butterTsp: Double,
-        distanceMiles: Double,
+        distanceMeters: Double,
         pace: String,
         isButterZero: Bool,
-        netButter: Double
+        netButter: Double,
+        usesMiles: Bool
     ) {
         guard isEnabled else { return }
 
@@ -30,7 +33,9 @@ class VoiceFeedbackService: VoiceFeedback {
         }
 
         let currentTsp = Int(butterTsp)
-        let currentMile = Int(distanceMiles)
+        let unitMeters = usesMiles ? 1609.344 : 1000.0
+        let unitName = usesMiles ? "Mile" : "Kilometer"
+        let currentUnit = Int(distanceMeters / unitMeters)
 
         if currentTsp > lastAnnouncedTsp {
             if currentTsp % 3 == 0 {
@@ -42,14 +47,17 @@ class VoiceFeedbackService: VoiceFeedback {
             lastAnnouncedTsp = currentTsp
         }
 
-        if currentMile > lastAnnouncedMile && currentMile > 0 {
+        if currentUnit > lastAnnouncedMile && currentUnit > 0 {
             let tspStr = String(format: "%.1f", butterTsp)
-            speak("Mile \(currentMile) complete. Pace: \(pace). \(tspStr) teaspoons burned.")
-            lastAnnouncedMile = currentMile
+            speak("\(unitName) \(currentUnit) complete. Pace: \(pace). \(tspStr) teaspoons burned.")
+            lastAnnouncedMile = currentUnit
         }
 
-        if isButterZero && abs(netButter) < 0.3 && netButter != 0 {
+        if isButterZero && abs(netButter) < 0.3 && netButter != 0 && !hasAnnouncedNearZero {
             speak("You're approaching Butter Zero! Nice churning!")
+            hasAnnouncedNearZero = true
+        } else if isButterZero && abs(netButter) > 1.0 {
+            hasAnnouncedNearZero = false
         }
     }
 

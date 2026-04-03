@@ -50,7 +50,7 @@ final class MockVoiceService: VoiceFeedback {
     var isEnabled: Bool = true
     var announcements: [String] = []
     func reset() { announcements.removeAll() }
-    func checkMilestones(butterTsp: Double, distanceMiles: Double, pace: String, isButterZero: Bool, netButter: Double) {}
+    func checkMilestones(butterTsp: Double, distanceMeters: Double, pace: String, isButterZero: Bool, netButter: Double, usesMiles: Bool) {}
     func announceRunEnd(totalButterTsp: Double, netButter: Double?, isButterZero: Bool) {
         announcements.append("end")
     }
