@@ -12,7 +12,9 @@ class HealthKitService {
         guard isAvailable else { return false }
 
         let typesToShare: Set<HKSampleType> = [
-            HKObjectType.workoutType()
+            HKObjectType.workoutType(),
+            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
+            HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
         ]
         let typesToRead: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .bodyMass)!
@@ -88,6 +90,20 @@ class HealthKitService {
             )
 
             try await builder.addSamples([energySample, distanceSample])
+
+            // Add a pause/resume event to account for paused time so
+            // HealthKit records active duration matching run.durationSeconds
+            let totalElapsed = endDate.timeIntervalSince(startDate)
+            let pausedTime = totalElapsed - run.durationSeconds
+            if pausedTime > 1 {
+                let pauseDate = endDate.addingTimeInterval(-pausedTime)
+                let resumeDate = endDate
+                try await builder.addWorkoutEvents([
+                    HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: pauseDate, duration: 0), metadata: nil),
+                    HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: resumeDate, duration: 0), metadata: nil)
+                ])
+            }
+
             try await builder.endCollection(at: endDate)
             try await builder.addMetadata([
                 "ButterBurnedTsp": run.totalButterBurnedTsp,
