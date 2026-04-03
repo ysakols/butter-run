@@ -35,7 +35,7 @@ struct ChurnButton: View {
                         .scaledToFit()
                         .frame(width: 32, height: 32)
                         .accessibilityHidden(true)
-                    Text("GO")
+                    Text("CHURN")
                         .font(.system(.title3, design: .rounded, weight: .black))
                         .foregroundStyle(ButterTheme.background)
                 }

@@ -50,15 +50,18 @@ final class ButterCalculatorTests: XCTestCase {
     }
 
     func test_butterZeroScore_offByOne() {
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 1.0), 80)
+        // Curve: 100 - abs(net) * 10 → 100 - 1*10 = 90
+        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 1.0), 90)
     }
 
     func test_butterZeroScore_offByFive() {
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 5.0), 0)
+        // 100 - 5*10 = 50
+        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 5.0), 50)
     }
 
     func test_butterZeroScore_negative() {
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: -2.0), 60)
+        // 100 - 2*10 = 80
+        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: -2.0), 80)
     }
 
     func test_butterZeroScore_neverNegative() {

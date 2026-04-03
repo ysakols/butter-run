@@ -39,6 +39,10 @@ struct RunSummaryView: View {
                     }
                     .padding(.top, 24)
 
+                    // Route map thumbnail
+                    RunMapThumbnail(routeData: run.routePolyline)
+                        .padding(.horizontal)
+
                     // Butter Zero score
                     if run.isButterZeroChallenge {
                         butterZeroSection

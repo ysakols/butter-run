@@ -2,14 +2,6 @@ import Foundation
 import CoreMotion
 import Combine
 
-protocol MotionTracking: AnyObject {
-    var currentCadence: Double { get }
-    var stepCount: Int { get }
-    var isAvailable: Bool { get }
-    func startTracking()
-    func stopTracking()
-}
-
 class MotionService: NSObject, ObservableObject, MotionTracking {
     private let pedometer = CMPedometer()
     private var isTracking = false

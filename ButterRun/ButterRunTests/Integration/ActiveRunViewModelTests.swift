@@ -10,7 +10,9 @@ final class MockLocationService: LocationTracking {
     var currentSpeedMps: Double = 0
     var elevationGainMeters: Double = 0
     var elevationLossMeters: Double = 0
+    var currentLocation: CLLocation?
     var gpsSignalState: GPSSignalState = .strong
+    var isAuthDenied: Bool = false
 
     private let _subject = PassthroughSubject<CLLocation, Never>()
     var locationPublisher: AnyPublisher<CLLocation, Never> {
@@ -30,7 +32,9 @@ final class MockLocationService: LocationTracking {
     func encodeRoute() -> Data? { nil }
 
     func simulateLocation() {
-        _subject.send(CLLocation(latitude: 37.7749, longitude: -122.4194))
+        let loc = CLLocation(latitude: 37.7749, longitude: -122.4194)
+        currentLocation = loc
+        _subject.send(loc)
     }
 }
 
@@ -56,6 +60,7 @@ final class MockVoiceService: VoiceFeedback {
     func announceAutoPause(paused: Bool) {
         announcements.append(paused ? "paused" : "resumed")
     }
+    func stop() {}
 }
 
 final class MockHapticService: HapticFeedback {
@@ -176,5 +181,63 @@ final class ActiveRunViewModelTests: XCTestCase {
         viewModel.startRun()
         _ = viewModel.stopRun()
         XCTAssertEqual(mockHaptic.finishes, 1)
+    }
+
+    // MARK: - State Guard Tests
+
+    func test_startRun_ignoredWhenAlreadyRunning() {
+        viewModel.startRun()
+        XCTAssertEqual(viewModel.state, .running)
+        viewModel.startRun() // Should be ignored
+        XCTAssertEqual(viewModel.state, .running)
+    }
+
+    func test_pauseRun_ignoredWhenNotRunning() {
+        viewModel.pauseRun() // Should be ignored — state is idle
+        XCTAssertEqual(viewModel.state, .idle)
+    }
+
+    func test_resumeRun_ignoredWhenNotPaused() {
+        viewModel.startRun()
+        viewModel.resumeRun() // Should be ignored — state is running, not paused
+        XCTAssertEqual(viewModel.state, .running)
+    }
+
+    func test_stopRun_idempotent() {
+        viewModel.startRun()
+        let run1 = viewModel.stopRun()
+        let run2 = viewModel.stopRun() // Should return same run
+        XCTAssertEqual(run1.id, run2.id)
+        XCTAssertEqual(mockHaptic.finishes, 1) // Only one haptic
+    }
+
+    func test_undoFloorAtZero() {
+        viewModel.startRun()
+        viewModel.eatButter(serving: .teaspoon) // +1.0
+        _ = viewModel.undoLastButterEntry()
+        XCTAssertEqual(viewModel.butterEatenTsp, 0.0, accuracy: 0.001)
+        // Second undo should fail gracefully
+        let result = viewModel.undoLastButterEntry()
+        XCTAssertFalse(result)
+        XCTAssertEqual(viewModel.butterEatenTsp, 0.0, accuracy: 0.001)
+    }
+
+    func test_butterZeroCrossing_triggersHaptic() {
+        viewModel.startRun()
+        viewModel.isButterZeroChallenge = true
+        viewModel.butterBurnedTsp = 1.0
+        viewModel.eatButter(serving: .teaspoon) // net = 1.0 - 1.0 = 0.0
+        XCTAssertEqual(mockHaptic.zeroCrossings, 1)
+    }
+
+    func test_pauseDuration_excluded() {
+        viewModel.startRun()
+        // Simulate brief pause
+        viewModel.pauseRun()
+        XCTAssertEqual(viewModel.state, .paused)
+        viewModel.resumeRun()
+        XCTAssertEqual(viewModel.state, .running)
+        // The test verifies the state transitions work;
+        // actual pause duration math requires real time elapsed
     }
 }

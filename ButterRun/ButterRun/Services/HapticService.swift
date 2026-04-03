@@ -1,12 +1,5 @@
 import UIKit
 
-protocol HapticFeedback {
-    func splitCompleted()
-    func butterZeroCrossing()
-    func churnStageAdvanced()
-    func runFinished()
-}
-
 class HapticService: HapticFeedback {
     private let impactMedium = UIImpactFeedbackGenerator(style: .medium)
     private let impactHeavy = UIImpactFeedbackGenerator(style: .heavy)

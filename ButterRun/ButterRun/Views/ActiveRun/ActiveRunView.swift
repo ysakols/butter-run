@@ -19,6 +19,7 @@ struct ActiveRunView: View {
     @State private var showMap = false
     @State private var showUndoToast = false
     @State private var undoTimer: Timer?
+    @ScaledMetric(relativeTo: .largeTitle) private var heroFontSize: CGFloat = 56
 
     var body: some View {
         ZStack {
@@ -208,7 +209,7 @@ struct ActiveRunView: View {
                 .accessibilityHidden(true)
 
             Text(viewModel.formattedButter)
-                .font(.system(size: 56, weight: .black, design: .rounded))
+                .font(.system(size: heroFontSize, weight: .black, design: .rounded))
                 .foregroundStyle(ButterTheme.gold)
                 .contentTransition(.numericText())
                 .animation(reduceMotion ? nil : .default, value: viewModel.formattedButter)

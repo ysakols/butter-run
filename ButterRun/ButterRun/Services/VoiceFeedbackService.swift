@@ -1,20 +1,5 @@
 import AVFoundation
 
-protocol VoiceFeedback {
-    var isEnabled: Bool { get set }
-    func reset()
-    func checkMilestones(
-        butterTsp: Double,
-        distanceMiles: Double,
-        pace: String,
-        isButterZero: Bool,
-        netButter: Double
-    )
-    func announceRunEnd(totalButterTsp: Double, netButter: Double?, isButterZero: Bool)
-    func announceChurnStage(_ stageName: String)
-    func announceAutoPause(paused: Bool)
-}
-
 class VoiceFeedbackService: VoiceFeedback {
     private let synthesizer = AVSpeechSynthesizer()
     var isEnabled: Bool = true
@@ -90,6 +75,10 @@ class VoiceFeedbackService: VoiceFeedback {
     func announceAutoPause(paused: Bool) {
         guard isEnabled else { return }
         speak(paused ? "Auto paused" : "Resumed")
+    }
+
+    func stop() {
+        synthesizer.stopSpeaking(at: .immediate)
     }
 
     private func speak(_ text: String) {

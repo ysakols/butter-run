@@ -4,7 +4,7 @@ import SwiftData
 @Model
 class Run {
     @Attribute(.spotlight) var id: UUID
-    var startDate: Date
+    @Attribute(.spotlight) var startDate: Date
     var endDate: Date?
     var distanceMeters: Double
     var durationSeconds: Double
@@ -59,7 +59,7 @@ class Run {
     }
 
     var butterZeroScore: Int {
-        let score = 100.0 - abs(netButterTsp) * 20.0
+        let score = 100.0 - abs(netButterTsp) * 10.0
         return max(0, min(100, Int(score)))
     }
 

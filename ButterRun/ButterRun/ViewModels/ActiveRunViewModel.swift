@@ -235,9 +235,6 @@ class ActiveRunViewModel {
         motionService.stopTracking()
         cancellables.removeAll()
 
-        // Deactivate background audio session
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-
         hapticService.runFinished()
         UIAccessibility.post(notification: .announcement, argument: "Run complete")
 
@@ -246,6 +243,11 @@ class ActiveRunViewModel {
             netButter: isButterZeroChallenge ? netButterTsp : nil,
             isButterZero: isButterZeroChallenge
         )
+
+        // Deactivate background audio session after voice announcement queued
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
 
         // Build the Run model
         let run = Run(startDate: startDate ?? .now, isButterZeroChallenge: isButterZeroChallenge)
@@ -434,16 +436,30 @@ class ActiveRunViewModel {
             return try? JSONEncoder().encode(snapshots)
         }()
 
-        draftService?.saveDraft(
-            startDate: startDate ?? .now,
-            elapsedSeconds: elapsedSeconds,
-            pausedDuration: pausedDuration,
-            distanceMeters: distanceMeters,
-            butterBurnedTsp: butterBurnedTsp,
-            butterEatenTsp: butterEatenTsp,
-            isButterZeroChallenge: isButterZeroChallenge,
-            routeData: locationService.encodeRoute(),
-            butterEntriesData: entriesData
-        )
+        // Encode route on background queue to avoid blocking main thread
+        let locationSvc = locationService
+        let draftSvc = draftService
+        let start = startDate ?? .now
+        let elapsed = elapsedSeconds
+        let paused = pausedDuration
+        let distance = distanceMeters
+        let burned = butterBurnedTsp
+        let eaten = butterEatenTsp
+        let isBZ = isButterZeroChallenge
+
+        DispatchQueue.global(qos: .utility).async {
+            let routeData = locationSvc.encodeRoute()
+            draftSvc?.saveDraft(
+                startDate: start,
+                elapsedSeconds: elapsed,
+                pausedDuration: paused,
+                distanceMeters: distance,
+                butterBurnedTsp: burned,
+                butterEatenTsp: eaten,
+                isButterZeroChallenge: isBZ,
+                routeData: routeData,
+                butterEntriesData: entriesData
+            )
+        }
     }
 }

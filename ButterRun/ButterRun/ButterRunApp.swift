@@ -170,7 +170,7 @@ struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var weightKg: Double = 70.0
     @State private var displayName: String = ""
-    @State private var useMiles: Bool = true
+    @State private var useMiles: Bool = Locale.current.measurementSystem == .us
     @State private var weightError: String?
 
     private var isFormValid: Bool {
@@ -246,13 +246,12 @@ struct OnboardingView: View {
                         .font(.system(.title3, design: .rounded, weight: .bold))
                         .foregroundStyle(ButterTheme.background)
                         .frame(maxWidth: .infinity)
-                        .padding()
+                        .padding(.vertical, 14)
                         .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 16))
                 }
                 .padding(.horizontal, 32)
                 .disabled(!isFormValid)
                 .opacity(isFormValid ? 1.0 : 0.5)
-                .accessibilityLabel("Start run")
 
                 Spacer().frame(height: 40)
             }
