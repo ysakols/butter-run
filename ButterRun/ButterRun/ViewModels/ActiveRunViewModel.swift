@@ -1,6 +1,8 @@
 import Foundation
 import Combine
 import SwiftData
+import AVFoundation
+import UIKit
 
 @Observable
 class ActiveRunViewModel {
@@ -44,11 +46,16 @@ class ActiveRunViewModel {
     private var splitTracker: SplitTracker?
     private var draftService: RunDraftService?
 
+    // Undo toast
+    var showUndoToast: Bool = false
+
     private var timer: Timer?
     private var startDate: Date?
     private var pausedDuration: TimeInterval = 0
     private var lastPauseDate: Date?
     private var lastDraftSave: Date?
+    private var lastLocationUpdate: Date?
+    private var previousSplitCount: Int = 0
     private var cancellables = Set<AnyCancellable>()
 
     var weightKg: Double = 70.0
@@ -101,15 +108,20 @@ class ActiveRunViewModel {
         String(format: "%.1f", butterBurnedTsp)
     }
 
-    var butterRate: Double {
-        guard elapsedSeconds > 60 else { return 0 }
+    var butterRate: Double? {
+        guard elapsedSeconds > 60 else { return nil }
         return butterBurnedTsp / (elapsedSeconds / 60.0)
+    }
+
+    var formattedButterRate: String {
+        guard let rate = butterRate else { return "--" }
+        return String(format: "%.2f/min", rate)
     }
 
     // MARK: - Actions
 
     func configure(profile: UserProfile) {
-        weightKg = profile.weightKg
+        weightKg = max(1.0, profile.weightKg)
         usesMiles = profile.usesMiles
         splitDistanceMeters = profile.splitDistanceMeters
         var voice = voiceService
@@ -122,6 +134,15 @@ class ActiveRunViewModel {
     }
 
     func startRun() {
+        guard state == .idle else { return }
+
+        // Clear any previous subscriptions
+        cancellables.removeAll()
+
+        // AVAudioSession keep-alive for background execution
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+        try? AVAudioSession.sharedInstance().setActive(true)
+
         state = .running
         startDate = .now
         elapsedSeconds = 0
@@ -133,8 +154,11 @@ class ActiveRunViewModel {
         isAutoPaused = false
         gpsSignalState = .strong
         lastDraftSave = .now
+        lastLocationUpdate = nil
+        previousSplitCount = 0
+        showUndoToast = false
 
-        splitTracker = SplitTracker(splitDistanceMeters: splitDistanceMeters, weightKg: weightKg)
+        splitTracker = SplitTracker(splitDistanceMeters: max(1.0, splitDistanceMeters), weightKg: weightKg)
         splitTracker?.start()
 
         var voice = voiceService
@@ -146,11 +170,12 @@ class ActiveRunViewModel {
         motionService.startTracking()
         startTimer()
 
-        // Subscribe to location updates
+        // Subscribe to location updates — this is the primary metrics driver
         locationService.locationPublisher
             .receive(on: DispatchQueue.main)
             .throttle(for: .seconds(1), scheduler: RunLoop.main, latest: true)
             .sink { [weak self] _ in
+                self?.lastLocationUpdate = Date()
                 self?.updateMetrics()
             }
             .store(in: &cancellables)
@@ -169,6 +194,7 @@ class ActiveRunViewModel {
             .sink { [weak self] stage in
                 self?.hapticService.churnStageAdvanced()
                 self?.voiceService.announceChurnStage(stage.name)
+                UIAccessibility.post(notification: .announcement, argument: "Churn stage: \(stage.name)")
             }
             .store(in: &cancellables)
     }
@@ -179,6 +205,7 @@ class ActiveRunViewModel {
     }
 
     func pauseRun() {
+        guard state == .running else { return }
         state = .paused
         lastPauseDate = .now
         locationService.pauseTracking()
@@ -186,6 +213,7 @@ class ActiveRunViewModel {
     }
 
     func resumeRun() {
+        guard state == .paused else { return }
         state = .running
         isAutoPaused = false
         if let pauseDate = lastPauseDate {
@@ -195,14 +223,23 @@ class ActiveRunViewModel {
         startTimer()
     }
 
+    private var finishedRun: Run?
+
     func stopRun() -> Run {
+        // Idempotent: return existing run if already finished
+        if state == .finished, let existing = finishedRun { return existing }
+
         state = .finished
         timer?.invalidate()
         locationService.stopTracking()
         motionService.stopTracking()
         cancellables.removeAll()
 
+        // Deactivate background audio session
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+
         hapticService.runFinished()
+        UIAccessibility.post(notification: .announcement, argument: "Run complete")
 
         voiceService.announceRunEnd(
             totalButterTsp: butterBurnedTsp,
@@ -248,6 +285,7 @@ class ActiveRunViewModel {
         run.splits = allSplits
         run.butterEntries = butterEntries
 
+        finishedRun = run
         return run
     }
 
@@ -256,32 +294,48 @@ class ActiveRunViewModel {
         butterEntries.append(entry)
         butterEatenTsp += entry.teaspoonEquivalent
 
+        // Show undo toast
+        showUndoToast = true
+        UIAccessibility.post(notification: .announcement, argument: "Added \(String(format: "%.1f", entry.teaspoonEquivalent)) teaspoons. Double-tap Undo to reverse.")
+
         // Check Butter Zero crossing
         if isButterZeroChallenge && abs(netButterTsp) < 0.3 {
             hapticService.butterZeroCrossing()
+            UIAccessibility.post(notification: .announcement, argument: "Butter Zero reached")
         }
     }
 
     /// Undo the most recent butter entry
     func undoLastButterEntry() -> Bool {
         guard let last = butterEntries.last else { return false }
-        butterEatenTsp -= last.teaspoonEquivalent
+        butterEatenTsp = max(0, butterEatenTsp - last.teaspoonEquivalent)
         butterEntries.removeLast()
+        showUndoToast = false
+        UIAccessibility.post(notification: .announcement, argument: "Butter entry undone")
         return true
     }
 
     // MARK: - Private
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.tick()
         }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
     }
 
     private func tick() {
         guard state == .running, let start = startDate else { return }
         elapsedSeconds = Date.now.timeIntervalSince(start) - pausedDuration
-        updateMetrics()
+
+        // Only call updateMetrics as fallback when no location update in last 2 seconds
+        if let lastLoc = lastLocationUpdate, Date().timeIntervalSince(lastLoc) < 2 {
+            // Location publisher is driving metrics — just update elapsed time display
+        } else {
+            updateMetrics()
+        }
+
         checkDraftSave()
     }
 
@@ -306,6 +360,9 @@ class ActiveRunViewModel {
         )
         butterBurnedTsp = ButterCalculator.caloriesToButterTsp(calories)
 
+        // Capture split count BEFORE update to detect new completions
+        let countBefore = splitTracker?.completedSplits.count ?? 0
+
         // Update split tracker
         splitTracker?.update(
             totalDistanceMeters: distanceMeters,
@@ -314,10 +371,13 @@ class ActiveRunViewModel {
             currentSpeedMph: currentSpeedMph
         )
 
-        // Check split completion for haptic
-        let previousCount = (splitTracker?.completedSplits.count ?? 0)
-        if previousCount > 0 {
+        // Check if a new split was completed
+        let countAfter = splitTracker?.completedSplits.count ?? 0
+        if countAfter > countBefore {
             hapticService.splitCompleted()
+            let splitNum = countAfter
+            let announcement = "Split \(splitNum) complete. Pace: \(formattedPace)"
+            UIAccessibility.post(notification: .announcement, argument: announcement)
         }
 
         // Update churn progress
@@ -345,10 +405,12 @@ class ActiveRunViewModel {
             isAutoPaused = true
             pauseRun()
             voiceService.announceAutoPause(paused: true)
+            UIAccessibility.post(notification: .announcement, argument: "Run auto-paused")
         case .autoResumed:
             isAutoPaused = false
             resumeRun()
             voiceService.announceAutoPause(paused: false)
+            UIAccessibility.post(notification: .announcement, argument: "Run resumed")
         }
     }
 

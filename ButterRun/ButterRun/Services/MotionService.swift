@@ -12,6 +12,7 @@ protocol MotionTracking: AnyObject {
 
 class MotionService: NSObject, ObservableObject, MotionTracking {
     private let pedometer = CMPedometer()
+    private var isTracking = false
 
     @Published var currentCadence: Double = 0
     @Published var stepCount: Int = 0
@@ -19,7 +20,7 @@ class MotionService: NSObject, ObservableObject, MotionTracking {
 
     override init() {
         super.init()
-        isAvailable = CMPedometer.isPedometerEventMonitoringAvailable()
+        isAvailable = CMPedometer.isStepCountingAvailable()
     }
 
     func startTracking() {
@@ -27,20 +28,24 @@ class MotionService: NSObject, ObservableObject, MotionTracking {
             return
         }
 
+        isTracking = true
         pedometer.startUpdates(from: .now) { [weak self] data, error in
+            guard let self, self.isTracking else { return }
             guard let data = data, error == nil else { return }
 
             DispatchQueue.main.async {
-                self?.stepCount = data.numberOfSteps.intValue
+                self.stepCount = data.numberOfSteps.intValue
 
                 if let cadence = data.currentCadence {
-                    self?.currentCadence = cadence.doubleValue * 60.0
+                    self.currentCadence = cadence.doubleValue * 60.0
                 }
             }
         }
     }
 
     func stopTracking() {
+        guard isTracking else { return }
+        isTracking = false
         pedometer.stopUpdates()
         currentCadence = 0
         stepCount = 0

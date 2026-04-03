@@ -75,7 +75,10 @@ struct ContextualStrip: View {
         }
         .padding(12)
         .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
-        .accessibilityElement(children: .contain)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(composedAccessibilityLabel)
+        .accessibilityAddTraits(.updatesFrequently)
     }
 
     private var netLabel: String {
@@ -86,5 +89,16 @@ struct ContextualStrip: View {
     private var netColor: Color {
         if isNearZero { return ButterTheme.success }
         return netTsp > 0 ? ButterTheme.success : ButterTheme.deficit
+    }
+
+    private var composedAccessibilityLabel: String {
+        var parts: [String] = []
+        if isButterZero {
+            parts.append("Butter Zero balance: \(netLabel)")
+        }
+        if isChurnEnabled {
+            parts.append("Churn stage: \(churnStage.name), \(Int(churnProgress * 100)) percent")
+        }
+        return parts.joined(separator: ". ")
     }
 }

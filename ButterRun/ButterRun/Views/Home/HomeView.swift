@@ -155,5 +155,7 @@ struct WeeklyButterCard: View {
         }
         .padding(20)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .accessibilityElement(children: .combine)
     }
 }

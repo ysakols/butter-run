@@ -2,10 +2,15 @@ import SwiftUI
 import ImageIO
 import UniformTypeIdentifiers
 
+enum ShareCardMode {
+    case story    // 9:16 (1080x1920) for TikTok/Stories
+    case square   // 1:1 (1080x1080) for Instagram feed
+}
+
 struct ShareImageRenderer {
     @MainActor
-    static func render(run: Run, usesMiles: Bool) -> UIImage? {
-        let view = ShareCardContent(run: run, usesMiles: usesMiles)
+    static func render(run: Run, usesMiles: Bool, mode: ShareCardMode = .story) -> UIImage? {
+        let view = ShareCardContent(run: run, usesMiles: usesMiles, mode: mode)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
 
@@ -46,70 +51,170 @@ struct ShareImageRenderer {
 struct ShareCardContent: View {
     let run: Run
     let usesMiles: Bool
+    let mode: ShareCardMode
+
+    private var cardWidth: CGFloat {
+        switch mode {
+        case .story: return 360   // 1080px at 3x
+        case .square: return 360  // 1080px at 3x
+        }
+    }
+
+    private var cardHeight: CGFloat {
+        switch mode {
+        case .story: return 640   // 1920px at 3x
+        case .square: return 360  // 1080px at 3x
+        }
+    }
+
+    /// Use BZ score as hero when active and score >= 80
+    private var bzIsHero: Bool {
+        run.isButterZeroChallenge && run.butterZeroScore >= 80
+    }
+
+    /// Format butter in the most shareable unit
+    private var heroButterText: String {
+        let tsp = run.totalButterBurnedTsp
+        if tsp >= 24 {
+            return String(format: "%.1f sticks", tsp / 24.0)
+        } else if tsp >= 3 {
+            return String(format: "%.1f tablespoons", tsp / 3.0)
+        } else {
+            return String(format: "%.1f teaspoons", tsp)
+        }
+    }
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
+        VStack(spacing: 0) {
+            Spacer(minLength: mode == .story ? 60 : 20)
+
+            // Brand header
+            VStack(spacing: 8) {
+                Image("butter-pat")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 56, height: 56)
+
                 Text("BUTTER RUN")
                     .font(.system(.title3, design: .rounded, weight: .bold))
                     .foregroundStyle(ButterTheme.textPrimary)
-                Spacer()
+                    .tracking(2)
             }
 
-            Text(String(format: "%.1f tsp", run.totalButterBurnedTsp))
-                .font(.system(size: 48, weight: .black, design: .rounded))
-                .foregroundStyle(ButterTheme.gold)
+            Spacer(minLength: mode == .story ? 40 : 16)
 
-            Text("of butter melted")
-                .font(.system(.body, design: .rounded))
-                .foregroundStyle(ButterTheme.textSecondary)
+            // Hero section
+            if bzIsHero {
+                // BZ score as hero
+                VStack(spacing: 8) {
+                    Text("I ran off")
+                        .font(.system(.body, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
 
-            HStack(spacing: 24) {
-                statItem(
-                    value: usesMiles
-                        ? String(format: "%.2f mi", run.distanceMiles)
-                        : String(format: "%.2f km", run.distanceKm),
-                    label: "Distance"
-                )
-                statItem(value: run.formattedDuration, label: "Time")
-                statItem(
-                    value: formatPace(run.averagePaceSecondsPerKm, miles: usesMiles),
-                    label: "Pace"
-                )
-            }
+                    Text(heroButterText)
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
 
-            if run.isButterZeroChallenge {
-                HStack {
-                    Text("Butter Zero Score:")
-                        .font(.system(.caption, design: .rounded))
-                    Text("\(run.butterZeroScore)")
-                        .font(.system(.caption, design: .rounded, weight: .bold))
+                    Text("of butter")
+                        .font(.system(.body, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
                 }
-                .foregroundStyle(ButterTheme.textSecondary)
+
+                Spacer(minLength: 20)
+
+                // BZ hero card
+                VStack(spacing: 4) {
+                    Text("\(run.butterZeroScore)")
+                        .font(.system(size: 48, weight: .black, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
+                    Text("Butter Zero Score")
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                    Text("Net: \(String(format: "%+.1f", run.netButterTsp)) tsp")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity)
+                .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                .padding(.horizontal, 24)
+            } else {
+                // Standard butter hero
+                VStack(spacing: 8) {
+                    Text("I ran off")
+                        .font(.system(.body, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+
+                    Text(heroButterText)
+                        .font(.system(size: 42, weight: .black, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
+                        .minimumScaleFactor(0.7)
+
+                    Text("of butter")
+                        .font(.system(.body, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                }
+
+                if run.isButterZeroChallenge {
+                    Spacer(minLength: 16)
+                    VStack(spacing: 2) {
+                        Text("Butter Zero: \(run.butterZeroScore)")
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundStyle(ButterTheme.gold)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
+                    .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                    .padding(.horizontal, 24)
+                }
             }
 
-            if let churn = run.churnResult {
-                let stage = ChurnStage(rawValue: churn.finalStage) ?? .liquid
-                Text("Churn: \(stage.name) (\(Int(churn.finalProgress * 100))%)")
+            Spacer(minLength: mode == .story ? 32 : 16)
+
+            // Stats line
+            let distanceStr = usesMiles
+                ? String(format: "%.2f mi", run.distanceMiles)
+                : String(format: "%.2f km", run.distanceKm)
+            let paceStr = formatPace(run.averagePaceSecondsPerKm, miles: usesMiles)
+
+            VStack(spacing: 4) {
+                Text("\(distanceStr) \u{2022} \(run.formattedDuration)")
+                    .font(.system(.headline, design: .rounded, weight: .bold))
+                    .foregroundStyle(ButterTheme.textPrimary)
+                Text("\(paceStr) avg pace")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+            }
+
+            Spacer(minLength: mode == .story ? 40 : 16)
+
+            // Hashtags
+            VStack(spacing: 4) {
+                Text("#ButterRun")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(ButterTheme.textSecondary)
+                Text("#ButterRunChallenge  #ButterZero")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary.opacity(0.7))
+            }
+
+            Spacer(minLength: mode == .story ? 24 : 12)
+
+            // CTA — prominent, full opacity
+            VStack(spacing: 2) {
+                Text("Download free:")
                     .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+                Text("butterrun.app")
+                    .font(.system(.callout, design: .rounded, weight: .bold))
                     .foregroundStyle(ButterTheme.gold)
             }
 
-            Divider()
-                .overlay(ButterTheme.surface)
-
-            HStack {
-                Text("#ButterRun #ButterZero")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(ButterTheme.textSecondary.opacity(0.6))
-                Spacer()
-                Text("butterrun.app")
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(ButterTheme.textSecondary.opacity(0.6))
-            }
+            Spacer(minLength: mode == .story ? 60 : 20)
         }
-        .padding(24)
-        .frame(width: 340)
+        .frame(width: cardWidth, height: cardHeight)
         .background(ButterTheme.background)
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(

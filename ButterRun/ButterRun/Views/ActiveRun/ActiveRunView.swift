@@ -25,9 +25,11 @@ struct ActiveRunView: View {
             ButterTheme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // GPS weak banner
+                // GPS signal banners
                 if viewModel.gpsSignalState == .weak {
                     gpsBanner
+                } else if viewModel.gpsSignalState == .lost {
+                    gpsLostBanner
                 }
 
                 // Auto-pause banner
@@ -85,7 +87,7 @@ struct ActiveRunView: View {
                         Image(systemName: showMap ? "square.grid.2x2" : "map")
                             .font(.body)
                             .foregroundStyle(ButterTheme.textSecondary)
-                            .padding(8)
+                            .frame(minWidth: 44, minHeight: 44)
                             .background(ButterTheme.surface, in: Circle())
                     }
                     .accessibilityLabel(showMap ? "Show metrics" : "Show map")
@@ -159,6 +161,27 @@ struct ActiveRunView: View {
         .frame(maxWidth: .infinity)
         .background(ButterTheme.deficit.opacity(0.8))
         .accessibilityLabel("GPS signal weak, distance tracking paused")
+        .onAppear {
+            UIAccessibility.post(notification: .announcement, argument: "GPS signal weak, distance tracking paused")
+        }
+    }
+
+    private var gpsLostBanner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "location.slash.fill")
+                .font(.caption)
+            Text("GPS signal lost")
+                .font(.system(.caption, design: .rounded))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(ButterTheme.deficit)
+        .accessibilityLabel("GPS signal lost")
+        .onAppear {
+            UIAccessibility.post(notification: .announcement, argument: "GPS signal lost")
+        }
     }
 
     private var autoPauseBanner: some View {
@@ -214,6 +237,7 @@ struct ActiveRunView: View {
         }
         .padding(12)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(0.12), lineWidth: 1))
     }
 
     private var controlsSection: some View {

@@ -1,6 +1,40 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Schema Versioning
+
+enum SchemaV1: VersionedSchema {
+    static var versionIdentifier = Schema.Version(1, 0, 0)
+    static var models: [any PersistentModel.Type] = [
+        Run.self,
+        UserProfile.self,
+        Split.self,
+        ButterEntry.self,
+        Achievement.self
+    ]
+}
+
+enum SchemaV2: VersionedSchema {
+    static var versionIdentifier = Schema.Version(2, 0, 0)
+    static var models: [any PersistentModel.Type] = [
+        Run.self,
+        UserProfile.self,
+        Split.self,
+        ButterEntry.self,
+        Achievement.self,
+        RunDraft.self
+    ]
+}
+
+enum ButterRunMigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any VersionedSchema.Type] = [SchemaV1.self, SchemaV2.self]
+    static var stages: [MigrationStage] = [
+        .lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self)
+    ]
+}
+
+// MARK: - App
+
 @main
 struct ButterRunApp: App {
     let container: ModelContainer
@@ -16,7 +50,11 @@ struct ButterRunApp: App {
                 RunDraft.self,
             ])
             let config = ModelConfiguration(schema: schema)
-            container = try ModelContainer(for: schema, configurations: [config])
+            container = try ModelContainer(
+                for: schema,
+                migrationPlan: ButterRunMigrationPlan.self,
+                configurations: [config]
+            )
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")
         }
@@ -45,6 +83,13 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            // Enforce UserProfile singleton — delete duplicates if any
+            if profiles.count > 1 {
+                for extra in profiles.dropFirst() {
+                    modelContext.delete(extra)
+                }
+            }
+
             // Purge stale drafts on launch
             let service = RunDraftService(container: modelContext.container)
             service.purgeStale(context: modelContext)

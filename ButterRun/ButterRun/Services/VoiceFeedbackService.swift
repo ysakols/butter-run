@@ -21,10 +21,12 @@ class VoiceFeedbackService: VoiceFeedback {
 
     private var lastAnnouncedTsp: Int = 0
     private var lastAnnouncedMile: Int = 0
+    private var announcedHalfTsp: Bool = false
 
     func reset() {
         lastAnnouncedTsp = 0
         lastAnnouncedMile = 0
+        announcedHalfTsp = false
     }
 
     func checkMilestones(
@@ -35,6 +37,12 @@ class VoiceFeedbackService: VoiceFeedback {
         netButter: Double
     ) {
         guard isEnabled else { return }
+
+        // First announcement at 0.5 tsp for early wow moment
+        if !announcedHalfTsp && butterTsp >= 0.5 {
+            speak("Half a teaspoon of butter melted. Keep going!")
+            announcedHalfTsp = true
+        }
 
         let currentTsp = Int(butterTsp)
         let currentMile = Int(distanceMiles)

@@ -3,11 +3,12 @@ import SwiftUI
 struct MetricGridView: View {
     let viewModel: ActiveRunViewModel
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var columns: [GridItem] {
-        if sizeClass == .compact {
-            // On small screens (iPhone SE), may need 1-column at large Dynamic Type
-            return [GridItem(.flexible()), GridItem(.flexible())]
+        if dynamicTypeSize >= .accessibility1 {
+            return [GridItem(.flexible())]
         }
         return [GridItem(.flexible()), GridItem(.flexible())]
     }
@@ -36,11 +37,11 @@ struct MetricGridView: View {
             .accessibilityLabel("Pace: \(viewModel.formattedPace)")
 
             metricTile(
-                value: String(format: "%.2f", viewModel.butterRate),
+                value: viewModel.formattedButterRate,
                 label: "tsp/min",
                 icon: "flame"
             )
-            .accessibilityLabel("Butter rate: \(String(format: "%.2f", viewModel.butterRate)) teaspoons per minute")
+            .accessibilityLabel("Butter rate: \(viewModel.formattedButterRate) teaspoons per minute")
         }
     }
 
@@ -60,11 +61,12 @@ struct MetricGridView: View {
                 .foregroundStyle(ButterTheme.textPrimary)
                 .contentTransition(.numericText())
                 .minimumScaleFactor(0.5)
-                .animation(.default, value: value)
+                .animation(reduceMotion ? nil : .default, value: value)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
         .accessibilityElement(children: .combine)
     }
 }

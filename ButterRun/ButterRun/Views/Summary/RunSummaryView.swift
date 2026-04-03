@@ -8,6 +8,7 @@ struct RunSummaryView: View {
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
     @State private var meltProgress: Double = 0
+    @State private var shareMode: ShareCardMode = .story
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -57,10 +58,18 @@ struct RunSummaryView: View {
                     }
 
                     // Calorie disclaimer
-                    Text("Estimates are approximate and for entertainment purposes.")
+                    Text("Estimates are approximate, based on pace and body weight.")
                         .font(.system(.caption2, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
                         .padding(.horizontal)
+
+                    // Share mode picker
+                    Picker("Share Format", selection: $shareMode) {
+                        Text("Story (9:16)").tag(ShareCardMode.story)
+                        Text("Square (1:1)").tag(ShareCardMode.square)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
 
                     // Share button
                     Button {
@@ -216,7 +225,7 @@ struct RunSummaryView: View {
 
     @MainActor
     private func generateAndShare() {
-        shareImage = ShareImageRenderer.render(run: run, usesMiles: usesMiles)
+        shareImage = ShareImageRenderer.render(run: run, usesMiles: usesMiles, mode: shareMode)
         showShareSheet = true
     }
 }

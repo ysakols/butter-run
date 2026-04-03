@@ -54,8 +54,14 @@ struct SettingsView: View {
                         .tint(ButterTheme.gold)
                     Toggle("Auto-Pause", isOn: $autoPause)
                         .tint(ButterTheme.gold)
-                    Toggle("HealthKit", isOn: $healthKit)
-                        .tint(ButterTheme.gold)
+                    HStack {
+                        Toggle("HealthKit", isOn: .constant(false))
+                            .tint(ButterTheme.gold)
+                            .disabled(true)
+                        Text("Coming Soon")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(ButterTheme.textSecondary)
+                    }
                 }
                 .listRowBackground(ButterTheme.surface)
 
@@ -68,9 +74,20 @@ struct SettingsView: View {
                 .listRowBackground(ButterTheme.surface)
 
                 Section {
-                    Text("Calorie estimates are approximate and for entertainment purposes. Actual calories burned depend on many factors including metabolism, body composition, terrain, and weather.")
+                    Text("Estimates are approximate, based on pace and body weight. Actual calories burned depend on many factors including metabolism, body composition, terrain, and weather.")
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
+                }
+                .listRowBackground(ButterTheme.surface)
+
+                Section("Health & Wellness Resources") {
+                    Text("If you or someone you know is struggling with an eating disorder, please reach out for help.")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+
+                    Link("National Eating Disorders Association", destination: URL(string: "https://www.nationaleatingdisorders.org")!)
+                        .font(.system(.body, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
                 }
                 .listRowBackground(ButterTheme.surface)
 
@@ -82,6 +99,10 @@ struct SettingsView: View {
                         Text("1.0.0")
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
+
+                    Link("Privacy Policy", destination: URL(string: "https://butterrun.app/privacy")!)
+                        .font(.system(.body, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
                 }
                 .listRowBackground(ButterTheme.surface)
 
@@ -113,15 +134,7 @@ struct SettingsView: View {
             .onChange(of: usesMiles) { _, _ in saveProfile() }
             .onChange(of: voiceFeedback) { _, _ in saveProfile() }
             .onChange(of: autoPause) { _, _ in saveProfile() }
-            .onChange(of: healthKit) { _, newValue in
-                saveProfile()
-                if newValue {
-                    Task {
-                        let service = HealthKitService()
-                        _ = await service.requestAuthorization()
-                    }
-                }
-            }
+            .onChange(of: healthKit) { _, _ in saveProfile() }
             .confirmationDialog(
                 "Delete All Data?",
                 isPresented: $showDeleteConfirmation,
