@@ -29,8 +29,8 @@ struct ButterCalculator {
         guard speed > 0 else { return 1.0 }
 
         // Clamp to table range
-        if speed <= metTable.first!.speedMph { return metTable.first!.met }
-        if speed >= metTable.last!.speedMph { return metTable.last!.met }
+        if let first = metTable.first, speed <= first.speedMph { return first.met }
+        if let last = metTable.last, speed >= last.speedMph { return last.met }
 
         // Linear interpolation between two surrounding entries
         for i in 0..<(metTable.count - 1) {

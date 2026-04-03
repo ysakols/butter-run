@@ -38,6 +38,7 @@ enum ButterRunMigrationPlan: SchemaMigrationPlan {
 @main
 struct ButterRunApp: App {
     let container: ModelContainer
+    let containerError: Error?
 
     init() {
         do {
@@ -55,16 +56,47 @@ struct ButterRunApp: App {
                 migrationPlan: ButterRunMigrationPlan.self,
                 configurations: [config]
             )
+            containerError = nil
         } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
+            // Fallback: create an in-memory container so the app can launch
+            containerError = error
+            container = try! ModelContainer(
+                for: Schema([Run.self, Split.self, ButterEntry.self, UserProfile.self, Achievement.self, RunDraft.self]),
+                configurations: [ModelConfiguration(isStoredInMemoryOnly: true)]
+            )
         }
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if let error = containerError {
+                DatabaseErrorView(error: error)
+            } else {
+                ContentView()
+            }
         }
         .modelContainer(container)
+    }
+}
+
+struct DatabaseErrorView: View {
+    let error: Error
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundStyle(.orange)
+            Text("Database Error")
+                .font(.system(.title2, design: .rounded, weight: .bold))
+            Text("Butter Run couldn't load your data. Try deleting and reinstalling the app.")
+                .font(.system(.body, design: .rounded))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
     }
 }
 

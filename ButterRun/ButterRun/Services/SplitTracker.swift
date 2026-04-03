@@ -9,7 +9,7 @@ class SplitTracker: ObservableObject {
 
     private var splitDistanceMeters: Double
     private var nextSplitBoundary: Double
-    private var splitStartTime: Date?
+    private var splitStartElapsedSeconds: Double = 0
     private var splitStartDistance: Double = 0
     private var splitStartElevationGain: Double = 0
     private var weightKg: Double
@@ -24,7 +24,7 @@ class SplitTracker: ObservableObject {
         currentSplitIndex = 0
         completedSplits = []
         nextSplitBoundary = splitDistanceMeters
-        splitStartTime = .now
+        splitStartElapsedSeconds = 0
         splitStartDistance = 0
         splitStartElevationGain = 0
     }
@@ -38,12 +38,7 @@ class SplitTracker: ObservableObject {
     ) {
         // Check if we crossed one or more split boundaries
         while totalDistanceMeters >= nextSplitBoundary {
-            let splitDuration: Double
-            if let startTime = splitStartTime {
-                splitDuration = Date.now.timeIntervalSince(startTime)
-            } else {
-                splitDuration = elapsedSeconds
-            }
+            let splitDuration = elapsedSeconds - splitStartElapsedSeconds
 
             let splitDistance = splitDistanceMeters
             let paceSecondsPerKm = splitDuration / (splitDistance / 1000.0)
@@ -72,7 +67,7 @@ class SplitTracker: ObservableObject {
 
             currentSplitIndex += 1
             nextSplitBoundary += splitDistanceMeters
-            splitStartTime = .now
+            splitStartElapsedSeconds = elapsedSeconds
             splitStartDistance = totalDistanceMeters
             splitStartElevationGain = elevationGainMeters
         }
@@ -88,12 +83,7 @@ class SplitTracker: ObservableObject {
         let remaining = totalDistanceMeters - splitStartDistance
         guard remaining > 10 else { return nil } // ignore tiny remainders
 
-        let splitDuration: Double
-        if let startTime = splitStartTime {
-            splitDuration = Date.now.timeIntervalSince(startTime)
-        } else {
-            splitDuration = 0
-        }
+        let splitDuration = elapsedSeconds - splitStartElapsedSeconds
 
         let paceSecondsPerKm = remaining > 0 ? splitDuration / (remaining / 1000.0) : 0
         let durationMinutes = splitDuration / 60.0

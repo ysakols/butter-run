@@ -181,8 +181,15 @@ class ActiveRunViewModel {
             .receive(on: DispatchQueue.main)
             .throttle(for: .seconds(1), scheduler: RunLoop.main, latest: true)
             .sink { [weak self] _ in
-                self?.lastLocationUpdate = Date()
-                self?.updateMetrics()
+                guard let self else { return }
+                self.lastLocationUpdate = Date()
+                if self.state == .running {
+                    self.updateMetrics()
+                } else if self.isAutoPaused {
+                    // During auto-pause, only feed speed to auto-pause service
+                    // so it can detect movement and fire .autoResumed
+                    self.autoPauseService.updateSpeed(self.locationService.currentSpeedMps)
+                }
             }
             .store(in: &cancellables)
 
@@ -428,13 +435,26 @@ class ActiveRunViewModel {
     private func handleAutoPauseEvent(_ event: AutoPauseEvent) {
         switch event {
         case .autoPaused:
+            guard state == .running else { return }
             isAutoPaused = true
-            pauseRun()
+            state = .paused
+            lastPauseDate = .now
+            if isChurnEnabled { churnEstimator.pause() }
+            timer?.invalidate()
+            // NOTE: Do NOT call locationService.pauseTracking() here.
+            // Location updates must continue so AutoPauseService can
+            // detect movement and fire .autoResumed.
             voiceService.announceAutoPause(paused: true)
             UIAccessibility.post(notification: .announcement, argument: "Run auto-paused")
         case .autoResumed:
+            guard state == .paused, isAutoPaused else { return }
             isAutoPaused = false
-            resumeRun()
+            state = .running
+            if let pauseDate = lastPauseDate {
+                pausedDuration += Date.now.timeIntervalSince(pauseDate)
+            }
+            if isChurnEnabled { churnEstimator.resume() }
+            startTimer()
             voiceService.announceAutoPause(paused: false)
             UIAccessibility.post(notification: .announcement, argument: "Run resumed")
         }
@@ -460,29 +480,18 @@ class ActiveRunViewModel {
             return try? JSONEncoder().encode(snapshots)
         }()
 
-        // Capture route data on main thread (locations array is main-thread-only)
+        // Save draft on main thread — lightweight single-row upsert every 30s
         let routeData = locationService.encodeRoute()
-        let draftSvc = draftService
-        let start = startDate ?? .now
-        let elapsed = elapsedSeconds
-        let paused = pausedDuration
-        let distance = distanceMeters
-        let burned = butterBurnedTsp
-        let eaten = butterEatenTsp
-        let isBZ = isButterZeroChallenge
-
-        DispatchQueue.global(qos: .utility).async {
-            draftSvc?.saveDraft(
-                startDate: start,
-                elapsedSeconds: elapsed,
-                pausedDuration: paused,
-                distanceMeters: distance,
-                butterBurnedTsp: burned,
-                butterEatenTsp: eaten,
-                isButterZeroChallenge: isBZ,
-                routeData: routeData,
-                butterEntriesData: entriesData
-            )
-        }
+        draftService?.saveDraft(
+            startDate: startDate ?? .now,
+            elapsedSeconds: elapsedSeconds,
+            pausedDuration: pausedDuration,
+            distanceMeters: distanceMeters,
+            butterBurnedTsp: butterBurnedTsp,
+            butterEatenTsp: butterEatenTsp,
+            isButterZeroChallenge: isButterZeroChallenge,
+            routeData: routeData,
+            butterEntriesData: entriesData
+        )
     }
 }
