@@ -83,6 +83,10 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         locationManager.startUpdatingLocation()
     }
 
+    func subtractDistance(_ meters: Double) {
+        totalDistanceMeters = max(0, totalDistanceMeters - meters)
+    }
+
     func encodeRoute() -> Data? {
         let simplified = simplifyRoute(locations, maxPoints: 5000)
         let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }

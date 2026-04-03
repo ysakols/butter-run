@@ -24,12 +24,18 @@ final class MockLocationService: LocationTracking {
     var pauseTrackingCalled = false
     var resumeTrackingCalled = false
 
+    var subtractedDistance: Double = 0
+
     func requestPermission() {}
     func startTracking() { startTrackingCalled = true }
     func stopTracking() { stopTrackingCalled = true }
     func pauseTracking() { pauseTrackingCalled = true }
     func resumeTracking() { resumeTrackingCalled = true }
     func encodeRoute() -> Data? { nil }
+    func subtractDistance(_ meters: Double) {
+        subtractedDistance += meters
+        totalDistanceMeters = max(0, totalDistanceMeters - meters)
+    }
 
     func simulateLocation() {
         let loc = CLLocation(latitude: 37.7749, longitude: -122.4194)

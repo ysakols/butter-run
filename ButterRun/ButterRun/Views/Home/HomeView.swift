@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var isChurnEnabled = false
     @State private var showChurnSetup = false
     @State private var churnConfig: ChurnConfiguration?
+    @State private var locationService = LocationService()
 
     private var profile: UserProfile? { profiles.first }
 
@@ -114,7 +115,8 @@ struct HomeView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
-            viewModel.load(runs: runs)
+            viewModel.load(runs: runs, usesMiles: profile?.usesMiles ?? true)
+            locationService.requestPermission()
         }
     }
 }
