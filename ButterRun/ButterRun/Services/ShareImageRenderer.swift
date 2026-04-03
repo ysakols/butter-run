@@ -171,6 +171,28 @@ struct ShareCardContent: View {
                 }
             }
 
+            // Churn result (when churn was active)
+            if let churn = run.churnResult {
+                Spacer(minLength: 12)
+                let stage = ChurnStage(rawValue: churn.finalStage) ?? .liquid
+                VStack(spacing: 4) {
+                    if churn.finalStage >= 4 {
+                        Text("I made butter!")
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .foregroundStyle(ButterTheme.gold)
+                    } else {
+                        Text("Churn: \(stage.name) (\(Int(churn.finalProgress * 100))%)")
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundStyle(ButterTheme.gold)
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                .padding(.horizontal, 24)
+            }
+
             Spacer(minLength: mode == .story ? 32 : 16)
 
             // Stats line

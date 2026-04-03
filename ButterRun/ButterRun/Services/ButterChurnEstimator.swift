@@ -76,7 +76,7 @@ class ButterChurnEstimator: ObservableObject {
         guard motionManager.isDeviceMotionAvailable else { return }
 
         motionManager.deviceMotionUpdateInterval = sampleRate
-        motionManager.startDeviceMotionUpdates(to: .init()) { [weak self] motion, error in
+        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
             guard let motion = motion, error == nil else { return }
 
             let accel = motion.userAcceleration
@@ -116,20 +116,16 @@ class ButterChurnEstimator: ObservableObject {
 
         // Calculate progress
         let rawProgress = totalAgitation / config.agitationThreshold
-        progress = min(rawProgress, config.maxProgress)
+        let clampedProgress = min(rawProgress, config.maxProgress)
+        progress = clampedProgress
 
-        // Determine stage
-        let newStage = ChurnStage.stage(forProgress: progress)
+        // Determine stage (already on main thread via OperationQueue.main)
+        let newStage = ChurnStage.stage(forProgress: clampedProgress)
+        currentStage = newStage
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.currentStage = newStage
-            self.progress = self.progress
-
-            if newStage != self.previousStage {
-                self.stageAdvancedPublisher.send(newStage)
-                self.previousStage = newStage
-            }
+        if newStage != previousStage {
+            stageAdvancedPublisher.send(newStage)
+            previousStage = newStage
         }
     }
 }

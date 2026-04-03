@@ -69,7 +69,11 @@ class VoiceFeedbackService: VoiceFeedback {
 
     func announceChurnStage(_ stageName: String) {
         guard isEnabled else { return }
-        speak("Churn stage: \(stageName)")
+        if stageName == "Butter" {
+            speak("Congratulations! You made butter!")
+        } else {
+            speak("Churn stage: \(stageName)")
+        }
     }
 
     func announceAutoPause(paused: Bool) {

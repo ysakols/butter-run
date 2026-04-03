@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var isButterZero = false
     @State private var isChurnEnabled = false
     @State private var showChurnSetup = false
+    @State private var churnConfig: ChurnConfiguration?
 
     private var profile: UserProfile? { profiles.first }
 
@@ -93,12 +94,13 @@ struct HomeView: View {
                 ActiveRunView(
                     isButterZeroChallenge: isButterZero,
                     isChurnEnabled: isChurnEnabled,
-                    churnConfig: nil,
+                    churnConfig: churnConfig,
                     profile: profile ?? UserProfile(displayName: "Runner", weightKg: 70)
                 )
             }
             .sheet(isPresented: $showChurnSetup) {
                 ChurnSetupSheet { config in
+                    churnConfig = config
                     showChurnSetup = false
                     // Small delay to allow sheet dismissal before full screen cover
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
