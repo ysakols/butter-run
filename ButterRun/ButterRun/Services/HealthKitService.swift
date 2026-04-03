@@ -11,13 +11,19 @@ class HealthKitService {
     func requestAuthorization() async -> Bool {
         guard isAvailable else { return false }
 
+        guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned),
+              let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning),
+              let bodyMassType = HKObjectType.quantityType(forIdentifier: .bodyMass) else {
+            return false
+        }
+
         let typesToShare: Set<HKSampleType> = [
             HKObjectType.workoutType(),
-            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
+            energyType,
+            distanceType
         ]
         let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .bodyMass)!
+            bodyMassType
         ]
 
         do {
@@ -31,7 +37,7 @@ class HealthKitService {
     func readWeight() async -> Double? {
         guard isAvailable else { return nil }
 
-        let weightType = HKQuantityType.quantityType(forIdentifier: .bodyMass)!
+        guard let weightType = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return nil }
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
         return await withCheckedContinuation { continuation in
@@ -72,7 +78,7 @@ class HealthKitService {
             try await builder.beginCollection(at: startDate)
 
             // Add energy burned sample
-            let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!
+            guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return false }
             let energySample = HKQuantitySample(
                 type: energyType,
                 quantity: HKQuantity(unit: .kilocalorie(), doubleValue: run.totalCaloriesBurned),
@@ -81,7 +87,7 @@ class HealthKitService {
             )
 
             // Add distance sample
-            let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!
+            guard let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else { return false }
             let distanceSample = HKQuantitySample(
                 type: distanceType,
                 quantity: HKQuantity(unit: .meter(), doubleValue: run.distanceMeters),

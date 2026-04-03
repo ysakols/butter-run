@@ -417,8 +417,8 @@ class ActiveRunViewModel {
             churnStage = churnEstimator.currentStage
         }
 
-        // Update route coordinates for live map (throttled to every 5s)
-        if lastRouteUpdate == nil || Date().timeIntervalSince(lastRouteUpdate!) >= 5 {
+        // Update route coordinates for live map (throttled to every 5s to avoid encoding overhead)
+        if lastRouteUpdate.map({ Date().timeIntervalSince($0) >= 5 }) ?? true {
             if let data = locationService.encodeRoute() {
                 routeCoordinates = LocationService.decodeRoute(data)
             }

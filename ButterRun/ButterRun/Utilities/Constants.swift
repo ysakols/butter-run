@@ -9,11 +9,7 @@ enum ButterTheme {
     static let textSecondary = Color(hex: "A0A0A5")
     static let success = Color(hex: "5ABF6E")
     static let deficit = Color(hex: "E57373")
-    // Deprecated aliases for migration
-    static let primary = gold
-    static let activeRunBg = background
-    static let accent = goldDim
-    static let secondary = goldDim
+
 }
 
 extension Color {

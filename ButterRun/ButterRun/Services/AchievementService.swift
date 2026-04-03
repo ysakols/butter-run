@@ -39,10 +39,39 @@ class AchievementService {
             award(.perfectZero)
         }
 
+        // Pat on the Back: burn 1 pat (~1.06 tsp / 36 cal) in a single run
+        if run.totalButterBurnedTsp >= 1.06 {
+            award(.patOnTheBack)
+        }
+
+        // Pound Pounder: burn 1 lb butter (3240 cal / 34 cal per tsp ≈ 95.3 tsp) cumulative
+        let totalButterTsp = allRuns.reduce(0.0) { $0 + $1.totalButterBurnedTsp }
+        if totalButterTsp >= (3240.0 / 34.0) {
+            award(.poundPounder)
+        }
+
+        // Butter Sculptor: complete 50 runs
+        if allRuns.count >= 50 {
+            award(.butterSculptor)
+        }
+
         // Marathon Melt: 26.2 miles total (cumulative)
         let totalMiles = allRuns.reduce(0.0) { $0 + $1.distanceMiles }
         if totalMiles >= 26.2 {
             award(.marathonMelt)
+        }
+
+        // Five Run Streak: 5 runs in one week
+        let calendar = Calendar.current
+        let oneWeekAgo = calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        let runsThisWeek = allRuns.filter { $0.startDate >= oneWeekAgo }
+        if runsThisWeek.count >= 5 {
+            award(.fiveRunStreak)
+        }
+
+        // Butter Fingers: eat butter 10 times in one run
+        if run.butterEntries.count >= 10 {
+            award(.butterFingers)
         }
 
         if !newAwards.isEmpty {

@@ -159,85 +159,82 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
 
 extension LocationService: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        DispatchQueue.main.async { [weak self] in
-            self?.authorizationStatus = manager.authorizationStatus
-            self?.isAuthDenied = (manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted)
-        }
+        // CLLocationManagerDelegate calls arrive on the thread where the manager was created (main)
+        authorizationStatus = manager.authorizationStatus
+        isAuthDenied = (manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted)
     }
 
     func locationManagerDidPauseLocationUpdates(_ manager: CLLocationManager) {
         // iOS paused updates due to battery pressure — surface GPS lost state
-        DispatchQueue.main.async { [weak self] in
-            self?.gpsSignalState = .lost
-        }
+        gpsSignalState = .lost
         // Re-enable updates immediately since we need continuous tracking for running
         manager.startUpdatingLocation()
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations newLocations: [CLLocation]) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.isTracking else { return }
+        // CLLocationManagerDelegate calls arrive on main thread (manager created on main)
+        guard isTracking else { return }
 
-            for location in newLocations {
-                // GPS signal quality check
-                if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50 {
-                    if self.weakSignalStart == nil {
-                        self.weakSignalStart = Date()
-                    }
-                    if let start = self.weakSignalStart {
-                        let elapsed = Date().timeIntervalSince(start)
-                        if elapsed > 60 {
-                            self.gpsSignalState = .lost
-                        } else if elapsed > 10 {
-                            self.gpsSignalState = .weak
-                        }
-                    }
-                    continue
+        for location in newLocations {
+            // GPS signal quality check (>50m accuracy = weak/lost)
+            if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50 {
+                if weakSignalStart == nil {
+                    weakSignalStart = Date()
                 }
-
-                // Signal recovered
-                self.weakSignalStart = nil
-                self.gpsSignalState = .strong
-
-                // Filter out inaccurate readings for distance calculation
-                guard location.horizontalAccuracy < 20 else { continue }
-
-                // Calculate distance from previous point
-                if let previous = self.previousLocation {
-                    let delta = location.distance(from: previous)
-                    if delta < 100 {
-                        self.totalDistanceMeters += delta
+                if let start = weakSignalStart {
+                    let elapsed = Date().timeIntervalSince(start)
+                    if elapsed > 60 {
+                        gpsSignalState = .lost
+                    } else if elapsed > 10 {
+                        gpsSignalState = .weak
                     }
                 }
-
-                // Speed
-                if location.speed >= 0 {
-                    self.currentSpeedMps = location.speed
-                } else if let previous = self.previousLocation {
-                    let timeDelta = location.timestamp.timeIntervalSince(previous.timestamp)
-                    if timeDelta > 0 {
-                        self.currentSpeedMps = location.distance(from: previous) / timeDelta
-                    }
-                }
-
-                // Elevation tracking
-                if location.verticalAccuracy >= 0 {
-                    if let prevAlt = self.previousAltitude {
-                        let altDelta = location.altitude - prevAlt
-                        if altDelta > 0 {
-                            self.elevationGainMeters += altDelta
-                        } else {
-                            self.elevationLossMeters += abs(altDelta)
-                        }
-                    }
-                    self.previousAltitude = location.altitude
-                }
-
-                self.locations.append(location)
-                self.previousLocation = location
-                self.currentLocation = location
-                self._locationSubject.send(location)
+                continue
             }
+
+            // Signal recovered
+            weakSignalStart = nil
+            gpsSignalState = .strong
+
+            // Filter out inaccurate readings for distance calculation (<20m required)
+            guard location.horizontalAccuracy < 20 else { continue }
+
+            // Calculate distance from previous point
+            if let previous = previousLocation {
+                let delta = location.distance(from: previous)
+                // Reject GPS spikes > 100m between consecutive readings
+                if delta < 100 {
+                    totalDistanceMeters += delta
+                }
+            }
+
+            // Speed
+            if location.speed >= 0 {
+                currentSpeedMps = location.speed
+            } else if let previous = previousLocation {
+                let timeDelta = location.timestamp.timeIntervalSince(previous.timestamp)
+                if timeDelta > 0 {
+                    currentSpeedMps = location.distance(from: previous) / timeDelta
+                }
+            }
+
+            // Elevation tracking
+            if location.verticalAccuracy >= 0 {
+                if let prevAlt = previousAltitude {
+                    let altDelta = location.altitude - prevAlt
+                    if altDelta > 0 {
+                        elevationGainMeters += altDelta
+                    } else {
+                        elevationLossMeters += abs(altDelta)
+                    }
+                }
+                previousAltitude = location.altitude
+            }
+
+            locations.append(location)
+            previousLocation = location
+            currentLocation = location
+            _locationSubject.send(location)
         }
     }
 }

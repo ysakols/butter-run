@@ -22,13 +22,14 @@ class MotionService: NSObject, ObservableObject, MotionTracking {
 
         isTracking = true
         pedometer.startUpdates(from: .now) { [weak self] data, error in
-            guard let self, self.isTracking else { return }
             guard let data = data, error == nil else { return }
 
             DispatchQueue.main.async {
+                guard let self, self.isTracking else { return }
                 self.stepCount = data.numberOfSteps.intValue
 
                 if let cadence = data.currentCadence {
+                    // Convert from steps/second to steps/minute
                     self.currentCadence = cadence.doubleValue * 60.0
                 }
             }
