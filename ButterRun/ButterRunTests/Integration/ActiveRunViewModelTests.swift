@@ -25,6 +25,7 @@ final class MockLocationService: LocationTracking {
     var resumeTrackingCalled = false
 
     var subtractedDistance: Double = 0
+    var routeIsDirty: Bool = false
 
     func requestPermission() {}
     func startTracking() { startTrackingCalled = true }

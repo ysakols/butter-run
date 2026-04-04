@@ -52,6 +52,35 @@ final class SplitTrackerTests: XCTestCase {
         XCTAssertTrue(finalSplit?.isPartial ?? false)
     }
 
+    func test_butterBurnedPerSplit() {
+        let tracker = SplitTracker(splitDistanceMeters: 1000, weightKg: 70)
+        tracker.start()
+        // First split: 1.5 tsp total
+        tracker.update(totalDistanceMeters: 1000, elapsedSeconds: 300, elevationGainMeters: 0, currentSpeedMph: 6.0, butterBurnedTsp: 1.5)
+        XCTAssertEqual(tracker.completedSplits.count, 1)
+        XCTAssertEqual(tracker.completedSplits[0].butterBurnedTsp, 1.5, accuracy: 0.01)
+
+        // Second split: 3.0 tsp total -> 1.5 tsp for this split
+        tracker.update(totalDistanceMeters: 2000, elapsedSeconds: 600, elevationGainMeters: 0, currentSpeedMph: 6.0, butterBurnedTsp: 3.0)
+        XCTAssertEqual(tracker.completedSplits.count, 2)
+        XCTAssertEqual(tracker.completedSplits[1].butterBurnedTsp, 1.5, accuracy: 0.01)
+    }
+
+    func test_finalSplit_butterBurned() {
+        let tracker = SplitTracker(splitDistanceMeters: 1609.344, weightKg: 70)
+        tracker.start()
+        tracker.update(totalDistanceMeters: 1609.344, elapsedSeconds: 480, elevationGainMeters: 0, currentSpeedMph: 6.0, butterBurnedTsp: 2.0)
+        let finalSplit = tracker.finalSplit(
+            totalDistanceMeters: 2500,
+            elapsedSeconds: 900,
+            elevationGainMeters: 0,
+            currentSpeedMph: 6.0,
+            butterBurnedTsp: 3.5
+        )
+        XCTAssertNotNil(finalSplit)
+        XCTAssertEqual(finalSplit!.butterBurnedTsp, 1.5, accuracy: 0.01)
+    }
+
     func test_finalSplit_tinyRemainder() {
         let tracker = SplitTracker(splitDistanceMeters: 1609.344, weightKg: 70)
         tracker.start()
