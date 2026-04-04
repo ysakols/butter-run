@@ -6,6 +6,12 @@ enum AutoPauseEvent {
     case autoResumed
 }
 
+/// Detects when a runner stops moving and automatically pauses/resumes the run.
+///
+/// Uses hysteresis to prevent spurious toggling: pauses when speed stays below 0.5 m/s
+/// (≈1.1 mph) for 10 seconds, resumes immediately when speed exceeds 0.8 m/s (≈1.8 mph).
+/// The higher resume threshold prevents rapid pause/resume cycles from GPS speed fluctuations
+/// near the pause boundary.
 class AutoPauseService: ObservableObject {
     @Published private(set) var isPaused = false
 

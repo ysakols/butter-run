@@ -1,6 +1,13 @@
 import Foundation
 import SwiftData
 
+/// A distance-based segment of a ``Run``, created each time the runner crosses a split boundary
+/// (e.g. every mile or kilometer, configured via ``UserProfile/splitDistance``).
+///
+/// Splits use zero-based ``index`` values (split 0 is the first segment). Pace is always stored
+/// in seconds-per-kilometer (``paceSecondsPerKm``) regardless of the user's display preference.
+/// The final split of a run is marked with ``isPartial`` when the remaining distance is less than
+/// a full split unit. Splits are cascade-deleted with their parent ``Run``.
 @Model
 class Split {
     var index: Int

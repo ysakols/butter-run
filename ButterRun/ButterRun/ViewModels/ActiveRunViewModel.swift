@@ -5,6 +5,13 @@ import SwiftData
 import AVFoundation
 import UIKit
 
+/// Central view model managing the lifecycle of an active running session.
+///
+/// Coordinates location tracking, motion sensing, auto-pause detection, split tracking, butter
+/// churn estimation, and voice feedback through injected service protocols. Transitions through
+/// states: `idle → running → paused → finished`. A 1-second timer drives ``updateMetrics()``
+/// which recalculates distance, speed, calories, butter burn, splits, and route encoding.
+/// Crash-recovery drafts are saved every 30 seconds via ``RunDraftService``.
 @Observable
 class ActiveRunViewModel {
     // MARK: - Run State
@@ -56,9 +63,12 @@ class ActiveRunViewModel {
     private var startDate: Date?
     private var pausedDuration: TimeInterval = 0
     private var lastPauseDate: Date?
+    /// Actual pause/resume timestamps for HealthKit workout events.
+    private var pauseResumeEvents: [(pauseDate: Date, resumeDate: Date)] = []
     private var lastDraftSave: Date?
     private var lastLocationUpdate: Date?
     private var lastRouteUpdate: Date?
+    private var lastTickTime: Date?
     private var previousSplitCount: Int = 0
     private var distanceAtAutoPause: Double = 0
     private var cancellables = Set<AnyCancellable>()
@@ -86,6 +96,11 @@ class ActiveRunViewModel {
     }
 
     // MARK: - Computed Properties
+
+    /// Actual pause/resume timestamps recorded during the run, for HealthKit integration.
+    var workoutPauseResumeEvents: [(pauseDate: Date, resumeDate: Date)] {
+        pauseResumeEvents
+    }
 
     var netButterTsp: Double {
         butterEatenTsp - butterBurnedTsp
@@ -163,6 +178,8 @@ class ActiveRunViewModel {
         gpsSignalState = .strong
         lastDraftSave = .now
         lastLocationUpdate = nil
+        lastTickTime = nil
+        pauseResumeEvents = []
         previousSplitCount = 0
         showUndoToast = false
 
@@ -221,6 +238,7 @@ class ActiveRunViewModel {
         guard state == .running else { return }
         state = .paused
         lastPauseDate = .now
+        lastTickTime = nil
         locationService.pauseTracking()
         if isChurnEnabled { churnEstimator.pause() }
         timer?.invalidate()
@@ -237,8 +255,10 @@ class ActiveRunViewModel {
         }
         state = .running
         isAutoPaused = false
+        let now = Date.now
         if let pauseDate = lastPauseDate {
-            pausedDuration += Date.now.timeIntervalSince(pauseDate)
+            pausedDuration += now.timeIntervalSince(pauseDate)
+            pauseResumeEvents.append((pauseDate: pauseDate, resumeDate: now))
         }
         locationService.resumeTracking()
         if isChurnEnabled { churnEstimator.resume() }
@@ -381,15 +401,22 @@ class ActiveRunViewModel {
             averageSpeedMph = ButterCalculator.metersPerSecondToMph(distanceMeters / elapsedSeconds)
         }
 
-        // Recalculate total butter burned
-        let durationMinutes = elapsedSeconds / 60.0
-        let avgMet = ButterCalculator.metValue(forSpeedMph: averageSpeedMph)
-        let calories = ButterCalculator.caloriesBurned(
-            weightKg: weightKg,
-            met: avgMet,
-            durationMinutes: durationMinutes
-        )
-        butterBurnedTsp = ButterCalculator.caloriesToButterTsp(calories)
+        // Accumulate butter burned incrementally using instantaneous speed
+        let now = Date()
+        if let lastTick = lastTickTime {
+            let deltaSeconds = now.timeIntervalSince(lastTick)
+            if deltaSeconds > 0 && deltaSeconds < 5 {
+                let deltaMinutes = deltaSeconds / 60.0
+                let met = ButterCalculator.metValue(forSpeedMph: currentSpeedMph)
+                let deltaCal = ButterCalculator.caloriesBurned(
+                    weightKg: weightKg,
+                    met: met,
+                    durationMinutes: deltaMinutes
+                )
+                butterBurnedTsp += ButterCalculator.caloriesToButterTsp(deltaCal)
+            }
+        }
+        lastTickTime = now
 
         // Capture split count BEFORE update to detect new completions
         let countBefore = splitTracker?.completedSplits.count ?? 0
@@ -417,10 +444,12 @@ class ActiveRunViewModel {
             churnStage = churnEstimator.currentStage
         }
 
-        // Update route coordinates for live map (throttled to every 5s to avoid encoding overhead)
+        // Update route coordinates for live map (throttled to every 5s, skipped if no new points)
         if lastRouteUpdate.map({ Date().timeIntervalSince($0) >= 5 }) ?? true {
-            if let data = locationService.encodeRoute() {
-                routeCoordinates = LocationService.decodeRoute(data)
+            if locationService.routeIsDirty {
+                if let data = locationService.encodeRoute() {
+                    routeCoordinates = LocationService.decodeRoute(data)
+                }
             }
             lastRouteUpdate = Date()
         }
@@ -446,6 +475,7 @@ class ActiveRunViewModel {
             isAutoPaused = true
             state = .paused
             lastPauseDate = .now
+            lastTickTime = nil
             distanceAtAutoPause = locationService.totalDistanceMeters
             if isChurnEnabled { churnEstimator.pause() }
             timer?.invalidate()
@@ -458,8 +488,10 @@ class ActiveRunViewModel {
             guard state == .paused, isAutoPaused else { return }
             isAutoPaused = false
             state = .running
+            let now = Date.now
             if let pauseDate = lastPauseDate {
-                pausedDuration += Date.now.timeIntervalSince(pauseDate)
+                pausedDuration += now.timeIntervalSince(pauseDate)
+                pauseResumeEvents.append((pauseDate: pauseDate, resumeDate: now))
             }
             // Discard GPS drift accumulated while auto-paused
             let driftMeters = locationService.totalDistanceMeters - distanceAtAutoPause

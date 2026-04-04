@@ -58,7 +58,7 @@ class HealthKitService {
         }
     }
 
-    func saveWorkout(run: Run) async -> Bool {
+    func saveWorkout(run: Run, pauseResumeEvents: [(pauseDate: Date, resumeDate: Date)] = []) async -> Bool {
         guard isAvailable else { return false }
 
         let startDate = run.startDate
@@ -97,17 +97,27 @@ class HealthKitService {
 
             try await builder.addSamples([energySample, distanceSample])
 
-            // Add a pause/resume event to account for paused time so
-            // HealthKit records active duration matching run.durationSeconds
-            let totalElapsed = endDate.timeIntervalSince(startDate)
-            let pausedTime = totalElapsed - run.durationSeconds
-            if pausedTime > 1 {
-                let pauseDate = endDate.addingTimeInterval(-pausedTime)
-                let resumeDate = endDate
-                try await builder.addWorkoutEvents([
-                    HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: pauseDate, duration: 0), metadata: nil),
-                    HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: resumeDate, duration: 0), metadata: nil)
-                ])
+            // Add pause/resume events using actual timestamps when available,
+            // falling back to synthetic timestamps for backwards compatibility
+            if !pauseResumeEvents.isEmpty {
+                var workoutEvents: [HKWorkoutEvent] = []
+                for event in pauseResumeEvents {
+                    workoutEvents.append(HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: event.pauseDate, duration: 0), metadata: nil))
+                    workoutEvents.append(HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: event.resumeDate, duration: 0), metadata: nil))
+                }
+                try await builder.addWorkoutEvents(workoutEvents)
+            } else {
+                // Fallback: synthesize a single pause block for paused time
+                let totalElapsed = endDate.timeIntervalSince(startDate)
+                let pausedTime = totalElapsed - run.durationSeconds
+                if pausedTime > 1 {
+                    let pauseDate = endDate.addingTimeInterval(-pausedTime)
+                    let resumeDate = endDate
+                    try await builder.addWorkoutEvents([
+                        HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: pauseDate, duration: 0), metadata: nil),
+                        HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: resumeDate, duration: 0), metadata: nil)
+                    ])
+                }
             }
 
             try await builder.endCollection(at: endDate)

@@ -44,11 +44,13 @@ class SplitTracker: ObservableObject {
             let paceSecondsPerKm = splitDuration / (splitDistance / 1000.0)
             let splitElevation = elevationGainMeters - splitStartElevationGain
 
-            // Calculate butter burned for this split
+            // Calculate butter burned for this split using the split's average speed
             let durationMinutes = splitDuration / 60.0
+            let splitAvgSpeedMps = splitDuration > 0 ? splitDistance / splitDuration : 0
+            let splitAvgSpeedMph = ButterCalculator.metersPerSecondToMph(splitAvgSpeedMps)
             let butterTsp = ButterCalculator.butterBurned(
                 weightKg: weightKg,
-                speedMph: currentSpeedMph,
+                speedMph: splitAvgSpeedMph,
                 durationMinutes: durationMinutes
             )
 
@@ -87,9 +89,11 @@ class SplitTracker: ObservableObject {
 
         let paceSecondsPerKm = remaining > 0 ? splitDuration / (remaining / 1000.0) : 0
         let durationMinutes = splitDuration / 60.0
+        let splitAvgSpeedMps = splitDuration > 0 ? remaining / splitDuration : 0
+        let splitAvgSpeedMph = ButterCalculator.metersPerSecondToMph(splitAvgSpeedMps)
         let butterTsp = ButterCalculator.butterBurned(
             weightKg: weightKg,
-            speedMph: currentSpeedMph,
+            speedMph: splitAvgSpeedMph,
             durationMinutes: durationMinutes
         )
 

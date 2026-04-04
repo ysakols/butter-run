@@ -17,6 +17,13 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     private(set) var elevationGainMeters: Double = 0
     private(set) var elevationLossMeters: Double = 0
 
+    /// Lightweight coordinate buffer for route persistence, avoiding retention of full CLLocation objects.
+    private var routeBuffer: [[Double]] = []
+    /// Tracks whether new points have been added since the last `encodeRoute()` call.
+    private(set) var routeIsDirty = false
+    /// Cached encoded route data, invalidated when new points arrive.
+    private var cachedRouteData: Data?
+
     private var previousLocation: CLLocation?
     private var previousAltitude: Double?
     private var weakSignalStart: Date?
@@ -42,6 +49,9 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
 
     func startTracking() {
         locations = []
+        routeBuffer = []
+        routeIsDirty = false
+        cachedRouteData = nil
         totalDistanceMeters = 0
         currentSpeedMps = 0
         elevationGainMeters = 0
@@ -88,9 +98,20 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     }
 
     func encodeRoute() -> Data? {
-        let simplified = simplifyRoute(locations, maxPoints: 5000)
-        let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
-        return try? JSONEncoder().encode(coords)
+        if !routeIsDirty, let cached = cachedRouteData {
+            return cached
+        }
+        let coords: [[Double]]
+        if routeBuffer.count > 5000 {
+            let simplified = simplifyRoute(locations, maxPoints: 5000)
+            coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
+        } else {
+            coords = routeBuffer
+        }
+        let data = try? JSONEncoder().encode(coords)
+        cachedRouteData = data
+        routeIsDirty = false
+        return data
     }
 
     // MARK: - Route Simplification (Douglas-Peucker)
@@ -231,7 +252,16 @@ extension LocationService: CLLocationManagerDelegate {
                 previousAltitude = location.altitude
             }
 
+            routeBuffer.append([location.coordinate.latitude, location.coordinate.longitude])
+            routeIsDirty = true
+            cachedRouteData = nil
             locations.append(location)
+            // Thin in-memory CLLocation array: keep only the last 120 entries (~2 min at 1/s)
+            // to bound memory while retaining enough for speed/distance calculations.
+            // The full route is preserved in the lightweight routeBuffer.
+            if locations.count > 180 {
+                locations.removeFirst(locations.count - 120)
+            }
             previousLocation = location
             currentLocation = location
             _locationSubject.send(location)
