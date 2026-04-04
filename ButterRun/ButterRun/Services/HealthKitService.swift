@@ -107,12 +107,13 @@ class HealthKitService {
                 }
                 try await builder.addWorkoutEvents(workoutEvents)
             } else {
-                // Fallback: synthesize a single pause block for paused time
+                // Fallback: synthesize a single pause block for paused time.
+                // Resume 1s before endDate so HealthKit sees the workout as active when it ends.
                 let totalElapsed = endDate.timeIntervalSince(startDate)
                 let pausedTime = totalElapsed - run.durationSeconds
                 if pausedTime > 1 {
                     let pauseDate = endDate.addingTimeInterval(-pausedTime)
-                    let resumeDate = endDate
+                    let resumeDate = endDate.addingTimeInterval(-1)
                     try await builder.addWorkoutEvents([
                         HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: pauseDate, duration: 0), metadata: nil),
                         HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: resumeDate, duration: 0), metadata: nil)

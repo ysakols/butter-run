@@ -186,7 +186,7 @@ struct CrashRecoveryWrapper<Content: View>: View {
             run.averagePaceSecondsPerKm = draft.elapsedSeconds / (draft.distanceMeters / 1000.0)
         }
 
-        // Decode and attach butter entries from draft
+        // Decode and attach butter entries from draft, preserving original serving types and timestamps
         if let entriesData = draft.butterEntriesData {
             struct EntrySnapshot: Codable {
                 let servingRaw: String
@@ -195,9 +195,9 @@ struct CrashRecoveryWrapper<Content: View>: View {
             }
             if let snapshots = try? JSONDecoder().decode([EntrySnapshot].self, from: entriesData) {
                 let entries = snapshots.map { snapshot -> ButterEntry in
-                    // Use .custom with the snapshot's exact tsp value to preserve
-                    // the recorded amount regardless of serving enum changes
-                    let entry = ButterEntry(serving: .custom, customTeaspoons: snapshot.tsp)
+                    let serving = ButterServing(rawValue: snapshot.servingRaw) ?? .custom
+                    let entry = ButterEntry(serving: serving, customTeaspoons: serving == .custom ? snapshot.tsp : 0)
+                    entry.timestamp = snapshot.timestamp
                     return entry
                 }
                 run.butterEntries = entries
@@ -205,6 +205,7 @@ struct CrashRecoveryWrapper<Content: View>: View {
         }
 
         modelContext.insert(run)
+        try? modelContext.save()
         discardDraft()
     }
 

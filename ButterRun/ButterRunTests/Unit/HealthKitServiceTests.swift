@@ -11,12 +11,9 @@ final class HealthKitServiceTests: XCTestCase {
         XCTAssertEqual(available, HKHealthStore.isHealthDataAvailable())
     }
 
-    func test_saveWorkout_withoutAuthorization_returnsFalse() async {
+    func test_saveWorkout_withoutAuthorization_returnsFalse() async throws {
         let service = HealthKitService()
-        guard service.isAvailable else {
-            // HealthKit not available on this platform — skip
-            return
-        }
+        try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
         let run = Run(startDate: .now, isButterZeroChallenge: false)
         run.endDate = Date()
         run.distanceMeters = 1000
@@ -29,9 +26,9 @@ final class HealthKitServiceTests: XCTestCase {
         XCTAssertFalse(result, "saveWorkout should return false without authorization")
     }
 
-    func test_saveWorkout_withPauseResumeEvents_returnsFalse() async {
+    func test_saveWorkout_withPauseResumeEvents_returnsFalse() async throws {
         let service = HealthKitService()
-        guard service.isAvailable else { return }
+        try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
 
         let run = Run(startDate: Date().addingTimeInterval(-600), isButterZeroChallenge: false)
         run.endDate = Date()
@@ -49,9 +46,9 @@ final class HealthKitServiceTests: XCTestCase {
         XCTAssertFalse(result, "saveWorkout should return false without authorization")
     }
 
-    func test_readWeight_withoutAuthorization_returnsNil() async {
+    func test_readWeight_withoutAuthorization_returnsNil() async throws {
         let service = HealthKitService()
-        guard service.isAvailable else { return }
+        try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
 
         let weight = await service.readWeight()
         // Without authorization, readWeight should return nil

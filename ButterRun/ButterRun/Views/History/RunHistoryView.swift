@@ -106,7 +106,10 @@ struct RunHistoryView: View {
         .onAppear {
             viewModel.load(runs: runs)
         }
-        .onChange(of: runs.map(\.id)) {
+        .onChange(of: runs.count) {
+            viewModel.load(runs: runs)
+        }
+        .onChange(of: runs.first?.id) {
             viewModel.load(runs: runs)
         }
     }

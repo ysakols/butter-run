@@ -370,6 +370,7 @@ class ActiveRunViewModel {
     // MARK: - Private
 
     private func startTimer() {
+        timer?.invalidate()
         let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.tick()
         }
@@ -404,8 +405,11 @@ class ActiveRunViewModel {
 
         // Accumulate butter burned incrementally using instantaneous speed.
         // Clamp delta to 5s to avoid over-counting from long backgrounding gaps.
+        // Only burn calories when GPS is providing fresh data (within last 3s) to avoid
+        // inflating totals from stale speed readings during weak/lost GPS.
         let now = Date()
-        if let lastTick = lastTickTime {
+        let gpsFresh = lastLocationUpdate.map({ now.timeIntervalSince($0) < 3 }) ?? false
+        if let lastTick = lastTickTime, gpsFresh {
             let rawDelta = now.timeIntervalSince(lastTick)
             if rawDelta > 0 {
                 let deltaSeconds = min(rawDelta, 5.0)
@@ -435,10 +439,11 @@ class ActiveRunViewModel {
 
         // Check if a new split was completed
         let countAfter = splitTracker?.completedSplits.count ?? 0
-        if countAfter > countBefore {
+        if countAfter > countBefore, let lastSplit = splitTracker?.completedSplits.last {
             hapticService.splitCompleted()
             let splitNum = countAfter
-            let announcement = "Split \(splitNum) complete. Pace: \(formattedPace)"
+            let splitPace = ButterFormatters.pace(secondsPerKm: lastSplit.paceSecondsPerKm, usesMiles: usesMiles)
+            let announcement = "Split \(splitNum) complete. Pace: \(splitPace)"
             UIAccessibility.post(notification: .announcement, argument: announcement)
         }
 

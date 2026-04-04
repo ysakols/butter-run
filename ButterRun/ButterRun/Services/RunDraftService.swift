@@ -3,13 +3,14 @@ import SwiftData
 
 class RunDraftService {
     private let container: ModelContainer
-    private lazy var backgroundContext: ModelContext = ModelContext(container)
+    /// Persistent context for draft saves. Must only be accessed from the main thread.
+    private var persistentContext: ModelContext?
 
     init(container: ModelContainer) {
         self.container = container
     }
 
-    /// Save a draft checkpoint. Uses a persistent background ModelContext.
+    /// Save a draft checkpoint. Uses a persistent ModelContext (main-thread only).
     func saveDraft(
         startDate: Date,
         elapsedSeconds: Double,
@@ -21,7 +22,10 @@ class RunDraftService {
         routeData: Data?,
         butterEntriesData: Data?
     ) {
-        let context = backgroundContext
+        if persistentContext == nil {
+            persistentContext = ModelContext(container)
+        }
+        let context = persistentContext!
 
         // Delete any existing draft first (only one at a time)
         let descriptor = FetchDescriptor<RunDraft>()

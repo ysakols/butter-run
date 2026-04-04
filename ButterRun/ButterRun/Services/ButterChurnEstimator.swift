@@ -55,6 +55,8 @@ class ButterChurnEstimator {
     private var sampleBuffer: [(x: Double, y: Double, z: Double)] = []
     private var previousStage: ChurnStage = .liquid
     private let lock = NSLock()
+    /// Incremented on each start() to invalidate stale async blocks from prior sessions.
+    private var generation: Int = 0
 
     let stageAdvancedPublisher = PassthroughSubject<ChurnStage, Never>()
 
@@ -76,6 +78,7 @@ class ButterChurnEstimator {
 
     func start(configuration: ChurnConfiguration) {
         lock.lock()
+        generation += 1
         self.configuration = configuration
         self.totalAgitation = 0
         self.progress = 0
@@ -101,7 +104,10 @@ class ButterChurnEstimator {
     }
 
     func resume() {
-        guard isActive, motionManager.isDeviceMotionAvailable else { return }
+        lock.lock()
+        let active = isActive
+        lock.unlock()
+        guard active, motionManager.isDeviceMotionAvailable else { return }
         motionManager.deviceMotionUpdateInterval = sampleRate
         motionManager.startDeviceMotionUpdates(to: motionQueue) { [weak self] motion, error in
             guard let motion = motion, error == nil else { return }
@@ -116,12 +122,15 @@ class ButterChurnEstimator {
         lock.lock()
         isActive = false
         let config = configuration
-        let stage = currentStage
-        let prog = progress
         let agitation = totalAgitation
         lock.unlock()
 
         guard let config else { return nil }
+
+        // Derive progress and stage from the locked agitation total rather than
+        // reading the async-updated observable properties, which may be stale.
+        let prog = min(agitation / config.agitationThreshold, config.maxProgress)
+        let stage = ChurnStage.stage(forProgress: prog)
 
         return ChurnResult(
             creamType: config.creamType,
@@ -136,20 +145,15 @@ class ButterChurnEstimator {
 
     func processSample(x: Double, y: Double, z: Double) {
         lock.lock()
-        sampleBuffer.append((x: x, y: y, z: z))
+        defer { lock.unlock() }
 
-        guard sampleBuffer.count >= windowSize else {
-            lock.unlock()
-            return
-        }
+        sampleBuffer.append((x: x, y: y, z: z))
+        guard sampleBuffer.count >= windowSize else { return }
 
         let rms = Self.agitationRMS(samples: sampleBuffer)
         sampleBuffer.removeAll()
 
-        guard let config = configuration else {
-            lock.unlock()
-            return
-        }
+        guard let config = configuration else { return }
 
         // Accumulate agitation
         totalAgitation += rms * config.effectivenessMultiplier
@@ -162,11 +166,16 @@ class ButterChurnEstimator {
         let newStage = ChurnStage.stage(forProgress: clampedProgress)
         let stageChanged = newStage != previousStage
         previousStage = newStage
-        lock.unlock()
+        let gen = generation
 
-        // Update observable properties and publish stage changes on main thread
+        // Update observable properties and publish stage changes on main thread.
+        // Check generation to prevent stale async blocks from overwriting a fresh start().
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
+            self.lock.lock()
+            let currentGen = self.generation
+            self.lock.unlock()
+            guard currentGen == gen else { return }
             self.progress = clampedProgress
             self.currentStage = newStage
             if stageChanged {
