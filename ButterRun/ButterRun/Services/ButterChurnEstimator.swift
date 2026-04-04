@@ -75,6 +75,7 @@ class ButterChurnEstimator {
     // MARK: - Lifecycle
 
     func start(configuration: ChurnConfiguration) {
+        lock.lock()
         self.configuration = configuration
         self.totalAgitation = 0
         self.progress = 0
@@ -82,6 +83,7 @@ class ButterChurnEstimator {
         self.previousStage = .liquid
         self.sampleBuffer = []
         self.isActive = true
+        lock.unlock()
 
         guard motionManager.isDeviceMotionAvailable else { return }
 
@@ -110,16 +112,23 @@ class ButterChurnEstimator {
 
     func stop() -> ChurnResult? {
         motionManager.stopDeviceMotionUpdates()
-        isActive = false
 
-        guard let config = configuration else { return nil }
+        lock.lock()
+        isActive = false
+        let config = configuration
+        let stage = currentStage
+        let prog = progress
+        let agitation = totalAgitation
+        lock.unlock()
+
+        guard let config else { return nil }
 
         return ChurnResult(
             creamType: config.creamType,
             creamCups: config.creamCups,
-            finalStage: currentStage.rawValue,
-            finalProgress: progress,
-            totalAgitation: totalAgitation
+            finalStage: stage.rawValue,
+            finalProgress: prog,
+            totalAgitation: agitation
         )
     }
 

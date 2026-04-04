@@ -324,7 +324,8 @@ class ActiveRunViewModel {
             totalDistanceMeters: distanceMeters,
             elapsedSeconds: elapsedSeconds,
             elevationGainMeters: locationService.elevationGainMeters,
-            currentSpeedMph: currentSpeedMph
+            currentSpeedMph: currentSpeedMph,
+            butterBurnedTsp: butterBurnedTsp
         ) {
             allSplits.append(finalSplit)
         }
@@ -401,11 +402,13 @@ class ActiveRunViewModel {
             averageSpeedMph = ButterCalculator.metersPerSecondToMph(distanceMeters / elapsedSeconds)
         }
 
-        // Accumulate butter burned incrementally using instantaneous speed
+        // Accumulate butter burned incrementally using instantaneous speed.
+        // Clamp delta to 5s to avoid over-counting from long backgrounding gaps.
         let now = Date()
         if let lastTick = lastTickTime {
-            let deltaSeconds = now.timeIntervalSince(lastTick)
-            if deltaSeconds > 0 && deltaSeconds < 5 {
+            let rawDelta = now.timeIntervalSince(lastTick)
+            if rawDelta > 0 {
+                let deltaSeconds = min(rawDelta, 5.0)
                 let deltaMinutes = deltaSeconds / 60.0
                 let met = ButterCalculator.metValue(forSpeedMph: currentSpeedMph)
                 let deltaCal = ButterCalculator.caloriesBurned(
@@ -421,12 +424,13 @@ class ActiveRunViewModel {
         // Capture split count BEFORE update to detect new completions
         let countBefore = splitTracker?.completedSplits.count ?? 0
 
-        // Update split tracker
+        // Update split tracker with accumulated butter burn for consistent per-split totals
         splitTracker?.update(
             totalDistanceMeters: distanceMeters,
             elapsedSeconds: elapsedSeconds,
             elevationGainMeters: locationService.elevationGainMeters,
-            currentSpeedMph: currentSpeedMph
+            currentSpeedMph: currentSpeedMph,
+            butterBurnedTsp: butterBurnedTsp
         )
 
         // Check if a new split was completed

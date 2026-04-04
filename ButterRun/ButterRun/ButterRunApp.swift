@@ -195,8 +195,9 @@ struct CrashRecoveryWrapper<Content: View>: View {
             }
             if let snapshots = try? JSONDecoder().decode([EntrySnapshot].self, from: entriesData) {
                 let entries = snapshots.map { snapshot -> ButterEntry in
-                    let serving = ButterServing(rawValue: snapshot.servingRaw) ?? .custom
-                    let entry = ButterEntry(serving: serving, customTeaspoons: serving == .custom ? snapshot.tsp : 0)
+                    // Use .custom with the snapshot's exact tsp value to preserve
+                    // the recorded amount regardless of serving enum changes
+                    let entry = ButterEntry(serving: .custom, customTeaspoons: snapshot.tsp)
                     return entry
                 }
                 run.butterEntries = entries

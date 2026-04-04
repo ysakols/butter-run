@@ -6,7 +6,7 @@ import SwiftData
 /// Stores distance, duration, pace, calorie/butter metrics, elevation, route data (encoded as
 /// a JSON array of `[lat, lng]` pairs in ``routePolyline``), split segments, and optional
 /// butter-churn results (serialized as JSON in ``churnResultData``). The ``netButterTsp``
-/// property represents `totalButterBurnedTsp - totalButterEatenTsp`. Runs flagged with
+/// property represents `totalButterEatenTsp - totalButterBurnedTsp` (positive = surplus butter). Runs flagged with
 /// ``isManualEntry`` were reconstructed from crash-recovery drafts rather than recorded live.
 @Model
 class Run {

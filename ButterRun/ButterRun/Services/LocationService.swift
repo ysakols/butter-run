@@ -103,7 +103,11 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         }
         let coords: [[Double]]
         if routeBuffer.count > 5000 {
-            let simplified = simplifyRoute(locations, maxPoints: 5000)
+            // Convert lightweight buffer to CLLocations for Douglas-Peucker simplification
+            let asLocations = routeBuffer.map {
+                CLLocation(latitude: $0[0], longitude: $0[1])
+            }
+            let simplified = simplifyRoute(asLocations, maxPoints: 5000)
             coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
         } else {
             coords = routeBuffer
