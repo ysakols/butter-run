@@ -19,7 +19,6 @@ struct SettingsView: View {
     @State private var showDeleteConfirmation = false
     @State private var showRecalcConfirmation = false
     @EnvironmentObject private var stravaAuth: StravaAuthService
-    @State private var stravaConnecting = false
     @State private var autoShareToStrava: Bool = false
 
     var body: some View {
@@ -68,55 +67,23 @@ struct SettingsView: View {
                 }
                 .listRowBackground(ButterTheme.surface)
 
-                Section("Integrations") {
-                    if stravaAuth.isAuthenticated {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(ButterTheme.success)
-                            Text("Connected to Strava")
-                                .font(.system(.body, design: .rounded))
-                                .foregroundStyle(ButterTheme.textPrimary)
-                            if let name = stravaAuth.athleteName {
-                                Spacer()
-                                Text(name)
-                                    .font(.system(.caption, design: .rounded))
-                                    .foregroundStyle(ButterTheme.textSecondary)
-                            }
-                        }
-
-                        Toggle("Auto-share runs", isOn: $autoShareToStrava)
-                            .tint(ButterTheme.gold)
-                            .onChange(of: autoShareToStrava) { _, _ in saveProfile() }
-
-                        Button(role: .destructive) {
-                            stravaAuth.disconnect()
-                            autoShareToStrava = false
+                Section {
+                    StravaIntegrationView(autoShareToStrava: $autoShareToStrava)
+                        .onChange(of: autoShareToStrava) { _, _ in saveProfile() }
+                        .onChange(of: stravaAuth.isAuthenticated) { _, connected in
                             if let p = profile {
-                                p.stravaConnected = false
-                                p.autoShareToStrava = false
+                                p.stravaConnected = connected
+                                if !connected {
+                                    autoShareToStrava = false
+                                    p.autoShareToStrava = false
+                                }
                             }
-                        } label: {
-                            Text("Disconnect Strava")
-                                .font(.system(.body, design: .rounded))
                         }
-                    } else {
-                        Button {
-                            stravaAuth.authorize()
-                        } label: {
-                            HStack {
-                                Image(systemName: "link")
-                                Text("Connect Strava")
-                                    .font(.system(.body, design: .rounded, weight: .semibold))
-                            }
-                            .foregroundStyle(Color(red: 0.99, green: 0.32, blue: 0.15))
-                        }
-
-                        Text("Share your runs to Strava automatically")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundStyle(ButterTheme.textSecondary)
-                    }
+                } header: {
+                    Text("Integrations")
                 }
-                .listRowBackground(ButterTheme.surface)
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
 
                 Section("Butter Math") {
                     infoRow("1 tsp butter", "34 calories")
