@@ -9,11 +9,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-test:
-    name: Build & Test
+  build:
+    name: Build
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ButterRun
@@ -35,53 +39,48 @@ jobs:
         run: |
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
 
-      - name: Detect Simulator
-        id: sim
-        run: |
-          RUNTIME=$(xcrun simctl list runtimes iOS -j | python3 -c "
-          import json, sys
-          runtimes = json.load(sys.stdin)['runtimes']
-          # Pick first available non-beta iOS runtime
-          for r in runtimes:
-              if r['isAvailable'] and 'iOS' in r['name'] and not r.get('isBeta', False):
-                  print(r['identifier'])
-                  sys.exit(0)
-          # Fallback to any available
-          for r in runtimes:
-              if r['isAvailable']:
-                  print(r['identifier'])
-                  sys.exit(0)
-          ")
-          echo "runtime=$RUNTIME"
-          UDID=$(xcrun simctl create "CI_iPhone" "iPhone 16" "$RUNTIME")
-          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
-          xcrun simctl boot "$UDID"
-          echo "Simulator $UDID booted"
-
-      - name: Build
+      - name: Build for Testing
         run: |
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
-            -destination 'platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Run Unit Tests
-        shell: bash {0}
+  test:
+    name: Unit Tests
+    needs: build
+    runs-on: macos-15
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ButterRun
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
         run: |
-          xcodebuild test-without-building \
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH="/Applications/Xcode.app"
+          fi
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+
+      - name: Create CI build config
+        run: |
+          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
+
+      - name: Build and Run Unit Tests
+        run: |
+          xcodebuild test \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
-            -destination 'platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -only-testing:ButterRunTests \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult
-          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
-
-      - name: Shutdown Simulator
-        if: always()
-        run: xcrun simctl shutdown '${{ steps.sim.outputs.udid }}' 2>/dev/null || true
 
       - name: Upload test results
         if: always()
