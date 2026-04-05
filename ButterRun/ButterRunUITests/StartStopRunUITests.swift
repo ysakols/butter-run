@@ -57,10 +57,8 @@ final class StartStopRunUITests: XCTestCase {
         XCTAssertTrue(churnButton.waitForExistence(timeout: 5))
         churnButton.tap()
 
-        // Wait a moment for the run to register
-        sleep(2)
-
         let stopButton = app.buttons["Stop run"]
+        XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
         stopButton.tap()
 
         let finishButton = app.buttons["Finish Run"]
