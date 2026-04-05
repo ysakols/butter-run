@@ -41,25 +41,14 @@ jobs:
           xcodebuild -project ButterRun.xcodeproj -scheme ButterRun -showBuildSettings -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO 2>&1 | head -80 || true
 
       - name: Build
-        shell: bash --noprofile --norc -o pipefail {0}
         run: |
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/build.log | xcpretty
-          BUILD_EXIT=${PIPESTATUS[0]}
-          if [ $BUILD_EXIT -ne 0 ]; then
-            echo "::error::Build failed with exit code $BUILD_EXIT"
-            echo "::group::Raw xcodebuild output (last 200 lines)"
-            tail -200 /tmp/build.log
-            echo "::endgroup::"
-            exit $BUILD_EXIT
-          fi
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Run Unit Tests
-        shell: bash --noprofile --norc -o pipefail {0}
         run: |
           xcodebuild test \
             -project ButterRun.xcodeproj \
@@ -67,16 +56,7 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -only-testing:ButterRunTests \
             CODE_SIGNING_ALLOWED=NO \
-            -resultBundlePath TestResults.xcresult \
-            2>&1 | tee /tmp/test.log | xcpretty
-          TEST_EXIT=${PIPESTATUS[0]}
-          if [ $TEST_EXIT -ne 0 ]; then
-            echo "::error::Tests failed with exit code $TEST_EXIT"
-            echo "::group::Raw xcodebuild output (last 200 lines)"
-            tail -200 /tmp/test.log
-            echo "::endgroup::"
-            exit $TEST_EXIT
-          fi
+            -resultBundlePath TestResults.xcresult
 
       - name: Upload test results
         if: always()
