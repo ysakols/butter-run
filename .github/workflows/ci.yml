@@ -35,36 +35,53 @@ jobs:
         run: |
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
 
+      - name: Detect Simulator
+        id: sim
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes iOS -j | python3 -c "
+          import json, sys
+          runtimes = json.load(sys.stdin)['runtimes']
+          # Pick first available non-beta iOS runtime
+          for r in runtimes:
+              if r['isAvailable'] and 'iOS' in r['name'] and not r.get('isBeta', False):
+                  print(r['identifier'])
+                  sys.exit(0)
+          # Fallback to any available
+          for r in runtimes:
+              if r['isAvailable']:
+                  print(r['identifier'])
+                  sys.exit(0)
+          ")
+          echo "runtime=$RUNTIME"
+          UDID=$(xcrun simctl create "CI_iPhone" "iPhone 16" "$RUNTIME")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          echo "Simulator $UDID booted"
+
       - name: Build
         run: |
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}' \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Run Unit Tests
+        shell: bash {0}
         run: |
-          # Run in a subshell with process group kill on exit
-          set -m
           xcodebuild test-without-building \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -destination 'platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}' \
             -only-testing:ButterRunTests \
             -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES \
-            -default-test-execution-time-allowance 120 \
             CODE_SIGNING_ALLOWED=NO \
-            -resultBundlePath TestResults.xcresult &
-          XCODE_PID=$!
-          # Kill entire process group after 8 minutes
-          ( sleep 480 && kill -9 -$XCODE_PID 2>/dev/null ) &
-          TIMER_PID=$!
-          wait $XCODE_PID
-          EXIT_CODE=$?
-          kill $TIMER_PID 2>/dev/null || true
-          exit $EXIT_CODE
+            -resultBundlePath TestResults.xcresult
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Shutdown Simulator
+        if: always()
+        run: xcrun simctl shutdown '${{ steps.sim.outputs.udid }}' 2>/dev/null || true
 
       - name: Upload test results
         if: always()
