@@ -43,8 +43,6 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Butter Run needs your location to track your run and calculate how much butter you're melting.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Butter Run needs background location access to accurately track your entire run route and distance, even when the screen is off.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Butter Run uses motion data to track your cadence, step count, and butter churn progress during runs.</string>
 	<key>NSHealthShareUsageDescription</key>
