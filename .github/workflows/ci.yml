@@ -37,7 +37,7 @@ jobs:
 
       - name: Create CI build config
         run: |
-          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
+          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\nSTRAVA_CLIENT_ID =\nSTRAVA_CLIENT_SECRET =\n' > ButterRun.xcconfig
 
       - name: Build for Testing
         run: |
@@ -70,7 +70,7 @@ jobs:
 
       - name: Create CI build config
         run: |
-          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
+          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\nSTRAVA_CLIENT_ID =\nSTRAVA_CLIENT_SECRET =\n' > ButterRun.xcconfig
 
       - name: Build and Run Unit Tests
         run: |

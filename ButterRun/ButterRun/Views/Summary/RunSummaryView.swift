@@ -13,6 +13,7 @@ struct RunSummaryView: View {
     @State private var stravaUploading = false
     @State private var stravaUploaded = false
     @State private var stravaError: String?
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -324,6 +325,7 @@ struct RunSummaryView: View {
             do {
                 let activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
                 run.stravaActivityId = activityId
+                try? modelContext.save()
                 stravaUploaded = true
             } catch {
                 stravaError = error.localizedDescription

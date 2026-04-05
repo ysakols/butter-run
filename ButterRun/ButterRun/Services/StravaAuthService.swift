@@ -23,15 +23,26 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     override init() {
         super.init()
-        isAuthenticated = KeychainService.load(key: Keys.accessToken) != nil
+        // Only show as authenticated if we have a token that isn't expired
+        if let _ = KeychainService.load(key: Keys.accessToken) {
+            if let expiryString = KeychainService.load(key: Keys.tokenExpiry),
+               let expiresAt = TimeInterval(expiryString),
+               Date().timeIntervalSince1970 < expiresAt {
+                isAuthenticated = true
+            } else if KeychainService.load(key: Keys.refreshToken) != nil {
+                // Token expired but we have a refresh token — mark as authenticated,
+                // refreshTokenIfNeeded() will handle the refresh before any API call.
+                isAuthenticated = true
+            }
+        }
     }
 
     // MARK: - ASWebAuthenticationPresentationContextProviding
 
     nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        // ASWebAuthenticationSession always calls this on the main thread.
-        // Use DispatchQueue.main.sync for safety under strict concurrency.
-        DispatchQueue.main.sync {
+        // Apple calls this on the main thread, so DispatchQueue.main.sync would deadlock.
+        // Use MainActor.assumeIsolated since we know we're on main.
+        MainActor.assumeIsolated {
             UIApplication.shared.connectedScenes
                 .compactMap { $0 as? UIWindowScene }
                 .flatMap(\.windows)
@@ -90,7 +101,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     // MARK: - Exchange Token
 
-    func exchangeToken(code: String) async throws {
+    private func exchangeToken(code: String) async throws {
         let params: [String: String] = [
             "client_id": StravaConfig.clientID,
             "client_secret": StravaConfig.clientSecret,

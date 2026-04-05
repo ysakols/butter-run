@@ -55,9 +55,15 @@ class StravaUploadService {
         }
 
         if run.routePolyline != nil {
-            // Upload GPX — Strava creates the activity from the file (includes full route/map)
-            let uploadId = try await uploadGPX(run: run, accessToken: accessToken)
-            return uploadId
+            // Upload GPX — Strava creates the activity from the file (includes full route/map).
+            // Falls back to manual activity creation if GPX generation fails.
+            do {
+                let uploadId = try await uploadGPX(run: run, accessToken: accessToken)
+                return uploadId
+            } catch {
+                let activityId = try await createActivity(run: run, accessToken: accessToken)
+                return activityId
+            }
         } else {
             // No route data — create a manual activity
             let activityId = try await createActivity(run: run, accessToken: accessToken)

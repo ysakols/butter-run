@@ -220,6 +220,7 @@ struct SettingsView: View {
     }
 
     private func deleteAllData() {
+        stravaAuth.disconnect()
         do {
             try modelContext.delete(model: Run.self)
             try modelContext.delete(model: Achievement.self)
