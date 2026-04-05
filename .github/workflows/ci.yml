@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,25 +25,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Discover Xcode environment
+        shell: bash {0}
+        run: |
+          echo "=== Available Xcode versions ==="
+          ls -d /Applications/Xcode*.app 2>/dev/null || echo "No Xcode apps found"
+          echo ""
+          echo "=== Current Xcode ==="
+          xcode-select -p
+          xcodebuild -version
+          echo ""
+          echo "=== Available simulator runtimes ==="
+          xcrun simctl list runtimes 2>/dev/null || echo "No runtimes found"
+          echo ""
+          echo "=== Available iOS simulators ==="
+          xcrun simctl list devices iPhone 2>/dev/null | head -30 || echo "No devices found"
+
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+        run: |
+          # Use the latest available Xcode 16.x
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH=$(ls -d /Applications/Xcode.app 2>/dev/null)
+          fi
+          echo "Using Xcode at: $XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
 
       - name: Show Xcode version
         run: xcodebuild -version
 
       - name: Install iOS Simulator
         run: |
-          for i in 1 2 3; do
-            echo "Attempt $i: downloading iOS platform..."
-            if xcodebuild -downloadPlatform iOS; then
-              echo "iOS platform installed successfully."
-              break
-            fi
-            echo "Attempt $i failed. Retrying in 30s..."
-            sleep 30
-          done
-          # Verify simulator is available
-          xcrun simctl list runtimes iOS
+          # Check if iOS simulator runtime is already available
+          if xcrun simctl list runtimes iOS 2>/dev/null | grep -q "iOS"; then
+            echo "iOS simulator runtime already available:"
+            xcrun simctl list runtimes iOS
+          else
+            echo "No iOS runtime found, downloading..."
+            for i in 1 2 3; do
+              echo "Attempt $i: downloading iOS platform..."
+              if xcodebuild -downloadPlatform iOS; then
+                echo "iOS platform installed successfully."
+                break
+              fi
+              echo "Attempt $i failed. Retrying in 30s..."
+              sleep 30
+            done
+            xcrun simctl list runtimes iOS
+          fi
 
       - name: Create CI build config
         run: |
@@ -69,6 +99,21 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
             | xcpretty
+
+      - name: Post failure diagnostics
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BODY="## CI Diagnostics
+          \`\`\`
+          $(xcode-select -p)
+          $(xcodebuild -version 2>&1)
+
+          Runtimes: $(xcrun simctl list runtimes iOS 2>&1)
+          \`\`\`"
+          cd "$GITHUB_WORKSPACE"
+          gh pr comment ${{ github.event.pull_request.number }} --body "$BODY"
 
       - name: Upload test results
         if: always()
