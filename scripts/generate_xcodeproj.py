@@ -123,7 +123,7 @@ def build_dir_tree(file_list: list[str]) -> dict:
 def emit_group(name: str, group_id: str, children_lines: list[str], path: str | None = None, source_tree: str = '"<group>"') -> str:
     children_str = "\n".join(f"\t\t\t\t{c}," for c in children_lines)
     path_line = f'\t\t\tpath = "{path}";\n' if path and (" " in path) else (f"\t\t\tpath = {path};\n" if path else "")
-    name_line = f'\t\t\tname = "{name}";\n' if name and (" " in name) else ""
+    name_line = f'\t\t\tname = "{name}";\n' if name and (" " in name or path is None) else ""
     return (
         f"\t\t{group_id} /* {name} */ = {{\n"
         f"\t\t\tisa = PBXGroup;\n"

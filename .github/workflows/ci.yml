@@ -27,6 +27,13 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Create CI build config
+        run: |
+          cat > ButterRun.xcconfig <<EOL
+          DEVELOPMENT_TEAM =
+          BUNDLE_ID_PREFIX = com.butterrun.ci
+          EOL
+
       - name: Build
         run: |
           set -o pipefail

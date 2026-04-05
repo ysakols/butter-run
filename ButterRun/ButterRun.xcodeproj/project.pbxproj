@@ -422,6 +422,7 @@
 				7AFD71F6FA5F5A3B50C21641 /* ButterRunTests.xctest */,
 				B2CD4289E21C92A1A57786BB /* ButterRunUITests.xctest */,
 			);
+			name = "Products";
 			sourceTree = "<group>";
 		};
 
