@@ -18,6 +18,8 @@ struct SettingsView: View {
     @State private var loaded = false
     @State private var showDeleteConfirmation = false
     @State private var showRecalcConfirmation = false
+    @EnvironmentObject private var stravaAuth: StravaAuthService
+    @State private var autoShareToStrava: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -64,6 +66,24 @@ struct SettingsView: View {
                     }
                 }
                 .listRowBackground(ButterTheme.surface)
+
+                Section {
+                    StravaIntegrationView(autoShareToStrava: $autoShareToStrava)
+                        .onChange(of: autoShareToStrava) { _, _ in saveProfile() }
+                        .onChange(of: stravaAuth.isAuthenticated) { _, connected in
+                            if let p = profile {
+                                p.stravaConnected = connected
+                                if !connected {
+                                    autoShareToStrava = false
+                                    p.autoShareToStrava = false
+                                }
+                            }
+                        }
+                } header: {
+                    Text("Integrations")
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
 
                 Section("Butter Math") {
                     infoRow("1 tsp butter", "34 calories")
@@ -183,6 +203,7 @@ struct SettingsView: View {
         voiceFeedback = p.voiceFeedbackEnabled
         autoPause = p.autoPauseEnabled
         healthKit = p.healthKitEnabled
+        autoShareToStrava = p.autoShareToStrava
         loaded = true
     }
 
@@ -195,9 +216,11 @@ struct SettingsView: View {
         p.voiceFeedbackEnabled = voiceFeedback
         p.autoPauseEnabled = autoPause
         p.healthKitEnabled = healthKit
+        p.autoShareToStrava = autoShareToStrava
     }
 
     private func deleteAllData() {
+        stravaAuth.disconnect()
         do {
             try modelContext.delete(model: Run.self)
             try modelContext.delete(model: Achievement.self)

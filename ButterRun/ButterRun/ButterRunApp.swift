@@ -26,10 +26,23 @@ enum SchemaV2: VersionedSchema {
     ]
 }
 
+enum SchemaV3: VersionedSchema {
+    static var versionIdentifier = Schema.Version(3, 0, 0)
+    static var models: [any PersistentModel.Type] = [
+        Run.self,
+        UserProfile.self,
+        Split.self,
+        ButterEntry.self,
+        Achievement.self,
+        RunDraft.self
+    ]
+}
+
 enum ButterRunMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] = [SchemaV1.self, SchemaV2.self]
+    static var schemas: [any VersionedSchema.Type] = [SchemaV1.self, SchemaV2.self, SchemaV3.self]
     static var stages: [MigrationStage] = [
-        .lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self)
+        .lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
+        .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self)
     ]
 }
 
@@ -37,6 +50,7 @@ enum ButterRunMigrationPlan: SchemaMigrationPlan {
 
 @main
 struct ButterRunApp: App {
+    @StateObject private var stravaAuth = StravaAuthService()
     let container: ModelContainer
     let containerError: Error?
 
@@ -76,6 +90,7 @@ struct ButterRunApp: App {
                 DatabaseErrorView(error: error)
             } else {
                 ContentView()
+                    .environmentObject(stravaAuth)
             }
         }
         .modelContainer(container)

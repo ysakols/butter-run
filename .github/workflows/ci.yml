@@ -37,7 +37,7 @@ jobs:
 
       - name: Create CI build config
         run: |
-          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
+          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\nSTRAVA_CLIENT_ID =\nSTRAVA_CLIENT_SECRET =\n' > ButterRun.xcconfig
 
       - name: Build for Testing
         run: |
@@ -70,41 +70,29 @@ jobs:
 
       - name: Create CI build config
         run: |
-          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
-
-      - name: Prepare Simulator
-        run: |
-          # Create a fresh simulator to avoid state issues
-          RUNTIME=$(xcrun simctl list runtimes iOS -j | python3 -c "
-          import json, sys
-          for r in json.load(sys.stdin)['runtimes']:
-              if r['isAvailable'] and not r.get('isBeta', False):
-                  print(r['identifier']); sys.exit(0)
-          for r in json.load(sys.stdin)['runtimes']:
-              if r['isAvailable']:
-                  print(r['identifier']); sys.exit(0)
-          ")
-          echo "Runtime: $RUNTIME"
-          UDID=$(xcrun simctl create "CI_Test" "iPhone 16" "$RUNTIME")
-          echo "Created simulator: $UDID"
-          xcrun simctl boot "$UDID"
-          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\nSTRAVA_CLIENT_ID =\nSTRAVA_CLIENT_SECRET =\n' > ButterRun.xcconfig
 
       - name: Build and Run Unit Tests
         run: |
-          xcodebuild test \
-            -project ButterRun.xcodeproj \
-            -scheme ButterRun \
-            -destination "platform=iOS Simulator,id=$UDID" \
-            -only-testing:ButterRunTests \
-            -parallel-testing-enabled NO \
-            -destination-timeout 120 \
-            CODE_SIGNING_ALLOWED=NO \
-            -resultBundlePath TestResults.xcresult
-
-      - name: Cleanup Simulator
-        if: always()
-        run: xcrun simctl delete "$UDID" 2>/dev/null || true
+          # Use perl alarm as hard kill - available on all macOS, unlike timeout
+          perl -e '
+            $SIG{ALRM} = sub {
+              print STDERR "Tests exceeded 480s, killing...\n";
+              kill -9, getpgrp();
+              exit 124;
+            };
+            alarm 480;
+            my $rc = system("xcodebuild", "test",
+              "-project", "ButterRun.xcodeproj",
+              "-scheme", "ButterRun",
+              "-destination", "platform=iOS Simulator,name=iPhone 16,OS=latest",
+              "-only-testing:ButterRunTests",
+              "-parallel-testing-enabled", "NO",
+              "CODE_SIGNING_ALLOWED=NO",
+              "-resultBundlePath", "TestResults.xcresult");
+            alarm 0;
+            exit($rc >> 8);
+          '
 
       - name: Upload test results
         if: always()

@@ -21,6 +21,10 @@ class UserProfile {
     var autoPauseEnabled: Bool = true
     var healthKitEnabled: Bool = false
 
+    // V3 fields — Strava integration
+    var stravaConnected: Bool = false
+    var autoShareToStrava: Bool = false
+
     init(
         displayName: String,
         weightKg: Double,
