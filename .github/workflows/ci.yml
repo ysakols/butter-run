@@ -54,6 +54,7 @@ jobs:
 
       - name: Build & Test
         shell: bash {0}
+        timeout-minutes: 15
         run: |
           xcodebuild test \
             -project ButterRun.xcodeproj \
@@ -62,7 +63,7 @@ jobs:
             -only-testing:ButterRunTests \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
-            2>&1 | tee /tmp/build.log | xcpretty
+            2>&1 | tee /tmp/build.log
           EXIT=${PIPESTATUS[0]}
           [ $EXIT -ne 0 ] && exit $EXIT
 
