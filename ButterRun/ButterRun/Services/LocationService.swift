@@ -141,10 +141,9 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     }
 
     private func douglasPeucker(_ points: [CLLocation], epsilon: Double) -> [CLLocation] {
-        guard points.count > 2 else { return points }
+        guard points.count > 2, let first = points.first, let last = points.last else { return points }
         var maxDist = 0.0
         var index = 0
-        let first = points.first!, last = points.last!
         for i in 1..<(points.count - 1) {
             let d = perpendicularDistance(point: points[i], lineStart: first, lineEnd: last)
             if d > maxDist {

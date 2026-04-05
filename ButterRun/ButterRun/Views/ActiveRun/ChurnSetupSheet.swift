@@ -76,9 +76,10 @@ struct ChurnSetupSheet: View {
                 Spacer()
 
                 Button {
+                    let validCups = creamCups.isFinite ? creamCups : 1.0
                     let config = ChurnConfiguration(
                         creamType: creamType,
-                        creamCups: min(20.0, max(0.1, creamCups)),
+                        creamCups: min(20.0, max(0.1, validCups)),
                         isRoomTemp: isRoomTemp
                     )
                     onStart(config)

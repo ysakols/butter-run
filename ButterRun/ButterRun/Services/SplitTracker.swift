@@ -65,9 +65,9 @@ class SplitTracker: ObservableObject {
             splitPublisher.send(split)
 
             currentSplitIndex += 1
+            splitStartDistance = nextSplitBoundary
             nextSplitBoundary += splitDistanceMeters
             splitStartElapsedSeconds = elapsedSeconds
-            splitStartDistance = totalDistanceMeters
             splitStartElevationGain = elevationGainMeters
             splitStartButterBurned = butterBurnedTsp
         }

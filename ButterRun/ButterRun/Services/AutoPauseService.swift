@@ -20,11 +20,16 @@ class AutoPauseService: ObservableObject {
     private let pauseSpeedThreshold: Double = 0.5   // m/s
     private let resumeSpeedThreshold: Double = 0.8   // m/s
     private let pauseDelay: TimeInterval = 10.0      // seconds
+    private let now: () -> Date
 
     private var slowStartTime: Date?
     private var cancellables = Set<AnyCancellable>()
 
     let eventPublisher = PassthroughSubject<AutoPauseEvent, Never>()
+
+    init(now: @escaping () -> Date = { Date() }) {
+        self.now = now
+    }
 
     func updateSpeed(_ speedMps: Double) {
         guard isEnabled else { return }
@@ -40,10 +45,10 @@ class AutoPauseService: ObservableObject {
             // Check for pause
             if speedMps < pauseSpeedThreshold {
                 if slowStartTime == nil {
-                    slowStartTime = Date()
+                    slowStartTime = now()
                 }
                 if let start = slowStartTime,
-                   Date().timeIntervalSince(start) >= pauseDelay {
+                   now().timeIntervalSince(start) >= pauseDelay {
                     isPaused = true
                     eventPublisher.send(.autoPaused)
                 }

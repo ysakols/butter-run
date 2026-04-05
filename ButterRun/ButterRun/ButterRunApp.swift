@@ -60,10 +60,13 @@ struct ButterRunApp: App {
         } catch {
             // Fallback: create an in-memory container so the app can launch
             containerError = error
-            container = try! ModelContainer(
+            guard let fallback = try? ModelContainer(
                 for: Schema([Run.self, Split.self, ButterEntry.self, UserProfile.self, Achievement.self, RunDraft.self]),
                 configurations: [ModelConfiguration(isStoredInMemoryOnly: true)]
-            )
+            ) else {
+                fatalError("Cannot create even an in-memory database: \(error)")
+            }
+            container = fallback
         }
     }
 
@@ -129,6 +132,14 @@ struct ContentView: View {
     }
 }
 
+/// Shared snapshot type used to encode/decode butter entries in run drafts.
+/// Used by both ActiveRunViewModel (encoder) and CrashRecoveryWrapper (decoder).
+struct DraftEntrySnapshot: Codable {
+    let servingRaw: String
+    let tsp: Double
+    let timestamp: Date
+}
+
 /// Checks for an unfinished run draft on app launch
 struct CrashRecoveryWrapper<Content: View>: View {
     @Environment(\.modelContext) private var modelContext
@@ -188,12 +199,7 @@ struct CrashRecoveryWrapper<Content: View>: View {
 
         // Decode and attach butter entries from draft, preserving original serving types and timestamps
         if let entriesData = draft.butterEntriesData {
-            struct EntrySnapshot: Codable {
-                let servingRaw: String
-                let tsp: Double
-                let timestamp: Date
-            }
-            if let snapshots = try? JSONDecoder().decode([EntrySnapshot].self, from: entriesData) {
+            if let snapshots = try? JSONDecoder().decode([DraftEntrySnapshot].self, from: entriesData) {
                 let entries = snapshots.map { snapshot -> ButterEntry in
                     let serving = ButterServing(rawValue: snapshot.servingRaw) ?? .custom
                     let entry = ButterEntry(serving: serving, customTeaspoons: serving == .custom ? snapshot.tsp : 0)

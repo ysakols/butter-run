@@ -29,10 +29,10 @@ final class HistoryUITests: XCTestCase {
         XCTAssertTrue(churnButton.waitForExistence(timeout: 5))
         churnButton.tap()
 
-        sleep(2) // Let it run briefly
-
-        // Stop
-        app.buttons["Stop run"].tap()
+        // Wait for active run UI to be ready
+        let stopButton = app.buttons["Stop run"]
+        XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
+        stopButton.tap()
         let finishButton = app.buttons["Finish Run"]
         XCTAssertTrue(finishButton.waitForExistence(timeout: 3))
         finishButton.tap()
