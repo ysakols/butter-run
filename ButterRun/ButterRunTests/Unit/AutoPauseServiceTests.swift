@@ -5,10 +5,12 @@ import Combine
 final class AutoPauseServiceTests: XCTestCase {
     var service: AutoPauseService!
     var cancellables: Set<AnyCancellable>!
+    var currentTime: Date!
 
     override func setUp() {
         super.setUp()
-        service = AutoPauseService()
+        currentTime = Date()
+        service = AutoPauseService(now: { [unowned self] in self.currentTime })
         service.isEnabled = true
         cancellables = []
     }
@@ -16,6 +18,7 @@ final class AutoPauseServiceTests: XCTestCase {
     override func tearDown() {
         cancellables = nil
         service = nil
+        currentTime = nil
         super.tearDown()
     }
 
@@ -23,24 +26,11 @@ final class AutoPauseServiceTests: XCTestCase {
         var events: [AutoPauseEvent] = []
         service.eventPublisher.sink { events.append($0) }.store(in: &cancellables)
 
-        let expectation = expectation(description: "Auto-pause triggers")
-
-        // Feed slow speed updates at 1-second intervals for 11 seconds
-        // The service uses Date() internally, so we need real elapsed time
-        DispatchQueue.global().async {
-            for i in 0..<12 {
-                Thread.sleep(forTimeInterval: 1.0)
-                DispatchQueue.main.sync {
-                    self.service.updateSpeed(0.3) // Below 0.5 m/s threshold
-                }
-                if i >= 10 {
-                    expectation.fulfill()
-                    break
-                }
-            }
+        // Feed slow speed updates, advancing time by 1 second each
+        for _ in 0..<11 {
+            currentTime = currentTime.addingTimeInterval(1.0)
+            service.updateSpeed(0.3) // Below 0.5 m/s threshold
         }
-
-        wait(for: [expectation], timeout: 15.0)
 
         XCTAssertTrue(service.isPaused, "Service should be paused after 10+ seconds below speed threshold")
         XCTAssertTrue(events.contains(.autoPaused), "Should have emitted autoPaused event")
@@ -50,19 +40,10 @@ final class AutoPauseServiceTests: XCTestCase {
         var events: [AutoPauseEvent] = []
         service.eventPublisher.sink { events.append($0) }.store(in: &cancellables)
 
-        let expectation = expectation(description: "Wait 9 seconds")
-
-        DispatchQueue.global().async {
-            for _ in 0..<9 {
-                Thread.sleep(forTimeInterval: 1.0)
-                DispatchQueue.main.sync {
-                    self.service.updateSpeed(0.3)
-                }
-            }
-            expectation.fulfill()
+        for _ in 0..<9 {
+            currentTime = currentTime.addingTimeInterval(1.0)
+            service.updateSpeed(0.3)
         }
-
-        wait(for: [expectation], timeout: 12.0)
 
         XCTAssertFalse(service.isPaused, "Service should NOT be paused after only 9 seconds")
         XCTAssertTrue(events.isEmpty, "Should not have emitted any events")
@@ -72,25 +53,15 @@ final class AutoPauseServiceTests: XCTestCase {
         var events: [AutoPauseEvent] = []
         service.eventPublisher.sink { events.append($0) }.store(in: &cancellables)
 
-        let expectation = expectation(description: "Pause then resume")
-
-        DispatchQueue.global().async {
-            // First trigger a pause (11 seconds of slow speed)
-            for _ in 0..<12 {
-                Thread.sleep(forTimeInterval: 1.0)
-                DispatchQueue.main.sync {
-                    self.service.updateSpeed(0.3)
-                }
-            }
-
-            // Now send fast speed to trigger resume
-            DispatchQueue.main.sync {
-                self.service.updateSpeed(1.0) // Above 0.8 m/s threshold
-            }
-            expectation.fulfill()
+        // First trigger a pause (11 seconds of slow speed)
+        for _ in 0..<12 {
+            currentTime = currentTime.addingTimeInterval(1.0)
+            service.updateSpeed(0.3)
         }
+        XCTAssertTrue(service.isPaused)
 
-        wait(for: [expectation], timeout: 16.0)
+        // Now send fast speed to trigger resume
+        service.updateSpeed(1.0) // Above 0.8 m/s threshold
 
         XCTAssertFalse(service.isPaused, "Service should have resumed")
         XCTAssertTrue(events.contains(.autoResumed), "Should have emitted autoResumed event")
@@ -101,8 +72,8 @@ final class AutoPauseServiceTests: XCTestCase {
         var events: [AutoPauseEvent] = []
         service.eventPublisher.sink { events.append($0) }.store(in: &cancellables)
 
-        // Even with many slow speed updates, should not pause when disabled
         for _ in 0..<20 {
+            currentTime = currentTime.addingTimeInterval(1.0)
             service.updateSpeed(0.1)
         }
 
@@ -111,7 +82,13 @@ final class AutoPauseServiceTests: XCTestCase {
     }
 
     func test_reset() {
-        service.updateSpeed(0.2)
+        // Trigger a pause first
+        for _ in 0..<12 {
+            currentTime = currentTime.addingTimeInterval(1.0)
+            service.updateSpeed(0.2)
+        }
+        XCTAssertTrue(service.isPaused)
+
         service.reset()
         XCTAssertFalse(service.isPaused)
     }
@@ -120,13 +97,18 @@ final class AutoPauseServiceTests: XCTestCase {
         // Start with slow speed
         service.updateSpeed(0.3)
 
-        // Then recover to fast speed (resets the slow timer)
-        service.updateSpeed(2.0)
-
-        // Then go slow again — should need another 10 seconds
+        // Advance 5 seconds
+        currentTime = currentTime.addingTimeInterval(5.0)
         service.updateSpeed(0.3)
 
-        // Should not be paused since the slow timer was reset
-        XCTAssertFalse(service.isPaused)
+        // Recover to fast speed (resets the slow timer)
+        service.updateSpeed(2.0)
+
+        // Go slow again and advance another 5 seconds — should NOT pause
+        // because the timer was reset by the fast speed
+        currentTime = currentTime.addingTimeInterval(5.0)
+        service.updateSpeed(0.3)
+
+        XCTAssertFalse(service.isPaused, "Timer should have been reset by speed recovery")
     }
 }
