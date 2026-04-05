@@ -36,11 +36,13 @@ jobs:
 
       - name: Verify project loads
         run: |
-          xcodebuild -project ButterRun.xcodeproj -scheme ButterRun -showBuildSettings -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO 2>&1 | head -50
+          xcodebuild -project ButterRun.xcodeproj -list 2>&1 || true
+          echo "---"
+          xcodebuild -project ButterRun.xcodeproj -scheme ButterRun -showBuildSettings -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO 2>&1 | head -80 || true
 
       - name: Build
+        shell: bash --noprofile --norc -o pipefail {0}
         run: |
-          set -o pipefail
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
@@ -49,15 +51,16 @@ jobs:
             2>&1 | tee /tmp/build.log | xcpretty
           BUILD_EXIT=${PIPESTATUS[0]}
           if [ $BUILD_EXIT -ne 0 ]; then
-            echo "::group::Raw xcodebuild output (last 100 lines)"
-            tail -100 /tmp/build.log
+            echo "::error::Build failed with exit code $BUILD_EXIT"
+            echo "::group::Raw xcodebuild output (last 200 lines)"
+            tail -200 /tmp/build.log
             echo "::endgroup::"
             exit $BUILD_EXIT
           fi
 
       - name: Run Unit Tests
+        shell: bash --noprofile --norc -o pipefail {0}
         run: |
-          set -o pipefail
           xcodebuild test \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
@@ -68,8 +71,9 @@ jobs:
             2>&1 | tee /tmp/test.log | xcpretty
           TEST_EXIT=${PIPESTATUS[0]}
           if [ $TEST_EXIT -ne 0 ]; then
-            echo "::group::Raw xcodebuild output (last 100 lines)"
-            tail -100 /tmp/test.log
+            echo "::error::Tests failed with exit code $TEST_EXIT"
+            echo "::group::Raw xcodebuild output (last 200 lines)"
+            tail -200 /tmp/test.log
             echo "::endgroup::"
             exit $TEST_EXIT
           fi
