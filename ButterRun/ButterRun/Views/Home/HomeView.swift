@@ -3,6 +3,7 @@ import SwiftData
 import CoreLocation
 
 struct HomeView: View {
+    @EnvironmentObject private var stravaAuth: StravaAuthService
     @Query(sort: \Run.startDate, order: .reverse) private var runs: [Run]
     @Query private var profiles: [UserProfile]
     @State private var viewModel = HomeViewModel()
@@ -102,6 +103,7 @@ struct HomeView: View {
                     churnConfig: churnConfig,
                     profile: profile ?? UserProfile(displayName: "Runner", weightKg: 70)
                 )
+                .environmentObject(stravaAuth)
             }
             .sheet(isPresented: $showChurnSetup) {
                 ChurnSetupSheet { config in

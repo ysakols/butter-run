@@ -6,6 +6,8 @@ struct ActiveRunView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @EnvironmentObject private var stravaAuth: StravaAuthService
+
     let isButterZeroChallenge: Bool
     let isChurnEnabled: Bool
     let churnConfig: ChurnConfiguration?
@@ -139,6 +141,7 @@ struct ActiveRunView: View {
                     usesMiles: profile.usesMiles,
                     onDismiss: { dismiss() }
                 )
+                .environmentObject(stravaAuth)
             }
         }
         .preferredColorScheme(.dark)
