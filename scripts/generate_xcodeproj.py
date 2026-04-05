@@ -683,10 +683,10 @@ sections.append(build_config(PROJECT_DEBUG_UUID, "Debug", project_debug_settings
 sections.append(build_config(PROJECT_RELEASE_UUID, "Release", project_release_settings))
 sections.append(build_config(APP_DEBUG_UUID, "Debug", app_debug_settings, base_config_ref=XCCONFIG_FILE_UUID))
 sections.append(build_config(APP_RELEASE_UUID, "Release", app_release_settings, base_config_ref=XCCONFIG_FILE_UUID))
-sections.append(build_config(TEST_DEBUG_UUID, "Debug", test_debug_settings))
-sections.append(build_config(TEST_RELEASE_UUID, "Release", test_release_settings))
-sections.append(build_config(UITEST_DEBUG_UUID, "Debug", uitest_debug_settings))
-sections.append(build_config(UITEST_RELEASE_UUID, "Release", uitest_release_settings))
+sections.append(build_config(TEST_DEBUG_UUID, "Debug", test_debug_settings, base_config_ref=XCCONFIG_FILE_UUID))
+sections.append(build_config(TEST_RELEASE_UUID, "Release", test_release_settings, base_config_ref=XCCONFIG_FILE_UUID))
+sections.append(build_config(UITEST_DEBUG_UUID, "Debug", uitest_debug_settings, base_config_ref=XCCONFIG_FILE_UUID))
+sections.append(build_config(UITEST_RELEASE_UUID, "Release", uitest_release_settings, base_config_ref=XCCONFIG_FILE_UUID))
 sections.append("/* End XCBuildConfiguration section */\n")
 
 # XCConfigurationList

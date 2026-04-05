@@ -748,6 +748,7 @@
 
 		2C95DCE8A5ED1B73A2083F8C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 25DD399AF7FABAED5A385081 /* ButterRun.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -765,6 +766,7 @@
 
 		4BF515973D47174B554D691D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 25DD399AF7FABAED5A385081 /* ButterRun.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -782,6 +784,7 @@
 
 		BB51EC485B772422D448A4C9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 25DD399AF7FABAED5A385081 /* ButterRun.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -798,6 +801,7 @@
 
 		D6099051BCB7FE6E953E8A82 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 25DD399AF7FABAED5A385081 /* ButterRun.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

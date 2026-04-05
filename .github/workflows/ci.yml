@@ -29,10 +29,7 @@ jobs:
 
       - name: Create CI build config
         run: |
-          cat > ButterRun.xcconfig <<EOL
-          DEVELOPMENT_TEAM =
-          BUNDLE_ID_PREFIX = com.butterrun.ci
-          EOL
+          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
 
       - name: Build
         run: |
