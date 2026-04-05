@@ -123,14 +123,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Post the build/test log as PR comment
           LOG_FILE="/tmp/build.log"
-          [ -f /tmp/test.log ] && [ ! -s /tmp/build.log ] && LOG_FILE="/tmp/test.log"
-          LAST_LINES=$(tail -80 "$LOG_FILE" 2>/dev/null || echo "No log available")
+          [ -f /tmp/test.log ] && LOG_FILE="/tmp/test.log"
+          # Extract actual error and warning lines
+          ERRORS=$(grep -E '(error:|warning:|fatal error|failed)' "$LOG_FILE" 2>/dev/null | head -60 || echo "No error lines found")
           cd "$GITHUB_WORKSPACE"
-          gh pr comment ${{ github.event.pull_request.number }} --body "## Build/Test Log (last 80 lines)
+          gh pr comment ${{ github.event.pull_request.number }} --body "## Compiler Errors
           \`\`\`
-          $LAST_LINES
+          $ERRORS
           \`\`\`"
 
       - name: Upload test results
