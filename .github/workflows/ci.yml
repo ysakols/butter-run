@@ -25,53 +25,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Discover Xcode environment
-        shell: bash {0}
-        run: |
-          echo "=== Available Xcode versions ==="
-          ls -d /Applications/Xcode*.app 2>/dev/null || echo "No Xcode apps found"
-          echo ""
-          echo "=== Current Xcode ==="
-          xcode-select -p
-          xcodebuild -version
-          echo ""
-          echo "=== Available simulator runtimes ==="
-          xcrun simctl list runtimes 2>/dev/null || echo "No runtimes found"
-          echo ""
-          echo "=== Available iOS simulators ==="
-          xcrun simctl list devices iPhone 2>/dev/null | head -30 || echo "No devices found"
-
       - name: Select Xcode
         run: |
-          # Use the latest available Xcode 16.x
           XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
           if [ -z "$XCODE_PATH" ]; then
-            XCODE_PATH=$(ls -d /Applications/Xcode.app 2>/dev/null)
+            XCODE_PATH="/Applications/Xcode.app"
           fi
-          echo "Using Xcode at: $XCODE_PATH"
+          echo "Using $XCODE_PATH"
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
 
-      - name: Show Xcode version
-        run: xcodebuild -version
-
-      - name: Install iOS Simulator
+      - name: Ensure iOS Simulator
         run: |
-          # Check if iOS simulator runtime is already available
           if xcrun simctl list runtimes iOS 2>/dev/null | grep -q "iOS"; then
-            echo "iOS simulator runtime already available:"
-            xcrun simctl list runtimes iOS
+            echo "iOS simulator runtime available"
           else
-            echo "No iOS runtime found, downloading..."
+            echo "Downloading iOS simulator runtime..."
             for i in 1 2 3; do
-              echo "Attempt $i: downloading iOS platform..."
-              if xcodebuild -downloadPlatform iOS; then
-                echo "iOS platform installed successfully."
-                break
-              fi
-              echo "Attempt $i failed. Retrying in 30s..."
+              xcodebuild -downloadPlatform iOS && break
+              echo "Retry $i..."
               sleep 30
             done
-            xcrun simctl list runtimes iOS
           fi
 
       - name: Create CI build config
@@ -87,15 +61,8 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee /tmp/build.log | xcpretty
-          BUILD_EXIT=${PIPESTATUS[0]}
-          if [ $BUILD_EXIT -ne 0 ]; then
-            echo "::error::Build failed with exit code $BUILD_EXIT"
-            echo "BUILD_FAILED=true" >> "$GITHUB_ENV"
-            echo "BUILD_LOG<<EOFLOG" >> "$GITHUB_ENV"
-            tail -50 /tmp/build.log >> "$GITHUB_ENV"
-            echo "EOFLOG" >> "$GITHUB_ENV"
-            exit $BUILD_EXIT
-          fi
+          EXIT=${PIPESTATUS[0]}
+          [ $EXIT -ne 0 ] && exit $EXIT
 
       - name: Run Unit Tests
         shell: bash {0}
@@ -108,15 +75,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
             2>&1 | tee /tmp/test.log | xcpretty
-          TEST_EXIT=${PIPESTATUS[0]}
-          if [ $TEST_EXIT -ne 0 ]; then
-            echo "::error::Tests failed with exit code $TEST_EXIT"
-            echo "BUILD_FAILED=true" >> "$GITHUB_ENV"
-            echo "BUILD_LOG<<EOFLOG" >> "$GITHUB_ENV"
-            tail -50 /tmp/test.log >> "$GITHUB_ENV"
-            echo "EOFLOG" >> "$GITHUB_ENV"
-            exit $TEST_EXIT
-          fi
+          EXIT=${PIPESTATUS[0]}
+          [ $EXIT -ne 0 ] && exit $EXIT
 
       - name: Post failure details
         if: failure() && github.event_name == 'pull_request'
@@ -125,10 +85,9 @@ jobs:
         run: |
           LOG_FILE="/tmp/build.log"
           [ -f /tmp/test.log ] && LOG_FILE="/tmp/test.log"
-          # Extract actual error and warning lines
-          ERRORS=$(grep -E '(error:|warning:|fatal error|failed)' "$LOG_FILE" 2>/dev/null | head -60 || echo "No error lines found")
+          ERRORS=$(grep -E 'error:' "$LOG_FILE" 2>/dev/null | head -40 || echo "No error lines found")
           cd "$GITHUB_WORKSPACE"
-          gh pr comment ${{ github.event.pull_request.number }} --body "## Compiler Errors
+          gh pr comment ${{ github.event.pull_request.number }} --body "## Build Errors
           \`\`\`
           $ERRORS
           \`\`\`"
