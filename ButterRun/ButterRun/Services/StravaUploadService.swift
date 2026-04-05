@@ -55,11 +55,13 @@ class StravaUploadService {
         }
 
         if run.routePolyline != nil {
-            // Upload GPX — Strava creates the activity from the file (includes full route/map).
+            // Upload GPX — Strava creates the activity asynchronously from the file.
+            // Poll until processing completes to get the real activity ID.
             // Falls back to manual activity creation if GPX generation fails.
             do {
                 let uploadId = try await uploadGPX(run: run, accessToken: accessToken)
-                return uploadId
+                let activityId = try await pollForActivityId(uploadId: uploadId, accessToken: accessToken)
+                return activityId
             } catch {
                 let activityId = try await createActivity(run: run, accessToken: accessToken)
                 return activityId
@@ -234,6 +236,35 @@ class StravaUploadService {
         let activityId = (json["activity_id"] as? NSNumber)?.int64Value
 
         return UploadStatus(id: idNumber.int64Value, status: status, activityId: activityId)
+    }
+
+    // MARK: - Poll Upload Status
+
+    /// Polls Strava's upload endpoint until processing completes, returning the final activity ID.
+    /// Strava GPX processing typically takes 2-15 seconds.
+    private func pollForActivityId(uploadId: Int64, accessToken: String, maxAttempts: Int = 10) async throws -> Int64 {
+        for attempt in 0..<maxAttempts {
+            if attempt > 0 {
+                // Exponential backoff: 2s, 4s, 4s, 4s...
+                let delay = attempt == 1 ? 2 : 4
+                try await Task.sleep(nanoseconds: UInt64(delay) * 1_000_000_000)
+            }
+
+            let status = try await checkUploadStatus(uploadId: uploadId, accessToken: accessToken)
+
+            if let activityId = status.activityId {
+                return activityId
+            }
+
+            // If Strava reports an error, stop polling
+            if status.status.contains("error") {
+                throw StravaUploadError.uploadFailed(status.status)
+            }
+        }
+
+        // Timed out waiting — return the upload ID as fallback
+        // (the activity will still be created, just not tracked precisely)
+        return uploadId
     }
 
     // MARK: - GPX Generation

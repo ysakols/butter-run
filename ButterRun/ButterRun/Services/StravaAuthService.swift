@@ -15,6 +15,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
         static let accessToken = "strava_access_token"
         static let refreshToken = "strava_refresh_token"
         static let tokenExpiry = "strava_token_expiry"
+        static let athleteName = "strava_athlete_name"
     }
 
     var accessToken: String? {
@@ -34,6 +35,8 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
                 // refreshTokenIfNeeded() will handle the refresh before any API call.
                 isAuthenticated = true
             }
+            // Restore persisted athlete name
+            athleteName = UserDefaults.standard.string(forKey: Keys.athleteName)
         }
     }
 
@@ -125,7 +128,9 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
         if let athlete = json["athlete"] as? [String: Any] {
             let first = athlete["firstname"] as? String ?? ""
             let last = athlete["lastname"] as? String ?? ""
-            athleteName = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
+            let name = "\(first) \(last)".trimmingCharacters(in: .whitespaces)
+            athleteName = name
+            UserDefaults.standard.set(name, forKey: Keys.athleteName)
         }
 
         isAuthenticated = true
@@ -179,6 +184,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
         // Clear local state immediately so UI updates are synchronous
         clearKeychain()
+        UserDefaults.standard.removeObject(forKey: Keys.athleteName)
         isAuthenticated = false
         athleteName = nil
 
