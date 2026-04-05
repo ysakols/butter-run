@@ -103,7 +103,7 @@ struct RunSummaryView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 if let image = shareImage {
-                    ShareSheetView(image: image)
+                    ShareSheetView(image: image, isPresented: $showShareSheet)
                 }
             }
         }
@@ -271,12 +271,17 @@ struct SplitRowView: View {
 
 struct ShareSheetView: UIViewControllerRepresentable {
     let image: UIImage
+    @Binding var isPresented: Bool
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(
+        let controller = UIActivityViewController(
             activityItems: [image],
             applicationActivities: nil
         )
+        controller.completionWithItemsHandler = { _, _, _, _ in
+            isPresented = false
+        }
+        return controller
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}

@@ -50,7 +50,7 @@ struct ButterRunApp: App {
                 Achievement.self,
                 RunDraft.self,
             ])
-            let config = ModelConfiguration(schema: schema)
+            let config = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
             container = try ModelContainer(
                 for: schema,
                 migrationPlan: ButterRunMigrationPlan.self,
@@ -129,6 +129,12 @@ struct ContentView: View {
     }
 }
 
+private struct CrashRecoveryEntrySnapshot: Codable {
+    let servingRaw: String
+    let tsp: Double
+    let timestamp: Date
+}
+
 /// Checks for an unfinished run draft on app launch
 struct CrashRecoveryWrapper<Content: View>: View {
     @Environment(\.modelContext) private var modelContext
@@ -144,13 +150,16 @@ struct CrashRecoveryWrapper<Content: View>: View {
         content()
             .onAppear(perform: checkForDraft)
             .alert("Unfinished Run", isPresented: $showRecoveryPrompt) {
+                Button("Save Run") {
+                    saveAsManualRun()
+                }
                 Button("Discard", role: .destructive) {
                     discardDraft()
                 }
             } message: {
                 if let draft = recoveredDraft {
                     let duration = ButterFormatters.duration(draft.elapsedSeconds)
-                    Text("You had an unfinished run from \(draft.startDate.formatted(date: .abbreviated, time: .shortened)) (\(duration)). Unfortunately it cannot be resumed.")
+                    Text("You had an unfinished run from \(draft.startDate.formatted(date: .abbreviated, time: .shortened)) (\(duration)). Would you like to save it?")
                 } else {
                     Text("You had an unfinished run that cannot be resumed.")
                 }
@@ -163,6 +172,42 @@ struct CrashRecoveryWrapper<Content: View>: View {
             recoveredDraft = draft
             showRecoveryPrompt = true
         }
+    }
+
+    private func saveAsManualRun() {
+        guard let draft = recoveredDraft else { return }
+
+        let run = Run(startDate: draft.startDate, isButterZeroChallenge: draft.isButterZeroChallenge)
+        run.endDate = draft.startDate.addingTimeInterval(draft.elapsedSeconds + draft.pausedDuration)
+        run.distanceMeters = draft.distanceMeters
+        run.durationSeconds = draft.elapsedSeconds
+        run.totalButterBurnedTsp = draft.butterBurnedTsp
+        run.totalButterEatenTsp = draft.butterEatenTsp
+        run.netButterTsp = draft.butterEatenTsp - draft.butterBurnedTsp
+        run.totalCaloriesBurned = draft.butterBurnedTsp * ButterCalculator.caloriesPerTeaspoon
+        run.isManualEntry = true
+        run.routePolyline = draft.routePointsData
+
+        if draft.distanceMeters > 0 && draft.elapsedSeconds > 0 {
+            run.averagePaceSecondsPerKm = draft.elapsedSeconds / (draft.distanceMeters / 1000.0)
+        }
+
+        // Decode and attach butter entries from draft, preserving original serving types and timestamps
+        if let entriesData = draft.butterEntriesData {
+            if let snapshots = try? JSONDecoder().decode([CrashRecoveryEntrySnapshot].self, from: entriesData) {
+                let entries = snapshots.map { snapshot -> ButterEntry in
+                    let serving = ButterServing(rawValue: snapshot.servingRaw) ?? .custom
+                    let entry = ButterEntry(serving: serving, customTeaspoons: serving == .custom ? snapshot.tsp : 0)
+                    entry.timestamp = snapshot.timestamp
+                    return entry
+                }
+                run.butterEntries = entries
+            }
+        }
+
+        modelContext.insert(run)
+        try? modelContext.save()
+        discardDraft()
     }
 
     private func discardDraft() {

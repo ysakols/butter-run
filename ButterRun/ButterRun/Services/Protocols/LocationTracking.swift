@@ -23,6 +23,8 @@ protocol LocationTracking: AnyObject {
     func pauseTracking()
     func resumeTracking()
     func encodeRoute() -> Data?
+    /// Whether new route points have been added since the last encode.
+    var routeIsDirty: Bool { get }
     /// Subtract drift distance accumulated during auto-pause
     func subtractDistance(_ meters: Double)
 }
