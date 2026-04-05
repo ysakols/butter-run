@@ -1,0 +1,29 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Local signing config (contains team ID)
+ButterRun/ButterRun.xcconfig
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Xcode Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Test results
+*.xcresult
+TestResults/

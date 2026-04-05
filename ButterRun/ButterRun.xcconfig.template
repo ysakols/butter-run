@@ -1,0 +1,9 @@
+// Butter Run Build Configuration
+// Copy this file to ButterRun.xcconfig and fill in your values.
+// Do NOT commit ButterRun.xcconfig to source control.
+
+// Your Apple Developer Team ID (found at https://developer.apple.com/account)
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+
+// Bundle identifier prefix (reverse domain notation, e.g. com.yourcompany)
+BUNDLE_ID_PREFIX = com.yourcompany

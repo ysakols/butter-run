@@ -27,28 +27,27 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Resolve package dependencies
-        run: xcodebuild -resolvePackageDependencies -scheme ButterRun -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'
-
       - name: Build
         run: |
+          set -o pipefail
           xcodebuild build-for-testing \
+            -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO \
-            | xcpretty || true
+            | xcpretty
 
       - name: Run Unit Tests
         run: |
+          set -o pipefail
           xcodebuild test \
+            -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -only-testing:ButterRunTests \
-            -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
-            | xcpretty || true
+            | xcpretty
 
       - name: Upload test results
         if: always()
