@@ -55,7 +55,11 @@ class StravaUploadService {
         let activityId = try await createActivity(run: run, accessToken: accessToken)
 
         if run.routePolyline != nil {
-            _ = try? await uploadGPX(run: run, accessToken: accessToken)
+            do {
+                _ = try await uploadGPX(run: run, accessToken: accessToken)
+            } catch {
+                print("Strava GPX upload failed (activity was created): \(error.localizedDescription)")
+            }
         }
 
         return activityId
@@ -116,12 +120,12 @@ class StravaUploadService {
         }
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let activityId = json["id"] as? Int64
+              let activityIdNumber = json["id"] as? NSNumber
         else {
             throw StravaUploadError.invalidResponse
         }
 
-        return activityId
+        return activityIdNumber.int64Value
     }
 
     // MARK: - Upload GPX
@@ -170,12 +174,12 @@ class StravaUploadService {
         }
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let uploadId = json["id"] as? Int64
+              let uploadIdNumber = json["id"] as? NSNumber
         else {
             throw StravaUploadError.invalidResponse
         }
 
-        return uploadId
+        return uploadIdNumber.int64Value
     }
 
     // MARK: - Check Upload Status
@@ -200,15 +204,15 @@ class StravaUploadService {
         }
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let id = json["id"] as? Int64,
+              let idNumber = json["id"] as? NSNumber,
               let status = json["status"] as? String
         else {
             throw StravaUploadError.invalidResponse
         }
 
-        let activityId = json["activity_id"] as? Int64
+        let activityId = (json["activity_id"] as? NSNumber)?.int64Value
 
-        return UploadStatus(id: id, status: status, activityId: activityId)
+        return UploadStatus(id: idNumber.int64Value, status: status, activityId: activityId)
     }
 
     // MARK: - GPX Generation

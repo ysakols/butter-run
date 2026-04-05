@@ -9,7 +9,7 @@ struct RunSummaryView: View {
     @State private var shareImage: UIImage?
     @State private var meltProgress: Double = 0
     @State private var shareMode: ShareCardMode = .story
-    @StateObject private var stravaAuth = StravaAuthService()
+    @EnvironmentObject private var stravaAuth: StravaAuthService
     @State private var stravaUploading = false
     @State private var stravaUploaded = false
     @State private var stravaError: String?

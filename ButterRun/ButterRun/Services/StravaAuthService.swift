@@ -1,8 +1,9 @@
 import Foundation
 import AuthenticationServices
+import UIKit
 
 @MainActor
-class StravaAuthService: ObservableObject {
+class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresentationContextProviding {
 
     @Published var isAuthenticated: Bool = false
     @Published var athleteName: String?
@@ -19,8 +20,20 @@ class StravaAuthService: ObservableObject {
         KeychainService.load(key: Keys.accessToken)
     }
 
-    init() {
+    override init() {
+        super.init()
         isAuthenticated = KeychainService.load(key: Keys.accessToken) != nil
+    }
+
+    // MARK: - ASWebAuthenticationPresentationContextProviding
+
+    nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        MainActor.assumeIsolated {
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap(\.windows)
+                .first(where: \.isKeyWindow) ?? ASPresentationAnchor()
+        }
     }
 
     // MARK: - Authorize
@@ -37,27 +50,34 @@ class StravaAuthService: ObservableObject {
             url: url,
             callbackURLScheme: StravaConfig.callbackScheme
         ) { [weak self] callbackURL, error in
-            guard let self else { return }
+            Task { @MainActor in
+                guard let self else { return }
 
-            if let error {
-                print("Strava auth error: \(error.localizedDescription)")
-                return
-            }
+                if let error {
+                    print("Strava auth error: \(error.localizedDescription)")
+                    self.authSession = nil
+                    return
+                }
 
-            guard let callbackURL,
-                  let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
-                  let code = components.queryItems?.first(where: { $0.name == "code" })?.value
-            else {
-                print("Strava auth: missing code in callback URL.")
-                return
-            }
+                guard let callbackURL,
+                      let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
+                      let code = components.queryItems?.first(where: { $0.name == "code" })?.value
+                else {
+                    print("Strava auth: missing code in callback URL.")
+                    self.authSession = nil
+                    return
+                }
 
-            Task {
-                try await self.exchangeToken(code: code)
+                do {
+                    try await self.exchangeToken(code: code)
+                } catch {
+                    print("Strava token exchange failed: \(error.localizedDescription)")
+                }
                 self.authSession = nil
             }
         }
 
+        authSession?.presentationContextProvider = self
         authSession?.prefersEphemeralWebBrowserSession = false
         authSession?.start()
     }
@@ -96,6 +116,7 @@ class StravaAuthService: ObservableObject {
 
     // MARK: - Refresh Token
 
+    /// Refreshes the access token if it will expire within 5 minutes.
     func refreshTokenIfNeeded() async throws {
         guard let expiryString = KeychainService.load(key: Keys.tokenExpiry),
               let expiresAt = TimeInterval(expiryString)
@@ -103,8 +124,9 @@ class StravaAuthService: ObservableObject {
             throw StravaAuthError.missingRefreshToken
         }
 
-        // If the token is still valid, nothing to do
-        if Date().timeIntervalSince1970 < expiresAt {
+        // Refresh 5 minutes before actual expiry to avoid edge-case failures
+        let graceSeconds: TimeInterval = 300
+        if Date().timeIntervalSince1970 + graceSeconds < expiresAt {
             return
         }
 
@@ -179,10 +201,10 @@ class StravaAuthService: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-        let body = params
-            .map { "\($0.key)=\($0.value)" }
-            .joined(separator: "&")
-        request.httpBody = body.data(using: .utf8)
+        // Use URLComponents for proper percent-encoding of values
+        var bodyComponents = URLComponents()
+        bodyComponents.queryItems = params.map { URLQueryItem(name: $0.key, value: $0.value) }
+        request.httpBody = bodyComponents.percentEncodedQuery?.data(using: .utf8)
 
         let (data, response) = try await URLSession.shared.data(for: request)
 

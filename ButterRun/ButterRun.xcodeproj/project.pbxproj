@@ -34,6 +34,7 @@
 		462D95A651CDC6B17493CC7D /* OnboardingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F316E1CB397A1C01BE56D71 /* OnboardingUITests.swift */; };
 		491E8F7166EC4527D859BA79 /* RunDraftService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A625A3485CDF897F0F8D2F79 /* RunDraftService.swift */; };
 		4A4AC8BE3E63E12D04563ED3 /* ButterRunApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1D9D574B35E9A5529C8D04 /* ButterRunApp.swift */; };
+		4A68D1ABD15A58D9C1D931FD /* StravaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC5780B5F418307666AE9A63 /* StravaTests.swift */; };
 		4C9D1367C00ED75D3B74E609 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D9ACBCD75D3B074E7314EBE /* KeychainService.swift */; };
 		4CF0303EED3DBC4BF61828B4 /* RunEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A061B270EEBB76BB3746810 /* RunEditView.swift */; };
 		5351E7E8F8F661A02DB26280 /* EatButterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B38FA49CD8267A66E262FE /* EatButterSheet.swift */; };
@@ -164,6 +165,7 @@
 		C5B292491165CC12B2966544 /* StravaAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StravaAuthService.swift; sourceTree = "<group>"; };
 		C6984E1952CE66E1D6D66320 /* ButterCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButterCalculator.swift; sourceTree = "<group>"; };
 		CC11197941AD4119D7A15B25 /* HapticFeedbackProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedbackProtocol.swift; sourceTree = "<group>"; };
+		CC5780B5F418307666AE9A63 /* StravaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StravaTests.swift; sourceTree = "<group>"; };
 		CF335BBAA5E226F02E679567 /* FormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatterTests.swift; sourceTree = "<group>"; };
 		D0646D1D89ACC428ACDB1686 /* ButterStickView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButterStickView.swift; sourceTree = "<group>"; };
 		D20CA3D59FD26B10321304CF /* ChurnButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChurnButton.swift; sourceTree = "<group>"; };
@@ -414,6 +416,7 @@
 				B58C225538AC25D33B0CFA19 /* RunHistoryViewModelTests.swift */,
 				5F9520CB5A40BED64AFFFF3B /* ShareImageRendererTests.swift */,
 				062570C619D98188DB004EFF /* SplitTrackerTests.swift */,
+				CC5780B5F418307666AE9A63 /* StravaTests.swift */,
 				061DA226E9B4134CAD5B73EE /* VoiceFeedbackServiceTests.swift */,
 			);
 			path = Unit;
@@ -653,6 +656,7 @@
 				1748047E8AB6F60B2E16B4BF /* RunHistoryViewModelTests.swift in Sources */,
 				802CF0BCCD86A09CBADDFCA7 /* ShareImageRendererTests.swift in Sources */,
 				2DA08DF967BD34E141F6E2F1 /* SplitTrackerTests.swift in Sources */,
+				4A68D1ABD15A58D9C1D931FD /* StravaTests.swift in Sources */,
 				15D9BC8351D90291948C35F1 /* VoiceFeedbackServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

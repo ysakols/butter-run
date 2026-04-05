@@ -18,7 +18,7 @@ struct SettingsView: View {
     @State private var loaded = false
     @State private var showDeleteConfirmation = false
     @State private var showRecalcConfirmation = false
-    @StateObject private var stravaAuth = StravaAuthService()
+    @EnvironmentObject private var stravaAuth: StravaAuthService
     @State private var stravaConnecting = false
     @State private var autoShareToStrava: Bool = false
 
