@@ -48,13 +48,16 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee /tmp/build.log || true
-          echo "=== ERRORS ==="
-          grep -i "error:" /tmp/build.log | tail -30 || true
-          echo "=== BUILD RESULT ==="
-          tail -5 /tmp/build.log
-          # Fail if build failed
-          if grep -q "BUILD FAILED" /tmp/build.log; then exit 65; fi
-          if grep -q "** BUILD SUCCEEDED **" /tmp/build.log; then echo "Build OK"; else exit 65; fi
+          # Extract and annotate each error for PR visibility
+          grep -i "error:" /tmp/build.log | while IFS= read -r line; do
+            echo "::error::$line"
+          done || true
+          # Check result
+          if grep -q "BUILD FAILED" /tmp/build.log || ! grep -q "BUILD SUCCEEDED" /tmp/build.log; then
+            echo "::error::Build failed. Last 20 lines:"
+            tail -20 /tmp/build.log | while IFS= read -r line; do echo "::error::$line"; done
+            exit 65
+          fi
 
       - name: Run Unit Tests
         run: |
