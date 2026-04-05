@@ -45,6 +45,7 @@ class StravaUploadService {
 
     /// Refreshes the token, creates a Strava activity, and optionally uploads GPX route data.
     /// Returns the Strava activity ID.
+    @MainActor
     func uploadRun(run: Run, authService: StravaAuthService) async throws -> Int64 {
         try await authService.refreshTokenIfNeeded()
 
@@ -79,9 +80,11 @@ class StravaUploadService {
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
         let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) tsp)"
 
-        let iso8601Formatter = ISO8601DateFormatter()
-        iso8601Formatter.formatOptions = [.withInternetDateTime]
-        let startDateLocal = iso8601Formatter.string(from: run.startDate)
+        // Strava expects start_date_local as local time WITHOUT timezone
+        let localFormatter = DateFormatter()
+        localFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        localFormatter.locale = Locale(identifier: "en_US_POSIX")
+        let startDateLocal = localFormatter.string(from: run.startDate)
 
         var description = "Tracked with Butter Run"
         description += "\nDistance: \(milesFormatted) mi"
