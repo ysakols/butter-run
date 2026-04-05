@@ -55,20 +55,17 @@ jobs:
       - name: Build
         timeout-minutes: 10
         run: |
-          set -o pipefail
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/build.log
+            > /tmp/build.log 2>&1
           echo "Build succeeded"
 
-      - name: Run Unit Tests
-        timeout-minutes: 10
+      - name: Boot Simulator
         run: |
-          set -o pipefail
-          xcrun simctl boot "$(xcrun simctl list devices available -j | python3 -c "
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
           import json, sys
           data = json.load(sys.stdin)
           for runtime, devices in data['devices'].items():
@@ -77,7 +74,14 @@ jobs:
                       if 'iPhone 16' in d['name'] and d['isAvailable']:
                           print(d['udid'])
                           sys.exit(0)
-          ")" 2>/dev/null || true
+          ")
+          xcrun simctl boot "$UDID" 2>/dev/null || true
+          xcrun simctl bootstatus "$UDID" -b 2>/dev/null || true
+          echo "Simulator ready"
+
+      - name: Run Unit Tests
+        timeout-minutes: 10
+        run: |
           xcodebuild test-without-building \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
@@ -85,7 +89,7 @@ jobs:
             -only-testing:ButterRunTests \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
-            2>&1 | tee /tmp/test.log
+            > /tmp/test.log 2>&1
 
       - name: Post failure details
         if: failure() && github.event_name == 'pull_request'
