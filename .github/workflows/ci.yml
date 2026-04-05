@@ -52,29 +52,17 @@ jobs:
         run: |
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
 
-      - name: Build
+      - name: Build & Test
         shell: bash {0}
         run: |
-          xcodebuild build-for-testing \
-            -project ButterRun.xcodeproj \
-            -scheme ButterRun \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/build.log | xcpretty
-          EXIT=${PIPESTATUS[0]}
-          [ $EXIT -ne 0 ] && exit $EXIT
-
-      - name: Run Unit Tests
-        shell: bash {0}
-        run: |
-          xcodebuild test-without-building \
+          xcodebuild test \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -only-testing:ButterRunTests \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
-            2>&1 | tee /tmp/test.log | xcpretty
+            2>&1 | tee /tmp/build.log | xcpretty
           EXIT=${PIPESTATUS[0]}
           [ $EXIT -ne 0 ] && exit $EXIT
 
