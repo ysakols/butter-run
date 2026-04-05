@@ -60,10 +60,13 @@ struct ButterRunApp: App {
         } catch {
             // Fallback: create an in-memory container so the app can launch
             containerError = error
-            container = try! ModelContainer(
+            guard let fallback = try? ModelContainer(
                 for: Schema([Run.self, Split.self, ButterEntry.self, UserProfile.self, Achievement.self, RunDraft.self]),
                 configurations: [ModelConfiguration(isStoredInMemoryOnly: true)]
-            )
+            ) else {
+                fatalError("Cannot create even an in-memory database: \(error)")
+            }
+            container = fallback
         }
     }
 
