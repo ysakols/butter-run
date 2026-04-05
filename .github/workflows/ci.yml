@@ -41,16 +41,18 @@ jobs:
           xcodebuild -project ButterRun.xcodeproj -scheme ButterRun -showBuildSettings -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO 2>&1 | head -80 || true
 
       - name: Build
+        shell: bash {0}
         run: |
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/build.log; BUILD_RC=$?
-          echo "## Build Output" >> "$GITHUB_STEP_SUMMARY"
+            2>&1 | tee /tmp/build.log
+          BUILD_RC=${PIPESTATUS[0]}
+          echo "## Build Output (exit code: $BUILD_RC)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          grep -iE "error:|warning:|BUILD (FAILED|SUCCEEDED)" /tmp/build.log | tail -50 >> "$GITHUB_STEP_SUMMARY" || true
+          grep -iE "error:|BUILD (FAILED|SUCCEEDED)" /tmp/build.log | tail -50 >> "$GITHUB_STEP_SUMMARY" || true
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "--- Last 30 lines ---" >> "$GITHUB_STEP_SUMMARY"
           tail -30 /tmp/build.log >> "$GITHUB_STEP_SUMMARY"
