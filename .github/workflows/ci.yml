@@ -30,6 +30,13 @@ jobs:
       - name: Create CI build config
         run: |
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
+          cat ButterRun.xcconfig
+          echo "---"
+          ls -la ButterRun.xcconfig
+
+      - name: Verify project loads
+        run: |
+          xcodebuild -project ButterRun.xcodeproj -scheme ButterRun -showBuildSettings -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO 2>&1 | head -50
 
       - name: Build
         run: |
@@ -39,7 +46,14 @@ jobs:
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
-            | xcpretty
+            2>&1 | tee /tmp/build.log | xcpretty
+          BUILD_EXIT=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "::group::Raw xcodebuild output (last 100 lines)"
+            tail -100 /tmp/build.log
+            echo "::endgroup::"
+            exit $BUILD_EXIT
+          fi
 
       - name: Run Unit Tests
         run: |
@@ -51,7 +65,14 @@ jobs:
             -only-testing:ButterRunTests \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
-            | xcpretty
+            2>&1 | tee /tmp/test.log | xcpretty
+          TEST_EXIT=${PIPESTATUS[0]}
+          if [ $TEST_EXIT -ne 0 ]; then
+            echo "::group::Raw xcodebuild output (last 100 lines)"
+            tail -100 /tmp/test.log
+            echo "::endgroup::"
+            exit $TEST_EXIT
+          fi
 
       - name: Upload test results
         if: always()
