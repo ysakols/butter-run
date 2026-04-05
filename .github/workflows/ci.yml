@@ -10,10 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
   build-and-test:
     name: Build & Test
@@ -31,39 +27,23 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Install iOS Simulator
+        run: |
+          xcodebuild -downloadPlatform iOS
+
       - name: Create CI build config
         run: |
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
-          cat ButterRun.xcconfig
-          echo "---"
-          ls -la ButterRun.xcconfig
-
-      - name: Verify project loads
-        run: |
-          xcodebuild -project ButterRun.xcodeproj -list 2>&1 || true
-          echo "---"
-          xcodebuild -project ButterRun.xcodeproj -scheme ButterRun -showBuildSettings -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO 2>&1 | head -80 || true
-
-      - name: List simulators
-        run: |
-          xcrun simctl list devices available | head -30
 
       - name: Build
-        shell: bash {0}
         run: |
+          set -o pipefail
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee /tmp/build.log
-          RC=${PIPESTATUS[0]}
-          if [ $RC -ne 0 ]; then
-            echo "## Build Failed (exit $RC)" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            cat /tmp/build.log >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          exit $RC
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
 
       - name: Run Unit Tests
         run: |
@@ -76,26 +56,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
             | xcpretty
-
-      - name: Post build errors to PR
-        if: failure() && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        working-directory: ${{ github.workspace }}
-        run: |
-          BODY="## Build Log ($(wc -c < /tmp/build.log) bytes)
-          \`\`\`
-          $(cat /tmp/build.log)
-          \`\`\`"
-          echo "$BODY" | gh pr comment ${{ github.event.pull_request.number }} -R ${{ github.repository }} --body-file -
-
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: /tmp/build.log
-          retention-days: 7
 
       - name: Upload test results
         if: always()
