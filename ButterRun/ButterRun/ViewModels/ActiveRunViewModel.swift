@@ -5,6 +5,12 @@ import SwiftData
 import AVFoundation
 import UIKit
 
+private struct DraftEntrySnapshot: Codable {
+    let servingRaw: String
+    let tsp: Double
+    let timestamp: Date
+}
+
 @Observable
 class ActiveRunViewModel {
     // MARK: - Run State
@@ -481,17 +487,10 @@ class ActiveRunViewModel {
         lastDraftSave = Date()
 
         // Encode butter entries for draft
-        let entriesData: Data? = {
-            struct EntrySnapshot: Codable {
-                let servingRaw: String
-                let tsp: Double
-                let timestamp: Date
-            }
-            let snapshots = butterEntries.map {
-                EntrySnapshot(servingRaw: $0.servingTypeRaw, tsp: $0.teaspoonEquivalent, timestamp: $0.timestamp)
-            }
-            return try? JSONEncoder().encode(snapshots)
-        }()
+        let snapshots = butterEntries.map {
+            DraftEntrySnapshot(servingRaw: $0.servingTypeRaw, tsp: $0.teaspoonEquivalent, timestamp: $0.timestamp)
+        }
+        let entriesData = try? JSONEncoder().encode(snapshots)
 
         // Save draft on main thread — lightweight single-row upsert every 30s
         let routeData = locationService.encodeRoute()
