@@ -6,6 +6,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -29,7 +32,17 @@ jobs:
 
       - name: Install iOS Simulator
         run: |
-          xcodebuild -downloadPlatform iOS
+          for i in 1 2 3; do
+            echo "Attempt $i: downloading iOS platform..."
+            if xcodebuild -downloadPlatform iOS; then
+              echo "iOS platform installed successfully."
+              break
+            fi
+            echo "Attempt $i failed. Retrying in 30s..."
+            sleep 30
+          done
+          # Verify simulator is available
+          xcrun simctl list runtimes iOS
 
       - name: Create CI build config
         run: |
@@ -48,7 +61,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           set -o pipefail
-          xcodebuild test \
+          xcodebuild test-without-building \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
