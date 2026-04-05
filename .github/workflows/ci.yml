@@ -46,17 +46,35 @@ jobs:
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee /tmp/build.log || true
+          echo "=== ERRORS ==="
+          grep -i "error:" /tmp/build.log | tail -30 || true
+          echo "=== BUILD RESULT ==="
+          tail -5 /tmp/build.log
+          # Fail if build failed
+          if grep -q "BUILD FAILED" /tmp/build.log; then exit 65; fi
+          if grep -q "** BUILD SUCCEEDED **" /tmp/build.log; then echo "Build OK"; else exit 65; fi
 
       - name: Run Unit Tests
         run: |
+          set -o pipefail
           xcodebuild test \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -only-testing:ButterRunTests \
             CODE_SIGNING_ALLOWED=NO \
-            -resultBundlePath TestResults.xcresult
+            -resultBundlePath TestResults.xcresult \
+            | xcpretty
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build.log
+          retention-days: 7
 
       - name: Upload test results
         if: always()
