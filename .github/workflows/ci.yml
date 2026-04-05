@@ -79,18 +79,27 @@ jobs:
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
 
       - name: Build
+        shell: bash {0}
         run: |
-          set -o pipefail
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
-            | xcpretty
+            2>&1 | tee /tmp/build.log | xcpretty
+          BUILD_EXIT=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "::error::Build failed with exit code $BUILD_EXIT"
+            echo "BUILD_FAILED=true" >> "$GITHUB_ENV"
+            echo "BUILD_LOG<<EOFLOG" >> "$GITHUB_ENV"
+            tail -50 /tmp/build.log >> "$GITHUB_ENV"
+            echo "EOFLOG" >> "$GITHUB_ENV"
+            exit $BUILD_EXIT
+          fi
 
       - name: Run Unit Tests
+        shell: bash {0}
         run: |
-          set -o pipefail
           xcodebuild test-without-building \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
@@ -98,22 +107,31 @@ jobs:
             -only-testing:ButterRunTests \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
-            | xcpretty
+            2>&1 | tee /tmp/test.log | xcpretty
+          TEST_EXIT=${PIPESTATUS[0]}
+          if [ $TEST_EXIT -ne 0 ]; then
+            echo "::error::Tests failed with exit code $TEST_EXIT"
+            echo "BUILD_FAILED=true" >> "$GITHUB_ENV"
+            echo "BUILD_LOG<<EOFLOG" >> "$GITHUB_ENV"
+            tail -50 /tmp/test.log >> "$GITHUB_ENV"
+            echo "EOFLOG" >> "$GITHUB_ENV"
+            exit $TEST_EXIT
+          fi
 
-      - name: Post failure diagnostics
+      - name: Post failure details
         if: failure() && github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          BODY="## CI Diagnostics
-          \`\`\`
-          $(xcode-select -p)
-          $(xcodebuild -version 2>&1)
-
-          Runtimes: $(xcrun simctl list runtimes iOS 2>&1)
-          \`\`\`"
+          # Post the build/test log as PR comment
+          LOG_FILE="/tmp/build.log"
+          [ -f /tmp/test.log ] && [ ! -s /tmp/build.log ] && LOG_FILE="/tmp/test.log"
+          LAST_LINES=$(tail -80 "$LOG_FILE" 2>/dev/null || echo "No log available")
           cd "$GITHUB_WORKSPACE"
-          gh pr comment ${{ github.event.pull_request.number }} --body "$BODY"
+          gh pr comment ${{ github.event.pull_request.number }} --body "## Build/Test Log (last 80 lines)
+          \`\`\`
+          $LAST_LINES
+          \`\`\`"
 
       - name: Upload test results
         if: always()
