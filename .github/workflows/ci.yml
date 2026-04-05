@@ -56,11 +56,19 @@ jobs:
         shell: bash {0}
         timeout-minutes: 15
         run: |
+          # Boot simulator first to avoid timeout during test phase
+          DEVICE=$(xcrun simctl list devices available | grep "iPhone 16" | head -1 | sed 's/.*(\(.*\)) .*/\1/')
+          if [ -n "$DEVICE" ]; then
+            echo "Booting simulator $DEVICE..."
+            xcrun simctl boot "$DEVICE" 2>/dev/null || true
+          fi
+
           xcodebuild test \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -only-testing:ButterRunTests \
+            -skip-testing:ButterRunUITests \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
             2>&1 | tee /tmp/build.log
