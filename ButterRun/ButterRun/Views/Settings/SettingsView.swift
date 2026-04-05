@@ -18,6 +18,9 @@ struct SettingsView: View {
     @State private var loaded = false
     @State private var showDeleteConfirmation = false
     @State private var showRecalcConfirmation = false
+    @StateObject private var stravaAuth = StravaAuthService()
+    @State private var stravaConnecting = false
+    @State private var autoShareToStrava: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -59,6 +62,56 @@ struct SettingsView: View {
                             .tint(ButterTheme.gold)
                             .disabled(true)
                         Text("Coming Soon")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(ButterTheme.textSecondary)
+                    }
+                }
+                .listRowBackground(ButterTheme.surface)
+
+                Section("Integrations") {
+                    if stravaAuth.isAuthenticated {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(ButterTheme.success)
+                            Text("Connected to Strava")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundStyle(ButterTheme.textPrimary)
+                            if let name = stravaAuth.athleteName {
+                                Spacer()
+                                Text(name)
+                                    .font(.system(.caption, design: .rounded))
+                                    .foregroundStyle(ButterTheme.textSecondary)
+                            }
+                        }
+
+                        Toggle("Auto-share runs", isOn: $autoShareToStrava)
+                            .tint(ButterTheme.gold)
+                            .onChange(of: autoShareToStrava) { _, _ in saveProfile() }
+
+                        Button(role: .destructive) {
+                            stravaAuth.disconnect()
+                            autoShareToStrava = false
+                            if let p = profile {
+                                p.stravaConnected = false
+                                p.autoShareToStrava = false
+                            }
+                        } label: {
+                            Text("Disconnect Strava")
+                                .font(.system(.body, design: .rounded))
+                        }
+                    } else {
+                        Button {
+                            stravaAuth.authorize()
+                        } label: {
+                            HStack {
+                                Image(systemName: "link")
+                                Text("Connect Strava")
+                                    .font(.system(.body, design: .rounded, weight: .semibold))
+                            }
+                            .foregroundStyle(Color(red: 0.99, green: 0.32, blue: 0.15))
+                        }
+
+                        Text("Share your runs to Strava automatically")
                             .font(.system(.caption, design: .rounded))
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
@@ -183,6 +236,7 @@ struct SettingsView: View {
         voiceFeedback = p.voiceFeedbackEnabled
         autoPause = p.autoPauseEnabled
         healthKit = p.healthKitEnabled
+        autoShareToStrava = p.autoShareToStrava
         loaded = true
     }
 
@@ -195,6 +249,7 @@ struct SettingsView: View {
         p.voiceFeedbackEnabled = voiceFeedback
         p.autoPauseEnabled = autoPause
         p.healthKitEnabled = healthKit
+        p.autoShareToStrava = autoShareToStrava
     }
 
     private func deleteAllData() {

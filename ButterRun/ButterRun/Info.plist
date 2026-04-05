@@ -49,5 +49,16 @@
 	<string>Butter Run reads your weight from Health to improve calorie calculations.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Butter Run can save your runs to Health so they appear in your activity rings.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>butterrun</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>Strava OAuth Callback</string>
+		</dict>
+	</array>
 </dict>
 </plist>

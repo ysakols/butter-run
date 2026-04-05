@@ -9,6 +9,10 @@ struct RunSummaryView: View {
     @State private var shareImage: UIImage?
     @State private var meltProgress: Double = 0
     @State private var shareMode: ShareCardMode = .story
+    @StateObject private var stravaAuth = StravaAuthService()
+    @State private var stravaUploading = false
+    @State private var stravaUploaded = false
+    @State private var stravaError: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -88,6 +92,59 @@ struct RunSummaryView: View {
                     }
                     .padding(.horizontal)
                     .accessibilityLabel("Share run results")
+
+                    // Strava upload
+                    if stravaAuth.isAuthenticated && !stravaUploaded {
+                        Button {
+                            stravaUploading = true
+                            stravaError = nil
+                            Task {
+                                do {
+                                    _ = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
+                                    stravaUploaded = true
+                                } catch {
+                                    stravaError = error.localizedDescription
+                                }
+                                stravaUploading = false
+                            }
+                        } label: {
+                            HStack {
+                                if stravaUploading {
+                                    ProgressView()
+                                        .tint(ButterTheme.background)
+                                }
+                                Text("Upload to Strava")
+                                    .font(.system(.body, design: .rounded, weight: .semibold))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color(red: 0.99, green: 0.32, blue: 0.15), in: RoundedRectangle(cornerRadius: 12))
+                            .foregroundStyle(.white)
+                        }
+                        .disabled(stravaUploading)
+                        .padding(.horizontal)
+                    }
+
+                    if stravaUploaded {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(ButterTheme.success)
+                            Text("Uploaded to Strava")
+                                .font(.system(.body, design: .rounded, weight: .semibold))
+                                .foregroundStyle(ButterTheme.success)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(ButterTheme.success.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+                    }
+
+                    if let error = stravaError {
+                        Text(error)
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(ButterTheme.deficit)
+                            .padding(.horizontal)
+                    }
                 }
                 .padding(.bottom, 32)
             }
