@@ -132,7 +132,9 @@ struct ContentView: View {
     }
 }
 
-private struct CrashRecoveryEntrySnapshot: Codable {
+/// Shared snapshot type used to encode/decode butter entries in run drafts.
+/// Used by both ActiveRunViewModel (encoder) and CrashRecoveryWrapper (decoder).
+struct DraftEntrySnapshot: Codable {
     let servingRaw: String
     let tsp: Double
     let timestamp: Date
@@ -197,7 +199,7 @@ struct CrashRecoveryWrapper<Content: View>: View {
 
         // Decode and attach butter entries from draft, preserving original serving types and timestamps
         if let entriesData = draft.butterEntriesData {
-            if let snapshots = try? JSONDecoder().decode([CrashRecoveryEntrySnapshot].self, from: entriesData) {
+            if let snapshots = try? JSONDecoder().decode([DraftEntrySnapshot].self, from: entriesData) {
                 let entries = snapshots.map { snapshot -> ButterEntry in
                     let serving = ButterServing(rawValue: snapshot.servingRaw) ?? .custom
                     let entry = ButterEntry(serving: serving, customTeaspoons: serving == .custom ? snapshot.tsp : 0)

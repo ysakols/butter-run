@@ -5,11 +5,6 @@ import SwiftData
 import AVFoundation
 import UIKit
 
-private struct DraftEntrySnapshot: Codable {
-    let servingRaw: String
-    let tsp: Double
-    let timestamp: Date
-}
 
 /// Central view model managing the lifecycle of an active running session.
 ///
