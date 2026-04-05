@@ -49,6 +49,10 @@
 	<string>Butter Run reads your weight from Health to improve calorie calculations.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Butter Run can save your runs to Health so they appear in your activity rings.</string>
+	<key>StravaClientID</key>
+	<string>$(STRAVA_CLIENT_ID)</string>
+	<key>StravaClientSecret</key>
+	<string>$(STRAVA_CLIENT_SECRET)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

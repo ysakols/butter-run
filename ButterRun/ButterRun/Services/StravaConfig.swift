@@ -2,8 +2,15 @@ import Foundation
 
 struct StravaConfig {
 
-    static let clientID = ""
-    static let clientSecret = ""
+    /// Loaded from Info.plist (sourced from .xcconfig, which is gitignored).
+    static var clientID: String {
+        Bundle.main.infoDictionary?["StravaClientID"] as? String ?? ""
+    }
+
+    /// Loaded from Info.plist (sourced from .xcconfig, which is gitignored).
+    static var clientSecret: String {
+        Bundle.main.infoDictionary?["StravaClientSecret"] as? String ?? ""
+    }
 
     static let authorizeURL = "https://www.strava.com/oauth/mobile/authorize"
     static let tokenURL = "https://www.strava.com/oauth/token"

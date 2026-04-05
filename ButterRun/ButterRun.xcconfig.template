@@ -7,3 +7,8 @@ DEVELOPMENT_TEAM = YOUR_TEAM_ID
 
 // Bundle identifier prefix (reverse domain notation, e.g. com.yourcompany)
 BUNDLE_ID_PREFIX = com.yourcompany
+
+// Strava API credentials (register at https://www.strava.com/settings/api)
+// Set callback domain to "butterrun" in your Strava app settings
+STRAVA_CLIENT_ID = YOUR_STRAVA_CLIENT_ID
+STRAVA_CLIENT_SECRET = YOUR_STRAVA_CLIENT_SECRET

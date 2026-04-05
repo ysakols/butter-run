@@ -32,6 +32,7 @@ struct UploadStatus {
 
 // MARK: - Service
 
+@MainActor
 class StravaUploadService {
 
     static let shared = StravaUploadService()
@@ -43,9 +44,9 @@ class StravaUploadService {
 
     // MARK: - High-Level Upload
 
-    /// Refreshes the token, creates a Strava activity, and optionally uploads GPX route data.
-    /// Returns the Strava activity ID.
-    @MainActor
+    /// Uploads a run to Strava. If route data exists, uploads GPX (which creates the activity
+    /// from the file with full route). Otherwise, creates a manual activity via the API.
+    /// Returns the Strava activity ID (or upload ID if GPX — the activity is created async by Strava).
     func uploadRun(run: Run, authService: StravaAuthService) async throws -> Int64 {
         try await authService.refreshTokenIfNeeded()
 
@@ -53,17 +54,15 @@ class StravaUploadService {
             throw StravaUploadError.notAuthenticated
         }
 
-        let activityId = try await createActivity(run: run, accessToken: accessToken)
-
         if run.routePolyline != nil {
-            do {
-                _ = try await uploadGPX(run: run, accessToken: accessToken)
-            } catch {
-                print("Strava GPX upload failed (activity was created): \(error.localizedDescription)")
-            }
+            // Upload GPX — Strava creates the activity from the file (includes full route/map)
+            let uploadId = try await uploadGPX(run: run, accessToken: accessToken)
+            return uploadId
+        } else {
+            // No route data — create a manual activity
+            let activityId = try await createActivity(run: run, accessToken: accessToken)
+            return activityId
         }
-
-        return activityId
     }
 
     // MARK: - Create Activity
@@ -148,10 +147,23 @@ class StravaUploadService {
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
+        // Build activity name and description
+        let miles = run.distanceMeters / 1609.344
+        let milesFormatted = String(format: "%.1f", miles)
+        let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
+        let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) tsp)"
+
+        var description = "Tracked with Butter Run"
+        description += "\nButter burned: \(butterFormatted) tsp"
+        description += "\nCalories: \(String(format: "%.0f", run.totalCaloriesBurned))"
+
         var body = Data()
 
-        // data_type field
+        // Metadata fields
         body.appendMultipartField(name: "data_type", value: "gpx", boundary: boundary)
+        body.appendMultipartField(name: "name", value: name, boundary: boundary)
+        body.appendMultipartField(name: "description", value: description, boundary: boundary)
+        body.appendMultipartField(name: "activity_type", value: "run", boundary: boundary)
 
         // GPX file
         body.appendMultipartFile(

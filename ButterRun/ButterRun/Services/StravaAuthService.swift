@@ -28,7 +28,9 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     // MARK: - ASWebAuthenticationPresentationContextProviding
 
     nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        MainActor.assumeIsolated {
+        // ASWebAuthenticationSession always calls this on the main thread.
+        // Use DispatchQueue.main.sync for safety under strict concurrency.
+        DispatchQueue.main.sync {
             UIApplication.shared.connectedScenes
                 .compactMap { $0 as? UIWindowScene }
                 .flatMap(\.windows)
