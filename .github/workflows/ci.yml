@@ -52,9 +52,23 @@ jobs:
         run: |
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\n' > ButterRun.xcconfig
 
-      - name: Boot Simulator
+      - name: Build
+        timeout-minutes: 10
         run: |
-          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c "
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project ButterRun.xcodeproj \
+            -scheme ButterRun \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee /tmp/build.log
+          echo "Build succeeded"
+
+      - name: Run Unit Tests
+        timeout-minutes: 10
+        run: |
+          set -o pipefail
+          xcrun simctl boot "$(xcrun simctl list devices available -j | python3 -c "
           import json, sys
           data = json.load(sys.stdin)
           for runtime, devices in data['devices'].items():
@@ -63,43 +77,15 @@ jobs:
                       if 'iPhone 16' in d['name'] and d['isAvailable']:
                           print(d['udid'])
                           sys.exit(0)
-          " 2>/dev/null)
-          if [ -n "$DEVICE_ID" ]; then
-            echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
-            echo "Booting simulator $DEVICE_ID..."
-            xcrun simctl boot "$DEVICE_ID" 2>/dev/null || true
-            # Wait for boot to complete
-            xcrun simctl bootstatus "$DEVICE_ID" -b 2>/dev/null || true
-            echo "Simulator booted"
-          else
-            echo "Warning: Could not find iPhone 16 simulator"
-          fi
-
-      - name: Build
-        timeout-minutes: 10
-        run: |
-          xcodebuild build-for-testing \
-            -project ButterRun.xcodeproj \
-            -scheme ButterRun \
-            -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
-            CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee /tmp/build.log
-          echo "Build exit code: $?"
-
-      - name: Run Unit Tests
-        shell: bash {0}
-        timeout-minutes: 10
-        run: |
+          ")" 2>/dev/null || true
           xcodebuild test-without-building \
             -project ButterRun.xcodeproj \
             -scheme ButterRun \
-            -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -only-testing:ButterRunTests \
+            CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult \
             2>&1 | tee /tmp/test.log
-          EXIT=$?
-          echo "Test exit code: $EXIT"
-          [ $EXIT -ne 0 ] && exit $EXIT
 
       - name: Post failure details
         if: failure() && github.event_name == 'pull_request'
@@ -117,7 +103,7 @@ jobs:
                 echo ""
               fi
             done
-            echo "=== test.log last 40 lines ==="
+            echo "=== last 40 lines ==="
             tail -40 /tmp/test.log 2>/dev/null || tail -40 /tmp/build.log 2>/dev/null || echo "No logs found"
             echo '```'
           } > /tmp/comment.md
