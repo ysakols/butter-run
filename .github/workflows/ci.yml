@@ -40,7 +40,23 @@ jobs:
           echo "---"
           xcodebuild -project ButterRun.xcodeproj -scheme ButterRun -showBuildSettings -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' CODE_SIGNING_ALLOWED=NO 2>&1 | head -80 || true
 
-      - name: Build
+      - name: Build App Only
+        run: |
+          xcodebuild build \
+            -project ButterRun.xcodeproj \
+            -target ButterRun \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee /tmp/build-app.log || true
+          grep -i "error:" /tmp/build-app.log | while IFS= read -r line; do
+            echo "::error::APP: $line"
+          done || true
+          if grep -q "BUILD FAILED" /tmp/build-app.log; then
+            tail -30 /tmp/build-app.log | while IFS= read -r line; do echo "::error::APP-TAIL: $line"; done
+            exit 65
+          fi
+
+      - name: Build for Testing
         run: |
           xcodebuild build-for-testing \
             -project ButterRun.xcodeproj \
@@ -48,14 +64,11 @@ jobs:
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee /tmp/build.log || true
-          # Extract and annotate each error for PR visibility
           grep -i "error:" /tmp/build.log | while IFS= read -r line; do
-            echo "::error::$line"
+            echo "::error::TEST: $line"
           done || true
-          # Check result
           if grep -q "BUILD FAILED" /tmp/build.log || ! grep -q "BUILD SUCCEEDED" /tmp/build.log; then
-            echo "::error::Build failed. Last 20 lines:"
-            tail -20 /tmp/build.log | while IFS= read -r line; do echo "::error::$line"; done
+            tail -30 /tmp/build.log | while IFS= read -r line; do echo "::error::TEST-TAIL: $line"; done
             exit 65
           fi
 
@@ -71,12 +84,35 @@ jobs:
             -resultBundlePath TestResults.xcresult \
             | xcpretty
 
-      - name: Upload build log
+      - name: Post build errors to PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          ERRORS=""
+          for f in /tmp/build-app.log /tmp/build.log; do
+            if [ -f "$f" ]; then
+              FOUND=$(grep -i "error:" "$f" | head -20 || true)
+              if [ -n "$FOUND" ]; then
+                ERRORS="${ERRORS}\n### Errors from $(basename $f)\n\`\`\`\n${FOUND}\n\`\`\`\n"
+              fi
+              TAIL=$(tail -30 "$f")
+              ERRORS="${ERRORS}\n### Last 30 lines of $(basename $f)\n\`\`\`\n${TAIL}\n\`\`\`\n"
+            fi
+          done
+          if [ -n "$ERRORS" ]; then
+            printf "## CI Build Errors\n${ERRORS}" | gh pr comment ${{ github.event.pull_request.number }} --body-file -
+          fi
+
+      - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: /tmp/build.log
+          name: build-logs
+          path: |
+            /tmp/build-app.log
+            /tmp/build.log
           retention-days: 7
 
       - name: Upload test results
