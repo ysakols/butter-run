@@ -740,6 +740,10 @@ scheme = f'''<?xml version="1.0" encoding="UTF-8"?>
       </BuildActionEntries>
    </BuildAction>
    <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES" shouldAutocreateTestPlan="YES">
+      <MacroExpansion>
+         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{APP_TARGET_UUID}" BuildableName="ButterRun.app" BlueprintName="ButterRun" ReferencedContainer="container:ButterRun.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <Testables>
          <TestableReference skipped="NO" parallelizable="YES">
             <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{TEST_TARGET_UUID}" BuildableName="ButterRunTests.xctest" BlueprintName="ButterRunTests" ReferencedContainer="container:ButterRun.xcodeproj">

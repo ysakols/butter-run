@@ -9,6 +9,10 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES" shouldAutocreateTestPlan="YES">
+      <MacroExpansion>
+         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="6D13DB2C5C036AE445513DA7" BuildableName="ButterRun.app" BlueprintName="ButterRun" ReferencedContainer="container:ButterRun.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <Testables>
          <TestableReference skipped="NO" parallelizable="YES">
             <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="89928EF9A7873588FB4002CE" BuildableName="ButterRunTests.xctest" BlueprintName="ButterRunTests" ReferencedContainer="container:ButterRun.xcodeproj">
