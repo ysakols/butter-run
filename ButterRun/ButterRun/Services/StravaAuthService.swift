@@ -6,6 +6,7 @@ import UIKit
 class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresentationContextProviding {
 
     @Published var isAuthenticated: Bool = false
+    @Published var isAuthorizing: Bool = false
     @Published var athleteName: String?
 
     private var authSession: ASWebAuthenticationSession?
@@ -48,12 +49,15 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
         guard let url = buildAuthorizeURL() else { return }
 
+        isAuthorizing = true
+
         authSession = ASWebAuthenticationSession(
             url: url,
             callbackURLScheme: StravaConfig.callbackScheme
         ) { [weak self] callbackURL, error in
             Task { @MainActor in
                 guard let self else { return }
+                defer { self.isAuthorizing = false }
 
                 if let error {
                     print("Strava auth error: \(error.localizedDescription)")
@@ -160,23 +164,21 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     // MARK: - Disconnect
 
     func disconnect() {
-        guard let token = accessToken else {
-            clearKeychain()
-            isAuthenticated = false
-            athleteName = nil
-            return
-        }
+        let token = accessToken
 
-        Task {
-            var request = URLRequest(url: URL(string: "https://www.strava.com/oauth/deauthorize")!)
-            request.httpMethod = "POST"
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        // Clear local state immediately so UI updates are synchronous
+        clearKeychain()
+        isAuthenticated = false
+        athleteName = nil
 
-            _ = try? await URLSession.shared.data(for: request)
-
-            clearKeychain()
-            isAuthenticated = false
-            athleteName = nil
+        // Best-effort deauthorize with Strava (fire and forget)
+        if let token {
+            Task {
+                var request = URLRequest(url: URL(string: "https://www.strava.com/oauth/deauthorize")!)
+                request.httpMethod = "POST"
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                _ = try? await URLSession.shared.data(for: request)
+            }
         }
     }
 

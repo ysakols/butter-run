@@ -94,8 +94,10 @@ struct RunSummaryView: View {
                     .accessibilityLabel("Share run results")
 
                     // Strava upload
-                    if stravaAuth.isAuthenticated {
+                    if stravaAuth.isAuthenticated && run.stravaActivityId == nil {
                         stravaUploadSection
+                    } else if run.stravaActivityId != nil || stravaUploaded {
+                        stravaUploadedBadge
                     }
                 }
                 .padding(.bottom, 32)
@@ -228,45 +230,36 @@ struct RunSummaryView: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var stravaUploadedBadge: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(ButterTheme.success.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(ButterTheme.success)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Uploaded to Strava")
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(ButterTheme.success)
+                Text("Activity is live on your Strava profile")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(ButterTheme.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(ButterTheme.success.opacity(0.2), lineWidth: 1))
+        .padding(.horizontal)
+    }
+
     private var stravaUploadSection: some View {
         let stravaOrange = Color(red: 0.99, green: 0.32, blue: 0.15)
 
         return VStack(spacing: 0) {
-            if stravaUploaded {
-                // Success state
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(ButterTheme.success.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(ButterTheme.success)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Uploaded to Strava")
-                            .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                            .foregroundStyle(ButterTheme.success)
-                        Text("Activity is live on your Strava profile")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(ButterTheme.textSecondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "figure.run")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(stravaOrange.opacity(0.6))
-                }
-                .padding(16)
-                .background(ButterTheme.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(ButterTheme.success.opacity(0.2), lineWidth: 1)
-                )
-            } else {
-                // Upload button
                 Button {
                     uploadToStrava()
                 } label: {
@@ -307,17 +300,16 @@ struct RunSummaryView: View {
                 }
                 .disabled(stravaUploading)
 
-                // Error message
-                if let error = stravaError {
-                    HStack(spacing: 6) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 11))
-                        Text(error)
-                            .font(.system(.caption2, design: .rounded))
-                    }
-                    .foregroundStyle(ButterTheme.deficit)
-                    .padding(.top, 8)
+            // Error message
+            if let error = stravaError {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11))
+                    Text(error)
+                        .font(.system(.caption2, design: .rounded))
                 }
+                .foregroundStyle(ButterTheme.deficit)
+                .padding(.top, 8)
             }
         }
         .padding(.horizontal)
@@ -330,7 +322,8 @@ struct RunSummaryView: View {
         stravaError = nil
         Task {
             do {
-                _ = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
+                let activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
+                run.stravaActivityId = activityId
                 stravaUploaded = true
             } catch {
                 stravaError = error.localizedDescription

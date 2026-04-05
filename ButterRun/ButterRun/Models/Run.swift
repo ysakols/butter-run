@@ -36,6 +36,9 @@ class Run {
     var targetDistanceMeters: Double?
     var targetDurationSeconds: Double?
 
+    // V3 fields — Strava integration
+    var stravaActivityId: Int64?
+
     init(
         startDate: Date = .now,
         isButterZeroChallenge: Bool = false

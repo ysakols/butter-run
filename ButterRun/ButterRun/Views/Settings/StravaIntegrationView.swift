@@ -6,7 +6,6 @@ struct StravaIntegrationView: View {
     @EnvironmentObject private var stravaAuth: StravaAuthService
     @Binding var autoShareToStrava: Bool
 
-    @State private var isConnecting = false
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showDisconnectConfirmation = false
@@ -192,7 +191,7 @@ struct StravaIntegrationView: View {
                 connectStrava()
             } label: {
                 HStack(spacing: 8) {
-                    if isConnecting {
+                    if stravaAuth.isAuthorizing {
                         ProgressView()
                             .tint(.white)
                             .scaleEffect(0.8)
@@ -201,7 +200,7 @@ struct StravaIntegrationView: View {
                             .font(.system(size: 14, weight: .bold))
                     }
 
-                    Text(isConnecting ? "Connecting..." : "Connect Strava")
+                    Text(stravaAuth.isAuthorizing ? "Connecting..." : "Connect Strava")
                         .font(.system(.body, design: .rounded, weight: .semibold))
                 }
                 .foregroundStyle(.white)
@@ -209,7 +208,7 @@ struct StravaIntegrationView: View {
                 .padding(.vertical, 12)
                 .background(stravaOrange, in: RoundedRectangle(cornerRadius: 10))
             }
-            .disabled(isConnecting)
+            .disabled(stravaAuth.isAuthorizing)
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
@@ -232,13 +231,8 @@ struct StravaIntegrationView: View {
             return
         }
 
-        isConnecting = true
+        // isAuthorizing is managed by StravaAuthService and clears when auth completes or fails
         stravaAuth.authorize()
-
-        // Reset connecting state after a delay (auth happens in browser)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            isConnecting = false
-        }
     }
 
     private func disconnectStrava() {
