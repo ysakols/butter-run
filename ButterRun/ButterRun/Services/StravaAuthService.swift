@@ -7,6 +7,8 @@ class StravaAuthService: ObservableObject {
     @Published var isAuthenticated: Bool = false
     @Published var athleteName: String?
 
+    private var authSession: ASWebAuthenticationSession?
+
     private enum Keys {
         static let accessToken = "strava_access_token"
         static let refreshToken = "strava_refresh_token"
@@ -31,7 +33,7 @@ class StravaAuthService: ObservableObject {
 
         guard let url = buildAuthorizeURL() else { return }
 
-        let session = ASWebAuthenticationSession(
+        authSession = ASWebAuthenticationSession(
             url: url,
             callbackURLScheme: StravaConfig.callbackScheme
         ) { [weak self] callbackURL, error in
@@ -52,11 +54,12 @@ class StravaAuthService: ObservableObject {
 
             Task {
                 try await self.exchangeToken(code: code)
+                self.authSession = nil
             }
         }
 
-        session.prefersEphemeralWebBrowserSession = false
-        session.start()
+        authSession?.prefersEphemeralWebBrowserSession = false
+        authSession?.start()
     }
 
     // MARK: - Exchange Token
