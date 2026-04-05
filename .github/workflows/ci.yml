@@ -68,31 +68,28 @@ jobs:
 
       - name: Post failure details
         if: failure() && github.event_name == 'pull_request'
+        shell: bash {0}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo "## Build Failure Details"
+            echo "## Build/Test Failure Details"
             echo '```'
-            echo "Xcode: $(xcodebuild -version 2>&1 | head -1)"
-            echo "Runtimes: $(xcrun simctl list runtimes iOS 2>&1 | head -3)"
-            echo ""
-            for LOG in /tmp/build.log /tmp/test.log; do
-              if [ -f "$LOG" ]; then
-                echo "=== $(basename $LOG) errors ==="
-                grep -E '(error:|FAIL|fatal)' "$LOG" 2>/dev/null | head -30
-                echo ""
-                echo "=== last 20 lines ==="
-                tail -20 "$LOG"
-              fi
-            done
-            if [ ! -f /tmp/build.log ] && [ ! -f /tmp/test.log ]; then
-              echo "No build/test logs found — failure occurred before build step."
+            if [ -f /tmp/build.log ]; then
+              echo "=== errors and failures ==="
+              grep -iE '(error:|failed|FAIL |fatal)' /tmp/build.log | head -40 || true
+              echo ""
+              echo "=== last 30 lines ==="
+              tail -30 /tmp/build.log
+            else
+              echo "No build log found — failure before build step."
+              echo "Xcode: $(xcodebuild -version 2>&1 | head -1)"
+              echo "Runtimes: $(xcrun simctl list runtimes iOS 2>&1 | head -3)"
             fi
             echo '```'
           } > /tmp/comment.md
           cd "$GITHUB_WORKSPACE"
-          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/comment.md || true
 
       - name: Upload test results
         if: always()
