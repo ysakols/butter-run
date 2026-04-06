@@ -14,7 +14,6 @@ final class HealthKitServiceTests: XCTestCase {
     func test_saveWorkout_withoutAuthorization_returnsFalse() async throws {
         let service = HealthKitService()
         try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
-        try XCTSkipUnless(HealthKitService.hasHealthKitEntitlement(), "HealthKit entitlement not present")
         let run = Run(startDate: .now, isButterZeroChallenge: false)
         run.endDate = Date()
         run.distanceMeters = 1000
@@ -30,7 +29,6 @@ final class HealthKitServiceTests: XCTestCase {
     func test_saveWorkout_withPauseResumeEvents_returnsFalse() async throws {
         let service = HealthKitService()
         try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
-        try XCTSkipUnless(HealthKitService.hasHealthKitEntitlement(), "HealthKit entitlement not present")
 
         let run = Run(startDate: Date().addingTimeInterval(-600), isButterZeroChallenge: false)
         run.endDate = Date()

@@ -1,19 +1,11 @@
 import Foundation
 import HealthKit
-import Security
 
 class HealthKitService {
     private let healthStore = HKHealthStore()
 
     var isAvailable: Bool {
         HKHealthStore.isHealthDataAvailable()
-    }
-
-    static func hasHealthKitEntitlement() -> Bool {
-        guard let task = SecTaskCreateFromSelf(nil) else { return false }
-        let value = SecTaskCopyValueForEntitlement(
-            task, "com.apple.developer.healthkit" as CFString, nil)
-        return value != nil
     }
 
     func requestAuthorization() async -> Bool {
@@ -67,7 +59,7 @@ class HealthKitService {
     }
 
     func saveWorkout(run: Run, pauseResumeEvents: [(pauseDate: Date, resumeDate: Date)] = []) async -> Bool {
-        guard isAvailable && Self.hasHealthKitEntitlement() else { return false }
+        guard isAvailable else { return false }
 
         let startDate = run.startDate
         let endDate = run.endDate ?? Date()
@@ -83,7 +75,20 @@ class HealthKitService {
         )
 
         do {
-            try await builder.beginCollection(at: startDate)
+            // beginCollection hangs indefinitely when the HealthKit entitlement
+            // is absent (e.g. unsigned CI builds). Race against a timeout so the
+            // method fails gracefully instead of blocking forever.
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask {
+                    try await builder.beginCollection(at: startDate)
+                }
+                group.addTask {
+                    try await Task.sleep(nanoseconds: 5_000_000_000)
+                    throw CancellationError()
+                }
+                try await group.next()
+                group.cancelAll()
+            }
 
             // Add energy burned sample
             guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return false }
