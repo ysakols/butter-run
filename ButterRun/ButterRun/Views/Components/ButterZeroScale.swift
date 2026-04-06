@@ -36,7 +36,7 @@ struct ButterZeroScale: View {
                 let width = geo.size.width
                 let center = width / 2
                 let clampedNet = max(-maxAbsNetPats, min(maxAbsNetPats, netPats))
-                let dotX = center + (clampedNet / maxAbsNetPats) * (width / 2 - 8)
+                let dotX = center + (clampedNet / maxAbsNetPats) * ((width / 2) - 8)
 
                 ZStack(alignment: .leading) {
                     // Background track
