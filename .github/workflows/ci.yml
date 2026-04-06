@@ -23,7 +23,7 @@ jobs:
         working-directory: ButterRun
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Select Xcode
         run: |
@@ -123,8 +123,6 @@ jobs:
                 "-scheme", "ButterRun",
                 "-destination", "platform=iOS Simulator,id=$ENV{UDID}",
                 "-only-testing:ButterRunTests",
-              "-skip-testing:ButterRunTests/HealthKitServiceTests/test_saveWorkout_withoutAuthorization_returnsFalse",
-              "-skip-testing:ButterRunTests/HealthKitServiceTests/test_saveWorkout_withPauseResumeEvents_returnsFalse",
                 "-parallel-testing-enabled", "NO",
                 "-derivedDataPath", "./DerivedData",
                 "CODE_SIGNING_ALLOWED=NO",
@@ -151,7 +149,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-results
           path: ButterRun/TestResults.xcresult

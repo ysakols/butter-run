@@ -11,9 +11,6 @@ final class HealthKitServiceTests: XCTestCase {
         XCTAssertEqual(available, HKHealthStore.isHealthDataAvailable())
     }
 
-    /// Note: This test hangs in CI (CODE_SIGNING_ALLOWED=NO strips the HealthKit entitlement,
-    /// causing HKWorkoutBuilder.beginCollection to block indefinitely). Skipped in CI via
-    /// -skip-testing in the workflow. Runs locally when the app is properly signed.
     func test_saveWorkout_withoutAuthorization_returnsFalse() async throws {
         let service = HealthKitService()
         try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
@@ -29,7 +26,6 @@ final class HealthKitServiceTests: XCTestCase {
         XCTAssertFalse(result, "saveWorkout should return false without authorization")
     }
 
-    /// See test_saveWorkout_withoutAuthorization_returnsFalse for CI skip rationale.
     func test_saveWorkout_withPauseResumeEvents_returnsFalse() async throws {
         let service = HealthKitService()
         try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
