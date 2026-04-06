@@ -18,9 +18,7 @@ class HomeViewModel {
         // Last run
         if let last = runs.sorted(by: { $0.startDate > $1.startDate }).first {
             let butter = String(format: "%.1f pats", last.totalButterBurnedTsp)
-            let distance = usesMiles
-                ? String(format: "%.1f mi", last.distanceMiles)
-                : String(format: "%.1f km", last.distanceKm)
+            let distance = ButterFormatters.distance(meters: last.distanceMeters, usesMiles: usesMiles)
             lastRunSummary = "\(butter) • \(distance) • \(last.formattedDuration)"
         }
     }

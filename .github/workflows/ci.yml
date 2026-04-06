@@ -6,6 +6,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -14,45 +17,139 @@ jobs:
   build-and-test:
     name: Build & Test
     runs-on: macos-15
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: ButterRun
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH="/Applications/Xcode.app"
+          fi
+          echo "Using $XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
 
-      - name: Show Xcode version
-        run: xcodebuild -version
+      - name: Create CI build config
+        run: |
+          printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\nSTRAVA_CLIENT_ID =\nSTRAVA_CLIENT_SECRET =\n' > ButterRun.xcconfig
 
-      - name: Resolve package dependencies
-        run: xcodebuild -resolvePackageDependencies -scheme ButterRun -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'
+      - name: Create and Boot Simulator
+        run: |
+          # Find latest available iOS runtime (parse JSON once to avoid double-stdin-read bug)
+          RUNTIME=$(xcrun simctl list runtimes iOS -j | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)['runtimes']
+          available = [r for r in data if r.get('isAvailable', False)]
+          if not available:
+              print('ERROR: No available iOS runtimes', file=sys.stderr)
+              sys.exit(1)
+          available.sort(key=lambda r: [int(x) for x in r.get('version','0').split('.') if x.isdigit()], reverse=True)
+          print(available[0]['identifier'])
+          ")
+          echo "Runtime: $RUNTIME"
 
-      - name: Build
+          # Find device type with fallback chain
+          DEVICE_TYPE=$(xcrun simctl list devicetypes -j | python3 -c "
+          import json, sys
+          types = json.load(sys.stdin)['devicetypes']
+          preferred = ['iPhone 16', 'iPhone 16 Pro', 'iPhone 15 Pro', 'iPhone 15', 'iPhone 14']
+          for name in preferred:
+              matches = [t for t in types if t['name'] == name]
+              if matches:
+                  print(matches[0]['identifier']); sys.exit(0)
+          iphones = [t for t in types if 'iPhone' in t['name']]
+          if iphones:
+              print(iphones[-1]['identifier']); sys.exit(0)
+          print('ERROR: No iPhone device types found', file=sys.stderr)
+          sys.exit(1)
+          ")
+          echo "Device type: $DEVICE_TYPE"
+
+          # Create simulator and persist UDID early so cleanup works even if boot fails
+          UDID=$(xcrun simctl create "CI_Test" "$DEVICE_TYPE" "$RUNTIME")
+          echo "Created simulator: $UDID"
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+
+          xcrun simctl boot "$UDID"
+
+          # Poll for boot completion (120s max, fail explicitly if not booted)
+          BOOTED=false
+          for i in $(seq 1 60); do
+            STATE=$(xcrun simctl list devices -j | UDID="$UDID" python3 -c "
+          import json, sys, os
+          udid = os.environ['UDID']
+          for runtime_devices in json.load(sys.stdin)['devices'].values():
+              for d in runtime_devices:
+                  if d['udid'] == udid:
+                      print(d['state']); sys.exit(0)
+          print('Unknown')
+          ")
+            if [ "$STATE" = "Booted" ]; then
+              BOOTED=true
+              echo "Simulator booted after $((i*2))s"
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$BOOTED" != "true" ]; then
+            echo "::error::Simulator failed to boot after 120s (last state: $STATE)"
+            exit 1
+          fi
+
+      - name: Build for Testing
         run: |
           xcodebuild build-for-testing \
+            -project ButterRun.xcodeproj \
             -scheme ButterRun \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -skipPackagePluginValidation \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty || true
+            -destination "platform=iOS Simulator,id=$UDID" \
+            -derivedDataPath ./DerivedData \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Run Unit Tests
         run: |
-          xcodebuild test \
-            -scheme ButterRun \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -only-testing:ButterRunTests \
-            -skipPackagePluginValidation \
-            CODE_SIGNING_ALLOWED=NO \
-            -resultBundlePath TestResults.xcresult \
-            | xcpretty || true
+          perl -e '
+            my $pid = fork();
+            die "fork failed: $!" unless defined $pid;
+            if ($pid == 0) {
+              exec("xcodebuild", "test-without-building",
+                "-project", "ButterRun.xcodeproj",
+                "-scheme", "ButterRun",
+                "-destination", "platform=iOS Simulator,id=$ENV{UDID}",
+                "-only-testing:ButterRunTests",
+                "-parallel-testing-enabled", "NO",
+                "-derivedDataPath", "./DerivedData",
+                "CODE_SIGNING_ALLOWED=NO",
+                "-resultBundlePath", "TestResults.xcresult");
+              die "exec failed: $!";
+            }
+            $SIG{ALRM} = sub {
+              print STDERR "\nTests exceeded 480s hard timeout, killing...\n";
+              kill 9, $pid;
+              exit 124;
+            };
+            alarm 480;
+            waitpid($pid, 0);
+            alarm 0;
+            my $rc = $?;
+            # Propagate exit code or signal death
+            if ($rc & 127) { exit(128 + ($rc & 127)); }
+            exit($rc >> 8);
+          '
+
+      - name: Cleanup Simulator
+        if: always()
+        run: xcrun simctl delete "$UDID" 2>/dev/null || true
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: test-results
           path: ButterRun/TestResults.xcresult

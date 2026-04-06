@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+/// The singleton user profile storing personal settings and body metrics.
+///
+/// Enforced as a singleton in ``ContentView`` — duplicate profiles are deleted on app launch.
+/// ``preferredUnit`` uses plural forms ("miles" / "kilometers") for display labeling, while
+/// ``splitDistance`` uses singular forms ("mile" / "kilometer") to name split segments.
+/// ``weightKg`` is used by ``ButterCalculator`` for calorie expenditure estimation.
 @Model
 class UserProfile {
     var id: UUID
@@ -17,6 +23,10 @@ class UserProfile {
 
     // V3 fields
     var weightUnit: String = "kg"  // "kg" or "lbs"
+
+    // V3 fields — Strava integration
+    var stravaConnected: Bool = false
+    var autoShareToStrava: Bool = false
 
     init(
         displayName: String,

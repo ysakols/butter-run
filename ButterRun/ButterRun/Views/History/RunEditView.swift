@@ -136,13 +136,16 @@ struct RunEditView: View {
             let durationMinutes = newDurationSeconds / 60.0
             let speedMps = newDistanceMeters > 0 ? newDistanceMeters / newDurationSeconds : 0
             let speedMph = ButterCalculator.metersPerSecondToMph(speedMps)
-            let met = ButterCalculator.metValue(forSpeedMph: speedMph)
-            let calories = ButterCalculator.caloriesBurned(
-                weightKg: weightKg, met: met, durationMinutes: durationMinutes
+            let butterBurned = ButterCalculator.butterBurned(
+                weightKg: weightKg, speedMph: speedMph, durationMinutes: durationMinutes
             )
-            run.totalCaloriesBurned = calories
-            run.totalButterBurnedTsp = ButterCalculator.caloriesToButterTsp(calories)
+            run.totalButterBurnedTsp = butterBurned
+            run.totalCaloriesBurned = butterBurned * ButterCalculator.caloriesPerTeaspoon
             run.netButterTsp = run.totalButterEatenTsp - run.totalButterBurnedTsp
+        } else {
+            run.totalCaloriesBurned = 0
+            run.totalButterBurnedTsp = 0
+            run.netButterTsp = run.totalButterEatenTsp
         }
 
         dismiss()

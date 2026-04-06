@@ -1,6 +1,19 @@
 import Foundation
 import HealthKit
 
+/// Thread-safe one-shot flag for racing unstructured tasks against a timeout.
+private final class ResumeOnce: @unchecked Sendable {
+    private let lock = NSLock()
+    private var resumed = false
+    func tryAcquire() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if resumed { return false }
+        resumed = true
+        return true
+    }
+}
+
 class HealthKitService {
     private let healthStore = HKHealthStore()
 
@@ -11,11 +24,19 @@ class HealthKitService {
     func requestAuthorization() async -> Bool {
         guard isAvailable else { return false }
 
+        guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned),
+              let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning),
+              let bodyMassType = HKObjectType.quantityType(forIdentifier: .bodyMass) else {
+            return false
+        }
+
         let typesToShare: Set<HKSampleType> = [
-            HKObjectType.workoutType()
+            HKObjectType.workoutType(),
+            energyType,
+            distanceType
         ]
         let typesToRead: Set<HKObjectType> = [
-            HKObjectType.quantityType(forIdentifier: .bodyMass)!
+            bodyMassType
         ]
 
         do {
@@ -29,14 +50,8 @@ class HealthKitService {
     func readWeight() async -> Double? {
         guard isAvailable else { return nil }
 
-        let weightType = HKQuantityType.quantityType(forIdentifier: .bodyMass)!
+        guard let weightType = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return nil }
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let query = HKSampleQuery(
-            sampleType: weightType,
-            predicate: nil,
-            limit: 1,
-            sortDescriptors: [sortDescriptor]
-        ) { _, _, _ in }
 
         return await withCheckedContinuation { continuation in
             let query = HKSampleQuery(
@@ -56,30 +71,100 @@ class HealthKitService {
         }
     }
 
-    func saveWorkout(run: Run) async -> Bool {
+    func saveWorkout(run: Run, pauseResumeEvents: [(pauseDate: Date, resumeDate: Date)] = []) async -> Bool {
         guard isAvailable else { return false }
 
         let startDate = run.startDate
         let endDate = run.endDate ?? Date()
-        let duration = run.durationSeconds
 
-        let workout = HKWorkout(
-            activityType: .running,
-            start: startDate,
-            end: endDate,
-            duration: duration,
-            totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: run.totalCaloriesBurned),
-            totalDistance: HKQuantity(unit: .meter(), doubleValue: run.distanceMeters),
-            metadata: [
-                "ButterBurnedTsp": run.totalButterBurnedTsp,
-                "Source": "Butter Run"
-            ]
+        let config = HKWorkoutConfiguration()
+        config.activityType = .running
+        config.locationType = .outdoor
+
+        let builder = HKWorkoutBuilder(
+            healthStore: healthStore,
+            configuration: config,
+            device: .local()
         )
 
         do {
-            try await healthStore.save(workout)
+            // beginCollection hangs indefinitely when the HealthKit entitlement
+            // is absent (e.g. unsigned CI builds) and does not respond to
+            // cooperative cancellation. Use unstructured tasks so the timeout
+            // can fire without waiting for the hung call to finish.
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let flag = ResumeOnce()
+
+                Task {
+                    do {
+                        try await builder.beginCollection(at: startDate)
+                        if flag.tryAcquire() { continuation.resume() }
+                    } catch {
+                        if flag.tryAcquire() { continuation.resume(throwing: error) }
+                    }
+                }
+
+                Task {
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    if flag.tryAcquire() {
+                        continuation.resume(throwing: CancellationError())
+                    }
+                }
+            }
+
+            // Add energy burned sample
+            guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return false }
+            let energySample = HKQuantitySample(
+                type: energyType,
+                quantity: HKQuantity(unit: .kilocalorie(), doubleValue: run.totalCaloriesBurned),
+                start: startDate,
+                end: endDate
+            )
+
+            // Add distance sample
+            guard let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else { return false }
+            let distanceSample = HKQuantitySample(
+                type: distanceType,
+                quantity: HKQuantity(unit: .meter(), doubleValue: run.distanceMeters),
+                start: startDate,
+                end: endDate
+            )
+
+            try await builder.addSamples([energySample, distanceSample])
+
+            // Add pause/resume events using actual timestamps when available,
+            // falling back to synthetic timestamps for backwards compatibility
+            if !pauseResumeEvents.isEmpty {
+                var workoutEvents: [HKWorkoutEvent] = []
+                for event in pauseResumeEvents {
+                    workoutEvents.append(HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: event.pauseDate, duration: 0), metadata: nil))
+                    workoutEvents.append(HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: event.resumeDate, duration: 0), metadata: nil))
+                }
+                try await builder.addWorkoutEvents(workoutEvents)
+            } else {
+                // Fallback: synthesize a single pause block for paused time.
+                // Resume 1s before endDate so HealthKit sees the workout as active when it ends.
+                let totalElapsed = endDate.timeIntervalSince(startDate)
+                let pausedTime = totalElapsed - run.durationSeconds
+                if pausedTime > 1 {
+                    let pauseDate = endDate.addingTimeInterval(-pausedTime)
+                    let resumeDate = endDate.addingTimeInterval(-1)
+                    try await builder.addWorkoutEvents([
+                        HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: pauseDate, duration: 0), metadata: nil),
+                        HKWorkoutEvent(type: .resume, dateInterval: DateInterval(start: resumeDate, duration: 0), metadata: nil)
+                    ])
+                }
+            }
+
+            try await builder.endCollection(at: endDate)
+            try await builder.addMetadata([
+                "ButterBurnedTsp": run.totalButterBurnedTsp,
+                "Source": "Butter Run"
+            ])
+            try await builder.finishWorkout()
             return true
         } catch {
+            builder.discardWorkout()
             return false
         }
     }

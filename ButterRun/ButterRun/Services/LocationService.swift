@@ -17,6 +17,13 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     private(set) var elevationGainMeters: Double = 0
     private(set) var elevationLossMeters: Double = 0
 
+    /// Lightweight coordinate buffer for route persistence, avoiding retention of full CLLocation objects.
+    private var routeBuffer: [[Double]] = []
+    /// Tracks whether new points have been added since the last `encodeRoute()` call.
+    private(set) var routeIsDirty = false
+    /// Cached encoded route data, invalidated when new points arrive.
+    private var cachedRouteData: Data?
+
     private var previousLocation: CLLocation?
     private var previousAltitude: Double?
     private var weakSignalStart: Date?
@@ -42,6 +49,9 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
 
     func startTracking() {
         locations = []
+        routeBuffer = []
+        routeIsDirty = false
+        cachedRouteData = nil
         totalDistanceMeters = 0
         currentSpeedMps = 0
         elevationGainMeters = 0
@@ -83,10 +93,29 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         locationManager.startUpdatingLocation()
     }
 
+    func subtractDistance(_ meters: Double) {
+        totalDistanceMeters = max(0, totalDistanceMeters - meters)
+    }
+
     func encodeRoute() -> Data? {
-        let simplified = simplifyRoute(locations, maxPoints: 5000)
-        let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
-        return try? JSONEncoder().encode(coords)
+        if !routeIsDirty, let cached = cachedRouteData {
+            return cached
+        }
+        let coords: [[Double]]
+        if routeBuffer.count > 5000 {
+            // Convert lightweight buffer to CLLocations for Douglas-Peucker simplification
+            let asLocations = routeBuffer.map {
+                CLLocation(latitude: $0[0], longitude: $0[1])
+            }
+            let simplified = simplifyRoute(asLocations, maxPoints: 5000)
+            coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
+        } else {
+            coords = routeBuffer
+        }
+        let data = try? JSONEncoder().encode(coords)
+        cachedRouteData = data
+        routeIsDirty = false
+        return data
     }
 
     // MARK: - Route Simplification (Douglas-Peucker)
@@ -112,10 +141,9 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     }
 
     private func douglasPeucker(_ points: [CLLocation], epsilon: Double) -> [CLLocation] {
-        guard points.count > 2 else { return points }
+        guard points.count > 2, let first = points.first, let last = points.last else { return points }
         var maxDist = 0.0
         var index = 0
-        let first = points.first!, last = points.last!
         for i in 1..<(points.count - 1) {
             let d = perpendicularDistance(point: points[i], lineStart: first, lineEnd: last)
             if d > maxDist {
@@ -155,85 +183,91 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
 
 extension LocationService: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        DispatchQueue.main.async { [weak self] in
-            self?.authorizationStatus = manager.authorizationStatus
-            self?.isAuthDenied = (manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted)
-        }
+        // CLLocationManagerDelegate calls arrive on the thread where the manager was created (main)
+        authorizationStatus = manager.authorizationStatus
+        isAuthDenied = (manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted)
     }
 
     func locationManagerDidPauseLocationUpdates(_ manager: CLLocationManager) {
         // iOS paused updates due to battery pressure — surface GPS lost state
-        DispatchQueue.main.async { [weak self] in
-            self?.gpsSignalState = .lost
-        }
+        gpsSignalState = .lost
         // Re-enable updates immediately since we need continuous tracking for running
         manager.startUpdatingLocation()
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations newLocations: [CLLocation]) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.isTracking else { return }
+        // CLLocationManagerDelegate calls arrive on main thread (manager created on main)
+        guard isTracking else { return }
 
-            for location in newLocations {
-                // GPS signal quality check
-                if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50 {
-                    if self.weakSignalStart == nil {
-                        self.weakSignalStart = Date()
-                    }
-                    if let start = self.weakSignalStart {
-                        let elapsed = Date().timeIntervalSince(start)
-                        if elapsed > 60 {
-                            self.gpsSignalState = .lost
-                        } else if elapsed > 10 {
-                            self.gpsSignalState = .weak
-                        }
-                    }
-                    continue
+        for location in newLocations {
+            // GPS signal quality check (>50m accuracy = weak/lost)
+            if location.horizontalAccuracy < 0 || location.horizontalAccuracy > 50 {
+                if weakSignalStart == nil {
+                    weakSignalStart = Date()
                 }
-
-                // Signal recovered
-                self.weakSignalStart = nil
-                self.gpsSignalState = .strong
-
-                // Filter out inaccurate readings for distance calculation
-                guard location.horizontalAccuracy < 20 else { continue }
-
-                // Calculate distance from previous point
-                if let previous = self.previousLocation {
-                    let delta = location.distance(from: previous)
-                    if delta < 100 {
-                        self.totalDistanceMeters += delta
+                if let start = weakSignalStart {
+                    let elapsed = Date().timeIntervalSince(start)
+                    if elapsed > 60 {
+                        gpsSignalState = .lost
+                    } else if elapsed > 10 {
+                        gpsSignalState = .weak
                     }
                 }
-
-                // Speed
-                if location.speed >= 0 {
-                    self.currentSpeedMps = location.speed
-                } else if let previous = self.previousLocation {
-                    let timeDelta = location.timestamp.timeIntervalSince(previous.timestamp)
-                    if timeDelta > 0 {
-                        self.currentSpeedMps = location.distance(from: previous) / timeDelta
-                    }
-                }
-
-                // Elevation tracking
-                if location.verticalAccuracy >= 0 {
-                    if let prevAlt = self.previousAltitude {
-                        let altDelta = location.altitude - prevAlt
-                        if altDelta > 0 {
-                            self.elevationGainMeters += altDelta
-                        } else {
-                            self.elevationLossMeters += abs(altDelta)
-                        }
-                    }
-                    self.previousAltitude = location.altitude
-                }
-
-                self.locations.append(location)
-                self.previousLocation = location
-                self.currentLocation = location
-                self._locationSubject.send(location)
+                continue
             }
+
+            // Signal recovered
+            weakSignalStart = nil
+            gpsSignalState = .strong
+
+            // Filter out inaccurate readings for distance calculation (<20m required)
+            guard location.horizontalAccuracy < 20 else { continue }
+
+            // Calculate distance from previous point
+            if let previous = previousLocation {
+                let delta = location.distance(from: previous)
+                // Reject GPS spikes > 100m between consecutive readings
+                if delta < 100 {
+                    totalDistanceMeters += delta
+                }
+            }
+
+            // Speed
+            if location.speed >= 0 {
+                currentSpeedMps = location.speed
+            } else if let previous = previousLocation {
+                let timeDelta = location.timestamp.timeIntervalSince(previous.timestamp)
+                if timeDelta > 0 {
+                    currentSpeedMps = location.distance(from: previous) / timeDelta
+                }
+            }
+
+            // Elevation tracking
+            if location.verticalAccuracy >= 0 {
+                if let prevAlt = previousAltitude {
+                    let altDelta = location.altitude - prevAlt
+                    if altDelta > 0 {
+                        elevationGainMeters += altDelta
+                    } else {
+                        elevationLossMeters += abs(altDelta)
+                    }
+                }
+                previousAltitude = location.altitude
+            }
+
+            routeBuffer.append([location.coordinate.latitude, location.coordinate.longitude])
+            routeIsDirty = true
+            cachedRouteData = nil
+            locations.append(location)
+            // Thin in-memory CLLocation array: keep only the last 120 entries (~2 min at 1/s)
+            // to bound memory while retaining enough for speed/distance calculations.
+            // The full route is preserved in the lightweight routeBuffer.
+            if locations.count > 180 {
+                locations.removeFirst(locations.count - 120)
+            }
+            previousLocation = location
+            currentLocation = location
+            _locationSubject.send(location)
         }
     }
 }

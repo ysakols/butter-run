@@ -56,8 +56,9 @@ struct EatButterSheet: View {
                         Text("pats")
                             .foregroundStyle(ButterTheme.textSecondary)
                         Button("Add") {
-                            guard customTsp > 0 else { return }
-                            onEat(.custom, customTsp)
+                            guard customTsp.isFinite, customTsp > 0 else { return }
+                            let clampedTsp = max(0.01, min(100.0, customTsp))
+                            onEat(.custom, clampedTsp)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)

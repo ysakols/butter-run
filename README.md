@@ -29,16 +29,44 @@ Calorie burn uses MET-based formulas from the Compendium of Physical Activities.
 - **SwiftUI** + **SwiftData** (iOS 17+)
 - **CoreLocation** for GPS tracking
 - **CoreMotion** for cadence/pedometer
+- **HealthKit** for weight & workout sync
 - **AVFoundation** for voice feedback
 - **MapKit** for route display
 
 ## Getting Started
 
-1. Open `ButterRun/` in Xcode 15+
-2. Create a new iOS App project (SwiftUI, SwiftData, iOS 17)
-3. Add all source files from the `ButterRun/ButterRun/` directory
-4. Set bundle identifier and signing team
-5. Build and run on device (GPS requires physical device)
+### Prerequisites
+
+- Xcode 16 or later
+- iOS 17.0+ deployment target
+- An Apple Developer account (for device testing and HealthKit)
+
+### Build & Run
+
+1. Clone the repository
+2. Copy the signing config template:
+   ```bash
+   cp ButterRun/ButterRun.xcconfig.template ButterRun/ButterRun.xcconfig
+   ```
+3. Edit `ButterRun/ButterRun.xcconfig` and fill in your `DEVELOPMENT_TEAM` and `BUNDLE_ID_PREFIX`
+4. Open `ButterRun/ButterRun.xcodeproj` in Xcode
+5. Select a device or simulator and press Run
+
+> **Note:** GPS tracking requires a physical device. The simulator can only test non-location features.
+
+### Regenerating the Xcode Project
+
+If you add or remove source files, regenerate the project:
+
+```bash
+python3 scripts/generate_xcodeproj.py
+```
+
+## Privacy
+
+Butter Run collects no data beyond what stays on your device. No analytics, no tracking, no network requests. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for details.
+
+## Design
 
 See [DESIGN.md](DESIGN.md) for the full design specification.
 

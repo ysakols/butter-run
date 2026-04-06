@@ -12,6 +12,10 @@ struct RunSummaryView: View {
     @State private var shareMode: ShareCardMode = .story
     @State private var newAchievements: [AchievementType] = []
     @State private var showAchievementOverlay = false
+    @EnvironmentObject private var stravaAuth: StravaAuthService
+    @State private var stravaUploading = false
+    @State private var stravaUploaded = false
+    @State private var stravaError: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.modelContext) private var modelContext
 
@@ -120,6 +124,13 @@ struct RunSummaryView: View {
                     }
                     .padding(.horizontal)
                     .accessibilityLabel("Share run results")
+
+                    // Strava upload
+                    if stravaAuth.isAuthenticated && run.stravaActivityId == nil {
+                        stravaUploadSection
+                    } else if run.stravaActivityId != nil || stravaUploaded {
+                        stravaUploadedBadge
+                    }
                 }
                 .padding(.bottom, 32)
             }
@@ -135,7 +146,7 @@ struct RunSummaryView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 if let image = shareImage {
-                    ShareSheetView(image: image)
+                    ShareSheetView(image: image, isPresented: $showShareSheet)
                 }
             }
             .onAppear {
@@ -267,6 +278,109 @@ struct RunSummaryView: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var stravaUploadedBadge: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(ButterTheme.success.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(ButterTheme.success)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Uploaded to Strava")
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(ButterTheme.success)
+                Text("Activity is live on your Strava profile")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(ButterTheme.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(ButterTheme.success.opacity(0.2), lineWidth: 1))
+        .padding(.horizontal)
+    }
+
+    private var stravaUploadSection: some View {
+        let stravaOrange = Color(red: 0.99, green: 0.32, blue: 0.15)
+
+        return VStack(spacing: 0) {
+                Button {
+                    uploadToStrava()
+                } label: {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.white.opacity(0.15))
+                                .frame(width: 32, height: 32)
+
+                            if stravaUploading {
+                                ProgressView()
+                                    .tint(.white)
+                                    .scaleEffect(0.7)
+                            } else {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(stravaUploading ? "Uploading..." : "Upload to Strava")
+                                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                            Text("Share this run on your profile")
+                                .font(.system(.caption2, design: .rounded))
+                                .opacity(0.8)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .opacity(0.6)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(12)
+                    .background(stravaOrange, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .disabled(stravaUploading)
+
+            // Error message
+            if let error = stravaError {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11))
+                    Text(error)
+                        .font(.system(.caption2, design: .rounded))
+                }
+                .foregroundStyle(ButterTheme.deficit)
+                .padding(.top, 8)
+            }
+        }
+        .padding(.horizontal)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(stravaUploaded ? "Uploaded to Strava" : "Upload to Strava")
+    }
+
+    private func uploadToStrava() {
+        stravaUploading = true
+        stravaError = nil
+        Task {
+            do {
+                let activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
+                run.stravaActivityId = activityId
+                try? modelContext.save()
+                stravaUploaded = true
+            } catch {
+                stravaError = error.localizedDescription
+            }
+            stravaUploading = false
+        }
+    }
+
     private var splitsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Splits")
@@ -319,12 +433,17 @@ struct SplitRowView: View {
 
 struct ShareSheetView: UIViewControllerRepresentable {
     let image: UIImage
+    @Binding var isPresented: Bool
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(
+        let controller = UIActivityViewController(
             activityItems: [image],
             applicationActivities: nil
         )
+        controller.completionWithItemsHandler = { _, _, _, _ in
+            isPresented = false
+        }
+        return controller
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}

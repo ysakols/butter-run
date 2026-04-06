@@ -6,7 +6,7 @@ struct OnboardingWalkthroughView: View {
 
     @State private var currentPage = 0
     @State private var displayName = ""
-    @State private var weightValue: Double = 70.0
+    @State private var weightValue: Double = Locale.current.measurementSystem == .us ? 154.0 : 70.0
     @State private var weightUnit: String = Locale.current.measurementSystem == .us ? "lbs" : "kg"
     @State private var useMiles: Bool = Locale.current.measurementSystem == .us
 
@@ -157,6 +157,13 @@ struct OnboardingWalkthroughView: View {
                     Text("Include backpack weight for accuracy.")
                         .font(ButterTypography.secondaryLabel)
                         .foregroundStyle(ButterTheme.textSecondary)
+                }
+                .onChange(of: weightUnit) { oldUnit, newUnit in
+                    if oldUnit == "kg" && newUnit == "lbs" {
+                        weightValue = weightValue * 2.20462
+                    } else if oldUnit == "lbs" && newUnit == "kg" {
+                        weightValue = weightValue / 2.20462
+                    }
                 }
 
                 Picker("Distance units", selection: $useMiles) {

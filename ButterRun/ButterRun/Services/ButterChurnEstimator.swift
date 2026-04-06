@@ -38,6 +38,13 @@ class ButterChurnEstimator {
     private let motionManager = CMMotionManager()
     private let sampleRate: TimeInterval = 1.0 / 20.0  // 20Hz
     private let windowSize = 20  // 1-second window at 20Hz
+    private let motionQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.name = "com.butterrun.churn-motion"
+        queue.maxConcurrentOperationCount = 1
+        queue.qualityOfService = .userInitiated
+        return queue
+    }()
 
     private(set) var currentStage: ChurnStage = .liquid
     private(set) var progress: Double = 0.0
@@ -47,6 +54,9 @@ class ButterChurnEstimator {
     private var totalAgitation: Double = 0
     private var sampleBuffer: [(x: Double, y: Double, z: Double)] = []
     private var previousStage: ChurnStage = .liquid
+    private let lock = NSLock()
+    /// Incremented on each start() to invalidate stale async blocks from prior sessions.
+    private var generation: Int = 0
 
     let stageAdvancedPublisher = PassthroughSubject<ChurnStage, Never>()
 
@@ -67,6 +77,8 @@ class ButterChurnEstimator {
     // MARK: - Lifecycle
 
     func start(configuration: ChurnConfiguration) {
+        lock.lock()
+        generation += 1
         self.configuration = configuration
         self.totalAgitation = 0
         self.progress = 0
@@ -74,11 +86,12 @@ class ButterChurnEstimator {
         self.previousStage = .liquid
         self.sampleBuffer = []
         self.isActive = true
+        lock.unlock()
 
         guard motionManager.isDeviceMotionAvailable else { return }
 
         motionManager.deviceMotionUpdateInterval = sampleRate
-        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
+        motionManager.startDeviceMotionUpdates(to: motionQueue) { [weak self] motion, error in
             guard let motion = motion, error == nil else { return }
 
             let accel = motion.userAcceleration
@@ -91,9 +104,12 @@ class ButterChurnEstimator {
     }
 
     func resume() {
-        guard isActive, motionManager.isDeviceMotionAvailable else { return }
+        lock.lock()
+        let active = isActive
+        lock.unlock()
+        guard active, motionManager.isDeviceMotionAvailable else { return }
         motionManager.deviceMotionUpdateInterval = sampleRate
-        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
+        motionManager.startDeviceMotionUpdates(to: motionQueue) { [weak self] motion, error in
             guard let motion = motion, error == nil else { return }
             let accel = motion.userAcceleration
             self?.processSample(x: accel.x, y: accel.y, z: accel.z)
@@ -102,24 +118,36 @@ class ButterChurnEstimator {
 
     func stop() -> ChurnResult? {
         motionManager.stopDeviceMotionUpdates()
-        isActive = false
 
-        guard let config = configuration else { return nil }
+        lock.lock()
+        isActive = false
+        let config = configuration
+        let agitation = totalAgitation
+        lock.unlock()
+
+        guard let config else { return nil }
+
+        // Derive progress and stage from the locked agitation total rather than
+        // reading the async-updated observable properties, which may be stale.
+        let prog = min(agitation / config.agitationThreshold, config.maxProgress)
+        let stage = ChurnStage.stage(forProgress: prog)
 
         return ChurnResult(
             creamType: config.creamType,
             creamCups: config.creamCups,
-            finalStage: currentStage.rawValue,
-            finalProgress: progress,
-            totalAgitation: totalAgitation
+            finalStage: stage.rawValue,
+            finalProgress: prog,
+            totalAgitation: agitation
         )
     }
 
     // MARK: - Sample Processing
 
     func processSample(x: Double, y: Double, z: Double) {
-        sampleBuffer.append((x: x, y: y, z: z))
+        lock.lock()
+        defer { lock.unlock() }
 
+        sampleBuffer.append((x: x, y: y, z: z))
         guard sampleBuffer.count >= windowSize else { return }
 
         let rms = Self.agitationRMS(samples: sampleBuffer)
@@ -133,15 +161,26 @@ class ButterChurnEstimator {
         // Calculate progress
         let rawProgress = totalAgitation / config.agitationThreshold
         let clampedProgress = min(rawProgress, config.maxProgress)
-        progress = clampedProgress
 
-        // Determine stage (already on main thread via OperationQueue.main)
+        // Determine stage
         let newStage = ChurnStage.stage(forProgress: clampedProgress)
-        currentStage = newStage
+        let stageChanged = newStage != previousStage
+        previousStage = newStage
+        let gen = generation
 
-        if newStage != previousStage {
-            stageAdvancedPublisher.send(newStage)
-            previousStage = newStage
+        // Update observable properties and publish stage changes on main thread.
+        // Check generation to prevent stale async blocks from overwriting a fresh start().
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.lock.lock()
+            let currentGen = self.generation
+            self.lock.unlock()
+            guard currentGen == gen else { return }
+            self.progress = clampedProgress
+            self.currentStage = newStage
+            if stageChanged {
+                self.stageAdvancedPublisher.send(newStage)
+            }
         }
     }
 }

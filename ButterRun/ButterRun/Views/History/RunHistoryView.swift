@@ -105,6 +105,12 @@ struct RunHistoryView: View {
         .onAppear {
             viewModel.load(runs: runs)
         }
+        .onChange(of: runs.count) {
+            viewModel.load(runs: runs)
+        }
+        .onChange(of: runs.first?.id) {
+            viewModel.load(runs: runs)
+        }
     }
 
     private var emptyState: some View {

@@ -1,6 +1,13 @@
 import Foundation
 import SwiftData
 
+/// A completed running session persisted via SwiftData.
+///
+/// Stores distance, duration, pace, calorie/butter metrics, elevation, route data (encoded as
+/// a JSON array of `[lat, lng]` pairs in ``routePolyline``), split segments, and optional
+/// butter-churn results (serialized as JSON in ``churnResultData``). The ``netButterTsp``
+/// property represents `totalButterEatenTsp - totalButterBurnedTsp` (positive = surplus butter). Runs flagged with
+/// ``isManualEntry`` were reconstructed from crash-recovery drafts rather than recorded live.
 @Model
 class Run {
     @Attribute(.spotlight) var id: UUID
@@ -28,6 +35,9 @@ class Run {
     var isManualEntry: Bool = false
     var targetDistanceMeters: Double?
     var targetDurationSeconds: Double?
+
+    // V3 fields — Strava integration
+    var stravaActivityId: Int64?
 
     init(
         startDate: Date = .now,
@@ -67,8 +77,13 @@ class Run {
     }
 
     var formattedDuration: String {
-        let minutes = Int(durationSeconds) / 60
-        let seconds = Int(durationSeconds) % 60
+        let totalSeconds = Int(durationSeconds)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        }
         return String(format: "%d:%02d", minutes, seconds)
     }
 

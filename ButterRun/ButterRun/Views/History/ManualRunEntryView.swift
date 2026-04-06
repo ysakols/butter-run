@@ -125,6 +125,7 @@ struct ManualRunEntryView: View {
     }
 
     private func saveManualRun() {
+        guard distanceValue > 0, durationMinutes > 0 else { return }
         let run = Run(startDate: date, isButterZeroChallenge: false)
         run.endDate = date.addingTimeInterval(durationSeconds)
         run.distanceMeters = distanceMeters

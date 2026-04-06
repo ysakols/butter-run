@@ -27,9 +27,9 @@ final class ButterCalculatorTests: XCTestCase {
     // MARK: - Calories
 
     func test_caloriesBurned_70kg_jogging() {
-        // 70kg, MET 8.3, 30min = (8.3 * 3.5 * 70 / 200) * 30
+        // 70kg, MET 8.3, 30min = (8.3 * 3.5 * 70 / 200) * 30 = 305.025
         let cal = ButterCalculator.caloriesBurned(weightKg: 70, met: 8.3, durationMinutes: 30)
-        XCTAssertEqual(cal, 304.85, accuracy: 0.1)
+        XCTAssertEqual(cal, 305.025, accuracy: 0.01)
     }
 
     func test_caloriesToButterTsp() {

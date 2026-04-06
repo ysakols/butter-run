@@ -3,6 +3,7 @@ import SwiftData
 import CoreLocation
 
 struct HomeView: View {
+    @EnvironmentObject private var stravaAuth: StravaAuthService
     @Query(sort: \Run.startDate, order: .reverse) private var runs: [Run]
     @Query private var profiles: [UserProfile]
     @State private var viewModel = HomeViewModel()
@@ -13,6 +14,7 @@ struct HomeView: View {
     @State private var churnConfig: ChurnConfiguration?
     @State private var showLocationPermission = false
     @State private var locationManager = CLLocationManager()
+    @State private var butterTrivia = ButterFacts.random
 
     private var profile: UserProfile? { profiles.first }
 
@@ -84,8 +86,8 @@ struct HomeView: View {
                     .padding(.bottom, 8)
                     .accessibilityLabel(isChurnEnabled ? "Set up churn tracker" : "Start run")
 
-                    // Butter trivia
-                    Text(ButterFacts.random)
+                    // Butter trivia (selected once per view appearance via butterTrivia state)
+                    Text(butterTrivia)
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
                         .multilineTextAlignment(.center)
@@ -104,6 +106,7 @@ struct HomeView: View {
                     churnConfig: churnConfig,
                     profile: profile ?? UserProfile(displayName: "Runner", weightKg: 70)
                 )
+                .environmentObject(stravaAuth)
             }
             .sheet(isPresented: $showChurnSetup) {
                 ChurnSetupSheet { config in
@@ -136,7 +139,7 @@ struct HomeView: View {
             }
         }
         .onAppear {
-            viewModel.load(runs: runs, usesMiles: profiles.first?.usesMiles ?? true)
+            viewModel.load(runs: runs, usesMiles: profile?.usesMiles ?? true)
         }
     }
 

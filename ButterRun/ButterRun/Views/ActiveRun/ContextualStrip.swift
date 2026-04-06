@@ -65,7 +65,7 @@ struct ContextualStrip: View {
         .padding(12)
         .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
-        .accessibilityElement(children: .ignore)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel(composedAccessibilityLabel)
         .accessibilityAddTraits(.updatesFrequently)
     }

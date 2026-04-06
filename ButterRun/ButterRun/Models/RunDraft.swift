@@ -1,6 +1,13 @@
 import Foundation
 import SwiftData
 
+/// A temporary snapshot of an in-progress run, saved to SwiftData every 30 seconds for crash recovery.
+///
+/// If the app terminates unexpectedly during a run, ``CrashRecoveryWrapper`` detects the draft on
+/// next launch and offers to discard or save it as a manual run. Route coordinates are stored in
+/// ``routePointsData`` as a JSON-encoded array of `[lat, lng]` pairs. Butter consumption events
+/// are stored in ``butterEntriesData`` as JSON-encoded `EntrySnapshot` objects. Drafts older than
+/// 48 hours are automatically purged on app launch.
 @Model
 class RunDraft {
     var id: UUID

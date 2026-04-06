@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Butter Run — Redesign v4b</title>
+<style>
+:root{--bg:#FFFDF7;--sf:#FFF;--bd:#F0E6D0;--go:#D4940A;--gd:#B87D08;--gl:#FFF3D6;--tp:#1C1C1E;--ts:#6B6B70;--ok:#2D8E40;--no:#CC3333;--wh:#FFF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'SF Pro Rounded',system-ui,sans-serif;background:#F0F0F0;color:var(--tp);-webkit-font-smoothing:antialiased}
+
+/* chrome */
+.hdr{background:var(--bg);border-bottom:1px solid var(--bd);padding:24px 0 18px;text-align:center;position:sticky;top:0;z-index:100}
+.hdr h1{font-size:22px;font-weight:800}
+.hdr p{color:var(--ts);font-size:12px;margin-top:3px}
+.nav{display:flex;justify-content:center;gap:5px;margin-top:12px;flex-wrap:wrap;padding:0 10px}
+.nb{padding:6px 12px;border-radius:16px;border:1.5px solid var(--bd);background:var(--sf);color:var(--ts);font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
+.nb:hover,.nb.on{background:var(--go);color:var(--wh);border-color:var(--go)}
+.wrap{max-width:1600px;margin:0 auto;padding:20px}
+.st{font-size:18px;font-weight:700;margin:0 0 4px}.sd{color:var(--ts);font-size:12px;margin-bottom:16px}
+.sr{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.ms{display:none}.ms.v{display:block}
+
+/* phone 375x812 → 300w */
+.ph{width:300px;height:650px;background:var(--bg);border-radius:32px;border:3px solid #E0E0E0;overflow:hidden;flex-shrink:0;box-shadow:0 6px 24px rgba(0,0,0,.07);display:flex;flex-direction:column;position:relative}
+.ps{height:44px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 4px;font-size:11px;font-weight:600;flex-shrink:0}
+.pb{flex:1;overflow-y:auto;padding:0 14px;display:flex;flex-direction:column}
+.pt{display:flex;justify-content:space-around;padding:5px 0 18px;border-top:1px solid var(--bd);background:var(--sf);flex-shrink:0}
+.pi{text-align:center;flex:1;font-size:9px;font-weight:600;color:var(--ts)}.pi.on{color:var(--go)}
+.pi-i{font-size:16px;display:block;margin-bottom:1px}
+.pc{text-align:center;font-size:10px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.4px;margin-top:8px}
+
+/* card */
+.c{background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ct{font-size:12px;font-weight:700}.cb{font-size:9px;font-weight:600;background:var(--gl);color:var(--go);padding:2px 7px;border-radius:5px}
+
+/* stat row */
+.srow{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--bd);margin-top:8px;padding-top:8px}
+.sc{text-align:center}.sc+.sc{border-left:1px solid var(--bd)}
+.sv{font-size:15px;font-weight:800;line-height:1.2}.sl{font-size:8px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+
+/* hero */
+.hn{font-size:34px;font-weight:900;line-height:1;letter-spacing:-1px}.hl{font-size:12px;font-weight:600;color:var(--ts);margin-top:1px}.hs{font-size:10px;color:var(--ts);margin-top:1px}
+
+/* cta */
+.btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:13px;border-radius:12px;border:none;background:var(--go);color:var(--wh);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(212,148,10,.2)}
+.btn.sec{background:var(--sf);border:1.5px solid var(--bd);color:var(--tp);box-shadow:none;font-size:14px}
+
+/* toggle */
+.tr{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)}.tr:last-child{border-bottom:none}
+.tt{font-size:13px;font-weight:600}.td{font-size:10px;color:var(--ts);margin-top:1px}
+.tl{display:flex;align-items:center;gap:5px}
+.tw{width:40px;height:22px;border-radius:11px;background:#E0E0E0;position:relative;flex-shrink:0}.tw.on{background:var(--go)}
+.tw::after{content:'';width:18px;height:18px;border-radius:50%;background:white;position:absolute;top:2px;left:2px;box-shadow:0 1px 2px rgba(0,0,0,.15)}.tw.on::after{left:20px}
+
+/* info btn */
+.ib{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--ts);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ts);flex-shrink:0;cursor:pointer}
+.ib.on{background:var(--go);color:white;border-color:var(--go)}
+
+/* BZ scale */
+.bz{background:var(--sf);border:1.5px solid var(--bd);border-radius:10px;padding:8px 12px}
+.bzh{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.bzt{font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px}
+.bzv{font-size:11px;font-weight:700}.bzv.p{color:var(--ok)}.bzv.n{color:var(--no)}.bzv.z{color:var(--go)}
+.btr{height:5px;background:#F0F0F0;border-radius:3px;position:relative}
+.bdo{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;border:2px solid var(--sf)}
+.bdo.p{background:var(--ok)}.bdo.n{background:var(--no)}.bdo.z{background:var(--go)}
+.bla{display:flex;justify-content:space-between;margin-top:3px;font-size:8px;color:var(--ts);font-weight:600}
+.bla span:nth-child(2){flex:1;text-align:center}
+
+/* form */
+.fg{margin-bottom:12px}.fl{font-size:11px;font-weight:600;color:var(--ts);display:block;margin-bottom:4px}
+.fi{background:var(--sf);border:1.5px solid var(--bd);border-radius:9px;padding:11px 12px;font-size:14px;color:var(--tp);width:100%}.fi.ph-text{color:var(--ts)}
+.seg{display:flex;background:#F0F0F0;border-radius:7px;padding:2px}
+.si{flex:1;text-align:center;padding:6px 3px;font-size:12px;font-weight:600;color:var(--ts);border-radius:5px}
+.si.on{background:var(--sf);color:var(--tp);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* onboarding */
+.ob{text-align:center;flex:1;display:flex;flex-direction:column;padding-top:12px}
+.ob h2{font-size:20px;font-weight:800;margin:10px 0 5px}
+.ob .tg{font-size:13px;color:var(--ts);line-height:1.45;padding:0 4px;margin-bottom:14px}
+.od{display:flex;justify-content:center;gap:5px;margin:12px 0}
+.odo{width:6px;height:6px;border-radius:50%;background:var(--bd)}.odo.on{background:var(--go);width:18px;border-radius:3px}
+.osk{color:var(--ts);font-size:12px;margin-top:6px}
+.osp{flex:1;min-height:6px}
+.fc{background:var(--gl);border:1.5px solid var(--bd);border-radius:12px;padding:12px;text-align:left}
+.fc h4{font-size:13px;font-weight:700;margin-bottom:2px}.fc p{font-size:11px;color:var(--ts);line-height:1.35}
+
+/* stage icons */
+.ostg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0;padding:0 2px}
+.osi{text-align:center}
+.osi-c{width:34px;height:34px;border-radius:50%;background:var(--gl);margin:0 auto 2px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.osi-n{font-size:9px;font-weight:600;color:var(--ts)}
+.osi:last-child .osi-n{color:var(--go);font-weight:700}
+
+/* metric grid */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.mc{background:var(--sf);border:1.5px solid var(--bd);border-radius:9px;padding:9px;text-align:center}
+.mv{font-size:18px;font-weight:800}.ml{font-size:9px;font-weight:600;color:var(--ts);margin-top:1px;display:flex;align-items:center;justify-content:center;gap:3px}
+
+/* run controls */
+.rc{display:flex;justify-content:center;gap:12px;align-items:center;margin-top:10px}
+.rb{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--bd);background:var(--sf);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer}
+.rb.big{width:60px;height:60px;background:var(--go);border:none;color:var(--wh);font-size:20px;box-shadow:0 3px 10px rgba(212,148,10,.3)}
+.rb.stp{background:var(--no);border:none;color:white}
+
+/* ach */
+.ach{background:var(--gl);border:1.5px solid var(--go);border-radius:10px;padding:10px;display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.ach-e{font-size:26px}.ach-t h4{font-size:13px;font-weight:700}.ach-t p{font-size:10px;color:var(--ts)}
+
+/* guide */
+.gs{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.gn{width:22px;height:22px;border-radius:50%;background:var(--go);color:var(--wh);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.gt h4{font-size:12px;font-weight:700;margin-bottom:1px}.gt p{font-size:11px;color:var(--ts);line-height:1.3}
+
+/* 5 stages */
+.stg5{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin:10px 0}
+.stg{text-align:center;padding:6px 2px;border:1px solid var(--bd);border-radius:6px;background:var(--gl)}
+.stg:last-child{border-color:var(--go)}
+.stg-i{font-size:16px;display:block;line-height:1.3}
+.stg-n{font-size:7px;font-weight:700;color:var(--ts);display:block}
+.stg-d{font-size:6px;color:var(--ts);display:block;margin-top:1px}
+
+/* tips with hanging indent */
+.tip{font-size:11px;color:var(--ts);line-height:1.5;padding-left:22px;text-indent:-22px;margin-bottom:3px}
+
+/* popover */
+.pop{background:var(--sf);border:1.5px solid var(--bd);border-radius:9px;padding:9px 11px;box-shadow:0 5px 16px rgba(0,0,0,.1);font-size:11px;color:var(--ts);line-height:1.4}
+.pop strong{color:var(--tp);display:block;margin-bottom:2px;font-size:12px}
+
+/* settings row */
+.srow2{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
+.srow2:last-child{border-bottom:none}
+.srow2 .sl2{font-size:13px;font-weight:600;color:var(--tp)}
+.srow2 .sv2{font-size:13px;color:var(--ts)}
+
+/* history run row */
+.hrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
+.hrow:last-child{border-bottom:none}
+.hl2{font-size:12px;font-weight:600;color:var(--tp)}.hd2{font-size:10px;color:var(--ts);margin-top:1px}
+.hr2{text-align:right}
+.hr2 .hv{font-size:14px;font-weight:800;color:var(--tp)}.hr2 .hm{font-size:10px;color:var(--ts)}
+
+/* palette */
+.swg{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:100px;text-align:center}.swc{width:100px;height:56px;border-radius:8px;border:1.5px solid #E0E0E0;margin-bottom:3px}
+.swn{font-size:10px;font-weight:700}.swh{font-size:9px;color:var(--ts);font-family:monospace}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>Butter Run — Redesign v4</h1>
+  <p>All 9 screens. Fixed: bullseye→⚖️, equal-size eat btn, symmetric labels, butter art back.</p>
+  <div class="nav">
+    <button class="nb on" onclick="s('ob')">Onboarding</button>
+    <button class="nb" onclick="s('ho')">Home</button>
+    <button class="nb" onclick="s('ar')">Active Run</button>
+    <button class="nb" onclick="s('su')">Summary</button>
+    <button class="nb" onclick="s('hi')">History</button>
+    <button class="nb" onclick="s('cg')">Churn Guide</button>
+    <button class="nb" onclick="s('se')">Settings</button>
+    <button class="nb" onclick="s('tt')">Tooltips</button>
+    <button class="nb" onclick="s('ba')">Butter Art</button>
+    <button class="nb" onclick="s('pa')">Palette</button>
+  </div>
+</div>
+<div class="wrap">
+
+<!-- ===== ONBOARDING ===== -->
+<div id="s-ob" class="ms v">
+<h2 class="st">Onboarding (4 Pages)</h2><p class="sd">Vertically centered content. All fits within iPhone 13 mini safe area.</p>
+<div class="sr">
+
+<!-- P1 -->
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb"><div class="ob">
+  <div class="osp"></div>
+  <svg width="64" height="46" viewBox="0 0 100 72" style="margin:0 auto;display:block"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF9E0"/><stop offset="40%" stop-color="#F3BA60"/><stop offset="100%" stop-color="#D4940A"/></linearGradient><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,.5)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient></defs><rect x="8" y="10" width="84" height="48" rx="6" fill="url(#g1)" stroke="rgba(0,0,0,.08)" stroke-width="1"/><rect x="12" y="13" width="76" height="20" rx="4" fill="url(#g2)" opacity=".6"/><path d="M28 18Q55 30 72 22" fill="none" stroke="#C4943F" stroke-width="1.5" stroke-linecap="round" opacity=".6"/></svg>
+  <h2>Butter Run</h2>
+  <p class="tg">Run it off. One pat at a time.</p>
+  <div class="fc"><h4>🧈 Track runs in pats of butter</h4><p>Every calorie you burn converts to pats. One pat ≈ 34 calories. A 5K burns about 8 pats!</p></div>
+  <div class="osp"></div>
+  <div class="od"><div class="odo on"></div><div class="odo"></div><div class="odo"></div><div class="odo"></div></div>
+  <button class="btn">Next</button><div class="osk">Skip</div><div style="height:10px"></div>
+</div></div></div><div class="pc">Page 1 — Welcome</div></div>
+
+<!-- P2 -->
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb"><div class="ob">
+  <div class="osp"></div>
+  <div style="font-size:40px">⚖️</div>
+  <h2>Butter Zero</h2>
+  <p class="tg">Bring butter on your run and eat it as you go. Try to burn exactly as many pats as you eat.</p>
+  <div class="fc" style="text-align:center">
+    <div style="font-size:20px;font-weight:900;color:var(--go)">0.0 <span style="font-size:11px;font-weight:600;color:var(--ts)">pats</span></div>
+    <div style="height:5px;background:#F0F0F0;border-radius:3px;position:relative;margin:8px 0 5px">
+      <div style="position:absolute;width:11px;height:11px;border-radius:50%;background:var(--go);border:2px solid white;top:-3px;left:calc(50% - 5.5px)"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--ts);font-weight:600"><span>- pats</span><span style="color:var(--go);font-weight:700">net zero</span><span>+ pats</span></div>
+  </div>
+  <div class="osp"></div>
+  <div class="od"><div class="odo"></div><div class="odo on"></div><div class="odo"></div><div class="odo"></div></div>
+  <button class="btn">Next</button><div class="osk">Skip</div><div style="height:10px"></div>
+</div></div></div><div class="pc">Page 2 — Butter Zero</div></div>
+
+<!-- P3 -->
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb"><div class="ob">
+  <div class="osp"></div>
+  <div style="font-size:40px">🧈</div>
+  <h2>Churn Tracker</h2>
+  <p class="tg">Carry cream in a sealed bag. Your running motion churns it into butter — usually in 6-10 km.</p>
+  <div class="ostg">
+    <div class="osi"><div class="osi-c">💧</div><div class="osi-n">Liquid</div></div>
+    <div class="osi"><div class="osi-c">🫧</div><div class="osi-n">Foamy</div></div>
+    <div class="osi"><div class="osi-c">☁️</div><div class="osi-n">Whipped</div></div>
+    <div class="osi"><div class="osi-c">🧈</div><div class="osi-n">Butter!</div></div>
+  </div>
+  <div class="fc"><p>Start with cold cream from the fridge. Check the <strong>Churn Guide</strong> tab for full instructions and temperature tips.</p></div>
+  <div class="osp"></div>
+  <div class="od"><div class="odo"></div><div class="odo"></div><div class="odo on"></div><div class="odo"></div></div>
+  <button class="btn">Next</button><div class="osk">Skip</div><div style="height:10px"></div>
+</div></div></div><div class="pc">Page 3 — Churn</div></div>
+
+<!-- P4 — vertically centered -->
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb"><div class="ob" style="text-align:left;justify-content:center">
+  <div style="text-align:center">
+    <svg width="40" height="28" viewBox="0 0 100 72" style="margin:0 auto 4px;display:block"><rect x="8" y="10" width="84" height="48" rx="6" fill="url(#g1)" stroke="rgba(0,0,0,.08)" stroke-width="1"/></svg>
+    <h2 style="font-size:18px">Let's get started</h2>
+    <p class="tg" style="margin-bottom:14px">We use your weight to estimate pats burned per run.</p>
+  </div>
+  <div class="fg"><label class="fl">Your name</label><div class="fi ph-text">Enter your name</div></div>
+  <div class="fg">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label class="fl" style="margin:0">Your weight</label><div class="ib">i</div></div>
+    <div style="display:grid;grid-template-columns:1fr 110px;gap:6px;align-items:center"><div class="fi">154</div><div class="seg"><div class="si on">lbs</div><div class="si">kg</div></div></div>
+    <div style="font-size:9px;color:var(--ts);margin-top:3px;line-height:1.3">Include backpack/pack weight for accuracy.</div>
+  </div>
+  <div class="fg"><label class="fl">Distance units</label><div class="seg"><div class="si on">Miles</div><div class="si">Kilometers</div></div></div>
+  <div class="od" style="justify-content:center"><div class="odo"></div><div class="odo"></div><div class="odo"></div><div class="odo on"></div></div>
+  <button class="btn">Let's Churn 🧈</button>
+  <div style="height:12px"></div>
+</div></div></div><div class="pc">Page 4 — Profile</div></div>
+
+</div></div>
+
+<!-- ===== HOME ===== -->
+<div id="s-ho" class="ms">
+<h2 class="st">Home Screen</h2><p class="sd">Dynamic Butter Zero scale. "Start Churning" well above tab bar. Labels: "burned more" / "ate more" (equal length).</p>
+<div class="sr">
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb">
+  <div style="font-size:22px;font-weight:800;margin:10px 0 2px">Hey, Sarah</div>
+  <div style="font-size:11px;color:var(--ts);font-style:italic;margin-bottom:12px">"It takes 21 lbs of milk to make 1 lb of butter."</div>
+  <div class="c">
+    <div class="ch"><span class="ct">This Week</span><span class="cb">Week 12</span></div>
+    <div class="hn">8.4</div><div class="hl">pats burned</div><div class="hs">≈ 8.9 tsp (303 cals)</div>
+    <div class="srow"><div class="sc"><div class="sv">3</div><div class="sl">Runs</div></div><div class="sc"><div class="sv">7.2 mi</div><div class="sl">Distance</div></div><div class="sc"><div class="sv">52:10</div><div class="sl">Time</div></div></div>
+  </div>
+  <div class="c">
+    <div class="tr"><div><div class="tl"><span class="tt">Butter Zero</span><div class="ib">i</div></div><div class="td">Eat butter on your run. Try to net zero.</div></div><div class="tw on"></div></div>
+    <div style="padding:8px 0 2px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:9px;font-weight:600;color:var(--ts)">This week avg</span><span style="font-size:11px;font-weight:700;color:var(--ok)">+0.3 pats</span></div>
+      <div class="btr"><div style="position:absolute;height:100%;width:3%;background:var(--ok);border-radius:3px;left:50%"></div><div class="bdo p" style="left:53%"></div></div>
+      <div class="bla"><span>− pats</span><span>net zero</span><span>+ pats</span></div>
+    </div>
+    <div class="tr"><div><div class="tl"><span class="tt">Churn Tracker</span><div class="ib">i</div></div><div class="td">Carry cream, churn butter as you run.</div></div><div class="tw"></div></div>
+  </div>
+  <div style="flex:1;min-height:6px"></div>
+  <button class="btn" style="margin-bottom:10px">🏃 Start Churning</button>
+</div><div class="pt"><div class="pi on"><span class="pi-i">🏃</span>Run</div><div class="pi"><span class="pi-i">📋</span>History</div><div class="pi"><span class="pi-i">📖</span>Guide</div><div class="pi"><span class="pi-i">⚙️</span>Settings</div></div></div><div class="pc">Home</div></div>
+
+<!-- home tooltip -->
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb">
+  <div style="font-size:22px;font-weight:800;margin:10px 0 2px">Hey, Sarah</div>
+  <div style="font-size:11px;color:var(--ts);font-style:italic;margin-bottom:12px">"Butter sculpting is competitive at US state fairs."</div>
+  <div class="c"><div class="ch"><span class="ct">This Week</span><span class="cb">Week 12</span></div><div class="hn">8.4</div><div class="hl">pats burned</div><div class="hs">≈ 8.9 tsp (303 cals)</div></div>
+  <div class="c" style="overflow:visible;position:relative">
+    <div class="tr"><div><div class="tl"><span class="tt">Butter Zero</span><div class="ib on">i</div></div></div><div class="tw on"></div></div>
+    <div class="pop" style="position:absolute;top:44px;left:2px;z-index:10;width:190px"><strong>Butter Zero</strong>Eat butter during your run and try to match what you burn. Track as + or - pats from net zero.</div>
+  </div>
+</div><div class="pt"><div class="pi on"><span class="pi-i">🏃</span>Run</div><div class="pi"><span class="pi-i">📋</span>History</div><div class="pi"><span class="pi-i">📖</span>Guide</div><div class="pi"><span class="pi-i">⚙️</span>Settings</div></div></div><div class="pc">Home — Tooltip</div></div>
+</div></div>
+
+<!-- ===== ACTIVE RUN ===== -->
+<div id="s-ar" class="ms">
+<h2 class="st">Active Run</h2><p class="sd">All 3 control buttons are equal-size circles. Stop requires 3-sec hold. Icons on pats/min label.</p>
+<div class="sr">
+<div><div class="ph"><div class="ps"><span>9:41</span><span style="font-size:9px;color:var(--ok)">● GPS</span></div><div class="pb">
+  <div style="text-align:center;padding:14px 0 8px">
+    <svg width="32" height="24" viewBox="0 0 100 72" style="margin:0 auto 3px;display:block"><rect x="8" y="10" width="84" height="48" rx="6" fill="url(#g1)" stroke="rgba(0,0,0,.08)" stroke-width="1"/></svg>
+    <div style="font-size:44px;font-weight:900;letter-spacing:-2px;line-height:1">4.2</div>
+    <div style="font-size:13px;font-weight:600;color:var(--ts);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:3px">🧈 pats burned</div>
+    <div style="font-size:10px;color:var(--ts)">≈ 4.5 tsp (151 cals)</div>
+  </div>
+  <div class="bz" style="margin-bottom:8px">
+    <div class="bzh"><div class="bzt">Butter Zero <div class="ib">i</div></div><div class="bzv p">+0.3 pats</div></div>
+    <div class="btr"><div style="position:absolute;height:100%;width:3%;background:var(--ok);border-radius:3px;left:50%"></div><div class="bdo p" style="left:53%"></div></div>
+    <div class="bla"><span>− pats</span><span>net zero</span><span>+ pats</span></div>
+  </div>
+  <div class="mg">
+    <div class="mc"><div class="mv">1.82</div><div class="ml">Miles</div></div>
+    <div class="mc"><div class="mv">18:42</div><div class="ml">Duration</div></div>
+    <div class="mc"><div class="mv">9'24"</div><div class="ml">📏 Pace /mi</div></div>
+    <div class="mc"><div class="mv">0.23</div><div class="ml">⚡ Pats/min</div></div>
+  </div>
+  <!-- Equal-size circular buttons -->
+  <div class="rc">
+    <div class="rb big" style="background:var(--gl);border:2px solid var(--go);color:var(--go);box-shadow:none;font-size:18px">🧈</div>
+    <div class="rb big">⏸</div>
+    <div class="rb big stp">⏹</div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:12px;margin-top:4px;font-size:8px;color:var(--ts);text-align:center"><span style="width:60px">Eat</span><span style="width:60px">Pause</span><span style="width:60px">Stop (hold)</span></div>
+</div></div><div class="pc">Active Run</div></div>
+</div></div>
+
+<!-- ===== SUMMARY ===== -->
+<div id="s-su" class="ms">
+<h2 class="st">Run Summary</h2><p class="sd">Content vertically distributed. Butter Zero as +/- pats. Full stats visible.</p>
+<div class="sr">
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb" style="justify-content:center;padding-bottom:12px">
+  <div style="text-align:center">
+    <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">Run Complete!</h2>
+    <div style="display:flex;flex-direction:column;align-items:center;margin:4px 0 8px"><div style="width:90px;height:30px;border-radius:4px;background:linear-gradient(180deg,#FFF9E0,#F3BA60 50%,#D4940A);border:1px solid rgba(0,0,0,.06)"></div><div style="width:70px;height:8px;background:radial-gradient(ellipse,rgba(243,186,96,.3),transparent 70%);margin-top:-2px"></div></div>
+    <div class="hn">7.8</div><div class="hl">pats burned</div><div class="hs">≈ 8.3 tsp (282 cals)</div>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin:10px 0 8px">
+    <div class="mc"><div style="font-size:15px;font-weight:800">3.1 mi</div><div class="ml">Distance</div></div>
+    <div class="mc"><div style="font-size:15px;font-weight:800">28:42</div><div class="ml">Duration</div></div>
+    <div class="mc"><div style="font-size:15px;font-weight:800">9'15"</div><div class="ml">Avg Pace</div></div>
+  </div>
+
+  <!-- More stats -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:8px">
+    <div class="mc"><div style="font-size:15px;font-weight:800">8'52"</div><div class="ml">Best Split</div></div>
+    <div class="mc"><div style="font-size:15px;font-weight:800">142 ft</div><div class="ml">Elev Gain</div></div>
+    <div class="mc"><div style="font-size:15px;font-weight:800">168</div><div class="ml">Avg Cadence</div></div>
+  </div>
+
+  <!-- BZ -->
+  <div class="bz" style="margin-bottom:8px">
+    <div class="bzh"><div class="bzt">Butter Zero</div><div class="bzv p">+0.3 pats</div></div>
+    <div class="btr"><div style="position:absolute;height:100%;width:3%;background:var(--ok);border-radius:3px;left:50%"></div><div class="bdo p" style="left:53%"></div></div>
+    <div class="bla"><span>− pats</span><span>net zero</span><span>+ pats</span></div>
+    <div style="text-align:center;margin-top:4px;font-size:10px;color:var(--ts)">Burned 7.8 · Ate 8.1 pats</div>
+  </div>
+
+  <!-- Splits preview -->
+  <div class="c" style="padding:10px">
+    <div class="ct" style="margin-bottom:6px">Splits</div>
+    <div style="display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:2px;font-size:9px;font-weight:600;color:var(--ts);margin-bottom:4px"><span>Mile</span><span style="text-align:right">Pace</span><span style="text-align:right">Pats</span><span style="text-align:right">Elev</span></div>
+    <div style="display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:2px;font-size:10px;padding:3px 0;border-top:1px solid var(--bd)"><span style="font-weight:700">1</span><span style="text-align:right">9'32"</span><span style="text-align:right">2.4</span><span style="text-align:right">+48 ft</span></div>
+    <div style="display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:2px;font-size:10px;padding:3px 0;border-top:1px solid var(--bd)"><span style="font-weight:700">2</span><span style="text-align:right">9'10"</span><span style="text-align:right">2.6</span><span style="text-align:right">+62 ft</span></div>
+    <div style="display:grid;grid-template-columns:40px 1fr 1fr 1fr;gap:2px;font-size:10px;padding:3px 0;border-top:1px solid var(--bd)"><span style="font-weight:700">3</span><span style="text-align:right">8'52"</span><span style="text-align:right">2.8</span><span style="text-align:right">+32 ft</span></div>
+  </div>
+
+  <div class="ach"><div class="ach-e">🏆</div><div class="ach-t"><h4>Tablespoon Triumph!</h4><p>Burned a full tablespoon in one run</p></div></div>
+  <button class="btn sec" style="margin-bottom:6px">📤 Share My Run</button>
+  <button class="btn">Done</button>
+</div></div><div class="pc">Run Summary</div></div>
+</div></div>
+
+<!-- ===== HISTORY ===== -->
+<div id="s-hi" class="ms">
+<h2 class="st">History</h2><p class="sd">All-time stats at top, run list below. Tap any run for detail view.</p>
+<div class="sr">
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb">
+  <div style="font-size:22px;font-weight:800;margin:10px 0 12px">History</div>
+  <!-- All-time stats -->
+  <div class="c">
+    <div class="srow" style="border-top:none;margin-top:0;padding-top:0">
+      <div class="sc"><div class="sv">42.6</div><div class="sl">Total Pats</div></div>
+      <div class="sc"><div class="sv">31.4 mi</div><div class="sl">Distance</div></div>
+      <div class="sc"><div class="sv">12</div><div class="sl">Runs</div></div>
+    </div>
+  </div>
+  <!-- Run list -->
+  <div class="c">
+    <div class="ch"><span class="ct">All Runs</span><span class="cb" style="cursor:pointer">+ Manual</span></div>
+    <div class="hrow"><div><div class="hl2">Today, 8:14 AM</div><div class="hd2">3.1 mi · 28:42 · 🎯 Butter Zero</div></div><div class="hr2"><div class="hv">7.8 pats</div><div class="hm">282 cals</div></div></div>
+    <div class="hrow"><div><div class="hl2">Apr 3, 7:30 AM</div><div class="hd2">2.4 mi · 22:15</div></div><div class="hr2"><div class="hv">5.2 pats</div><div class="hm">177 cals</div></div></div>
+    <div class="hrow"><div><div class="hl2">Apr 1, 6:45 AM</div><div class="hd2">1.8 mi · 18:30 · 🧈 Churned!</div></div><div class="hr2"><div class="hv">3.8 pats</div><div class="hm">129 cals</div></div></div>
+    <div class="hrow"><div><div class="hl2">Mar 29, 7:00 AM</div><div class="hd2">4.2 mi · 38:10 · 🎯 Butter Zero</div></div><div class="hr2"><div class="hv">9.1 pats</div><div class="hm">309 cals</div></div></div>
+    <div class="hrow"><div><div class="hl2">Mar 27, 8:00 AM</div><div class="hd2">2.0 mi · 19:45</div></div><div class="hr2"><div class="hv">4.4 pats</div><div class="hm">150 cals</div></div></div>
+    <div class="hrow"><div><div class="hl2">Mar 25, 6:30 AM</div><div class="hd2">3.5 mi · 32:20 · ✍️ Manual</div></div><div class="hr2"><div class="hv">7.5 pats</div><div class="hm">255 cals</div></div></div>
+  </div>
+</div><div class="pt"><div class="pi"><span class="pi-i">🏃</span>Run</div><div class="pi on"><span class="pi-i">📋</span>History</div><div class="pi"><span class="pi-i">📖</span>Guide</div><div class="pi"><span class="pi-i">⚙️</span>Settings</div></div></div><div class="pc">History</div></div>
+</div></div>
+
+<!-- ===== CHURN GUIDE ===== -->
+<div id="s-cg" class="ms">
+<h2 class="st">Churn Guide</h2><p class="sd">Temperature + ice section updated with body heat research. Hanging-indent tips.</p>
+<div class="sr">
+<div><div class="ph" style="height:auto;min-height:650px"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb" style="padding-bottom:6px">
+  <div style="margin:10px 0 14px"><div style="font-size:20px;font-weight:800">Churn Guide</div><div style="font-size:12px;color:var(--ts);margin-top:2px">How to make butter on a run</div></div>
+  <div class="c">
+    <div class="ct" style="margin-bottom:8px">What You Need</div>
+    <div class="gs"><div class="gn">1</div><div class="gt"><h4>Heavy cream (36%+ fat)</h4><p>About 1 cup (250 ml). Light cream won't work.</p></div></div>
+    <div class="gs"><div class="gn">2</div><div class="gt"><h4>Two zip-lock bags</h4><p>Fill 60-70% full. Double-bag for leak safety.</p></div></div>
+    <div class="gs" style="margin-bottom:0"><div class="gn">3</div><div class="gt"><h4>Running vest or pack</h4><p>Tuck bags in. Leave slightly loose to bounce.</p></div></div>
+  </div>
+  <div class="c" style="background:var(--gl);border-color:var(--go)">
+    <div style="font-size:13px;font-weight:700;margin-bottom:5px">🌡️ Temperature + Body Heat</div>
+    <div style="font-size:11px;color:var(--ts);line-height:1.45">
+      <p style="margin-bottom:5px"><strong style="color:var(--tp)">Start cold</strong> — straight from the fridge. Your body heat gradually warms it, which actually helps reach the ideal churning temperature (50-59°F).</p>
+      <p style="margin-bottom:5px"><strong style="color:var(--tp)">Cool days (below 65°F):</strong> No ice needed. Body heat is your friend. Back pocket placement works best.</p>
+      <p style="margin-bottom:5px"><strong style="color:var(--tp)">Warm days (above 72°F):</strong> Add a small ice pack next to the bag. Use an outer mesh pocket for airflow.</p>
+      <p><strong style="color:var(--no)">Above 68°F cream temp = failure.</strong> Fat won't separate. Greasy cream, not butter.</p>
+    </div>
+  </div>
+  <div class="c">
+    <div class="ct" style="margin-bottom:6px">The 5 Stages</div>
+    <div class="stg5">
+      <div class="stg" style="background:#E8F4FE"><span class="stg-i">💧</span><span class="stg-n">Liquid</span><span class="stg-d">Start</span></div>
+      <div class="stg" style="background:#FFF8E8"><span class="stg-i">🫧</span><span class="stg-n">Foamy</span><span class="stg-d">~2 km</span></div>
+      <div class="stg"><span class="stg-i">☁️</span><span class="stg-n">Whipped</span><span class="stg-d">~3 km</span></div>
+      <div class="stg" style="background:#FFEECC"><span class="stg-i">🔸</span><span class="stg-n">Breaking</span><span class="stg-d">~5 km</span></div>
+      <div class="stg"><span class="stg-i">🧈</span><span class="stg-n" style="color:var(--go)">Butter!</span><span class="stg-d">6-10km</span></div>
+    </div>
+    <div style="font-size:10px;color:var(--ts);line-height:1.3">Squeeze the bag every 2-3 km. Trails churn faster than roads.</div>
+  </div>
+  <div class="c">
+    <div class="ct" style="margin-bottom:4px">Tips</div>
+    <div class="tip">🧂 Add a pinch of salt before sealing</div>
+    <div class="tip">🧊 Freeze ice cubes with cream on warm days</div>
+    <div class="tip">🏔️ Hills and stairs speed up churning</div>
+    <div class="tip">🥖 Bring bread to eat your butter at the finish</div>
+    <div class="tip">⏱️ Expect 45-60 min of running (6-10 km)</div>
+    <div class="tip">🌡️ Morning runs in cool weather work best</div>
+  </div>
+</div><div class="pt"><div class="pi"><span class="pi-i">🏃</span>Run</div><div class="pi"><span class="pi-i">📋</span>History</div><div class="pi on"><span class="pi-i">📖</span>Guide</div><div class="pi"><span class="pi-i">⚙️</span>Settings</div></div></div><div class="pc">Churn Guide</div></div>
+</div></div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="s-se" class="ms">
+<h2 class="st">Settings</h2><p class="sd">Profile, units, run preferences, butter math reference, data management.</p>
+<div class="sr">
+<div><div class="ph"><div class="ps"><span>9:41</span><span>···</span></div><div class="pb">
+  <div style="font-size:22px;font-weight:800;margin:10px 0 12px">Settings</div>
+  <!-- Profile -->
+  <div class="c">
+    <div class="ct" style="margin-bottom:6px">Profile</div>
+    <div class="srow2"><span class="sl2">Name</span><span class="sv2">Sarah ›</span></div>
+    <div class="srow2"><span class="sl2">Weight</span><span class="sv2">154 lbs ›</span></div>
+  </div>
+  <!-- Units -->
+  <div class="c">
+    <div class="ct" style="margin-bottom:6px">Units</div>
+    <div class="srow2"><span class="sl2">Distance</span><div class="seg" style="width:120px"><div class="si on" style="padding:4px 2px;font-size:11px">Miles</div><div class="si" style="padding:4px 2px;font-size:11px">Km</div></div></div>
+  </div>
+  <!-- Run Settings -->
+  <div class="c">
+    <div class="ct" style="margin-bottom:6px">Run Settings</div>
+    <div class="tr"><span class="tt">Voice Feedback</span><div class="tw on"></div></div>
+    <div class="tr"><span class="tt">Auto-Pause</span><div class="tw on"></div></div>
+    <div class="tr"><span class="tt">HealthKit</span><div class="tw"></div></div>
+  </div>
+  <!-- Butter Math -->
+  <div class="c">
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px"><span class="ct">Butter Math</span><div class="ib">i</div></div>
+    <div style="font-size:11px;color:var(--ts);line-height:1.6">
+      1 pat ≈ 1 tsp — 34 cals<br>
+      1 tbsp (3 pats) — 102 cals<br>
+      1 stick (24 pats) — 810 cals<br>
+      1 lb (96 pats) — 3,240 cals
+    </div>
+  </div>
+  <!-- About -->
+  <div class="c">
+    <div class="ct" style="margin-bottom:6px">About</div>
+    <div class="srow2"><span class="sl2">Version</span><span class="sv2">1.0.0</span></div>
+    <div class="srow2"><span class="sl2">Privacy Policy</span><span class="sv2">›</span></div>
+  </div>
+  <!-- Danger -->
+  <div style="text-align:center;margin:12px 0"><button class="btn sec" style="color:var(--no);border-color:var(--no);font-size:13px">Delete All My Data</button></div>
+  <div style="font-size:9px;color:var(--ts);text-align:center;line-height:1.3;padding:0 8px;margin-bottom:8px">Calorie estimates are approximate, based on pace and body weight. If you or someone you know is struggling with an eating disorder, please reach out to NEDA at 1-800-931-2237.</div>
+</div><div class="pt"><div class="pi"><span class="pi-i">🏃</span>Run</div><div class="pi"><span class="pi-i">📋</span>History</div><div class="pi"><span class="pi-i">📖</span>Guide</div><div class="pi on"><span class="pi-i">⚙️</span>Settings</div></div></div><div class="pc">Settings</div></div>
+</div></div>
+
+<!-- ===== TOOLTIPS ===== -->
+<div id="s-tt" class="ms">
+<h2 class="st">Tooltip System</h2><p class="sd">Always "Butter Zero" — never "BZ". Info (i) popovers at 7 locations.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:520px">
+  <div class="c"><div style="display:flex;align-items:center;gap:5px;margin-bottom:6px"><span style="font-size:13px;font-weight:700">Butter Zero</span><div class="ib on">i</div></div><div class="pop" style="position:relative;width:100%"><strong>Butter Zero</strong>Eat butter during your run and try to match what you burn. Track as + or - pats from net zero.</div></div>
+  <div class="c"><div style="display:flex;align-items:center;gap:5px;margin-bottom:6px"><span style="font-size:13px;font-weight:700">Pats</span><div class="ib on">i</div></div><div class="pop" style="position:relative;width:100%"><strong>What's a pat?</strong>≈ 1 tsp of butter (~34 cals). A fun, tangible way to track energy burned.</div></div>
+  <div class="c"><div style="display:flex;align-items:center;gap:5px;margin-bottom:6px"><span style="font-size:13px;font-weight:700">Churn Tracker</span><div class="ib on">i</div></div><div class="pop" style="position:relative;width:100%"><strong>Churn Tracker</strong>Carry cream in a bag while you run. Bouncing churns it into butter in ~6-10 km.</div></div>
+  <div class="c"><div style="display:flex;align-items:center;gap:5px;margin-bottom:6px"><span style="font-size:13px;font-weight:700">Your Weight</span><div class="ib on">i</div></div><div class="pop" style="position:relative;width:100%"><strong>Why weight?</strong>Heavier runners burn more per mile. Include pack weight for accuracy.</div></div>
+</div></div>
+
+<!-- ===== BUTTER ART ===== -->
+<div id="s-ba" class="ms">
+<h2 class="st">Butter Pat — Style Variations</h2><p class="sd">6 SVG directions for the app icon/mascot. Use as prompts for AI image generation or illustrator brief.</p>
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+
+  <div style="text-align:center"><div style="background:var(--bg);border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:inline-block">
+    <svg width="140" height="100" viewBox="0 0 160 120"><rect x="16" y="20" width="128" height="72" rx="8" fill="url(#g1)" stroke="rgba(180,140,50,.2)" stroke-width="1.5"/><rect x="22" y="24" width="116" height="30" rx="5" fill="url(#g2)" opacity=".7"/><path d="M42 32Q85 48 118 36" fill="none" stroke="#C4943F" stroke-width="2" stroke-linecap="round" opacity=".5"/></svg>
+  </div><div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px">A: Classic Flat</div><div style="font-size:9px;color:var(--ts);max-width:140px;margin:2px auto">Simple gradient, knife mark, highlight</div></div>
+
+  <div style="text-align:center"><div style="background:var(--bg);border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:inline-block">
+    <svg width="140" height="100" viewBox="0 0 160 120"><defs><linearGradient id="b3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F3BA60"/><stop offset="100%" stop-color="#D4940A"/></linearGradient></defs><polygon points="30,40 130,28 140,44 40,56" fill="url(#g1)" stroke="rgba(180,140,50,.2)" stroke-width="1"/><polygon points="40,56 140,44 140,76 40,88" fill="url(#b3)" stroke="rgba(180,140,50,.2)" stroke-width="1"/><polygon points="130,28 140,44 140,76 130,60" fill="#C4943F" stroke="rgba(180,140,50,.2)" stroke-width="1"/><path d="M55 44Q90 38 120 36" fill="none" stroke="rgba(196,148,63,.4)" stroke-width="1.5" stroke-linecap="round"/><polygon points="35,43 125,31 130,38 40,50" fill="white" opacity=".15"/></svg>
+  </div><div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px">B: 3D Isometric</div><div style="font-size:9px;color:var(--ts);max-width:140px;margin:2px auto">Dimensional, shows thickness</div></div>
+
+  <div style="text-align:center"><div style="background:var(--bg);border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:inline-block">
+    <svg width="140" height="100" viewBox="0 0 160 120"><defs><radialGradient id="c1" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFF9E0"/><stop offset="60%" stop-color="#F3BA60"/><stop offset="100%" stop-color="#D4940A"/></radialGradient></defs><ellipse cx="80" cy="95" rx="55" ry="8" fill="rgba(0,0,0,.04)"/><rect x="24" y="24" width="112" height="64" rx="16" fill="url(#c1)" stroke="rgba(180,140,50,.15)" stroke-width="1.5"/><rect x="30" y="28" width="100" height="24" rx="10" fill="white" opacity=".2"/><path d="M48 38Q80 50 108 40" fill="none" stroke="#C4943F" stroke-width="2" stroke-linecap="round" opacity=".35"/></svg>
+  </div><div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px">C: Rounded Soft</div><div style="font-size:9px;color:var(--ts);max-width:140px;margin:2px auto">Bigger radius, friendlier feel</div></div>
+
+  <div style="text-align:center"><div style="background:var(--bg);border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:inline-block">
+    <svg width="140" height="100" viewBox="0 0 160 120"><defs><linearGradient id="d1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#E8E8E8"/><stop offset="30%" stop-color="#F5F5F5"/><stop offset="60%" stop-color="#E0E0E0"/><stop offset="100%" stop-color="#F0F0F0"/></linearGradient></defs><rect x="20" y="24" width="120" height="68" rx="4" fill="url(#d1)" stroke="#D0D0D0" stroke-width="1"/><path d="M100,24 L140,24 L140,56 Z" fill="#F3BA60" stroke="rgba(180,140,50,.2)" stroke-width="1"/><path d="M108,28 L136,28 L136,50 Z" fill="#FFF9E0" opacity=".4"/><line x1="20" y1="50" x2="100" y2="50" stroke="#D8D8D8" stroke-width=".5"/><line x1="60" y1="24" x2="60" y2="92" stroke="#D8D8D8" stroke-width=".5"/><text x="42" y="42" font-size="8" font-weight="800" fill="#B0B0B0" font-family="system-ui">BUTTER</text><text x="42" y="52" font-size="6" fill="#C0C0C0" font-family="system-ui">RUN</text></svg>
+  </div><div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px">D: Foil-Wrapped</div><div style="font-size:9px;color:var(--ts);max-width:140px;margin:2px auto">Silver foil, butter peeking out</div></div>
+
+  <div style="text-align:center"><div style="background:var(--bg);border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:inline-block">
+    <svg width="140" height="100" viewBox="0 0 160 120"><rect x="24" y="24" width="112" height="68" rx="4" fill="none" stroke="var(--go)" stroke-width="3"/><rect x="30" y="30" width="100" height="56" rx="2" fill="none" stroke="var(--go)" stroke-width="1" stroke-dasharray="2 2"/><line x1="34" y1="34" x2="126" y2="82" stroke="var(--go)" stroke-width=".5" opacity=".2"/><line x1="34" y1="50" x2="110" y2="82" stroke="var(--go)" stroke-width=".5" opacity=".2"/><line x1="50" y1="34" x2="126" y2="66" stroke="var(--go)" stroke-width=".5" opacity=".2"/><line x1="66" y1="34" x2="126" y2="50" stroke="var(--go)" stroke-width=".5" opacity=".2"/><path d="M48 42Q80 56 112 44" fill="none" stroke="var(--go)" stroke-width="2" stroke-linecap="round"/><text x="80" y="76" font-size="9" font-weight="800" fill="var(--go)" text-anchor="middle" font-family="system-ui">1 PAT</text></svg>
+  </div><div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px">E: Stamp / Woodcut</div><div style="font-size:9px;color:var(--ts);max-width:140px;margin:2px auto">Monochrome line art, vintage</div></div>
+
+  <div style="text-align:center"><div style="background:var(--bg);border:1.5px solid var(--bd);border-radius:16px;padding:24px;display:inline-block">
+    <svg width="140" height="100" viewBox="0 0 160 120"><rect x="30" y="20" width="100" height="56" rx="8" fill="url(#g1)" stroke="rgba(180,140,50,.2)" stroke-width="1.5"/><rect x="36" y="24" width="88" height="22" rx="5" fill="white" opacity=".2"/><line x1="14" y1="36" x2="26" y2="36" stroke="var(--go)" stroke-width="2" stroke-linecap="round" opacity=".4"/><line x1="10" y1="48" x2="26" y2="48" stroke="var(--go)" stroke-width="2" stroke-linecap="round" opacity=".3"/><line x1="16" y1="60" x2="26" y2="60" stroke="var(--go)" stroke-width="2" stroke-linecap="round" opacity=".2"/><g transform="translate(108,78) scale(.4)" fill="var(--go)" opacity=".6"><circle cx="12" cy="0" r="6"/><path d="M0 10L12 8L24 16M12 8L8 24L0 32M8 24L18 34" fill="none" stroke="var(--go)" stroke-width="4" stroke-linecap="round"/></g></svg>
+  </div><div style="font-size:10px;font-weight:600;color:var(--ts);margin-top:4px">F: Butter + Runner</div><div style="font-size:9px;color:var(--ts);max-width:140px;margin:2px auto">Motion lines, tiny runner silhouette</div></div>
+
+</div></div>
+
+<!-- ===== PALETTE ===== -->
+<div id="s-pa" class="ms">
+<h2 class="st">Color Palette</h2><p class="sd">All WCAG AA on cream background.</p>
+<div class="swg">
+  <div class="sw"><div class="swc" style="background:#FFFDF7"></div><div class="swn">Background</div><div class="swh">#FFFDF7</div></div>
+  <div class="sw"><div class="swc" style="background:#FFF"></div><div class="swn">Surface</div><div class="swh">#FFFFFF</div></div>
+  <div class="sw"><div class="swc" style="background:#F0E6D0"></div><div class="swn">Border</div><div class="swh">#F0E6D0</div></div>
+  <div class="sw"><div class="swc" style="background:#D4940A"></div><div class="swn">Gold</div><div class="swh">#D4940A</div></div>
+  <div class="sw"><div class="swc" style="background:#B87D08"></div><div class="swn">Gold Dim</div><div class="swh">#B87D08</div></div>
+  <div class="sw"><div class="swc" style="background:#FFF3D6"></div><div class="swn">Gold Light</div><div class="swh">#FFF3D6</div></div>
+  <div class="sw"><div class="swc" style="background:#1C1C1E;border-color:#1C1C1E"></div><div class="swn">Text</div><div class="swh">#1C1C1E</div></div>
+  <div class="sw"><div class="swc" style="background:#6B6B70;border-color:#6B6B70"></div><div class="swn">Secondary</div><div class="swh">#6B6B70</div></div>
+  <div class="sw"><div class="swc" style="background:#2D8E40;border-color:#2D8E40"></div><div class="swn">Success</div><div class="swh">#2D8E40</div></div>
+  <div class="sw"><div class="swc" style="background:#CC3333;border-color:#CC3333"></div><div class="swn">Deficit</div><div class="swh">#CC3333</div></div>
+</div></div>
+
+</div>
+<script>
+function s(id){document.querySelectorAll('.ms').forEach(e=>e.classList.remove('v'));document.getElementById('s-'+id).classList.add('v');document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));event.target.classList.add('on')}
+</script>
+</body>
+</html>

@@ -88,6 +88,13 @@ struct ButterCalculator {
         eatenTsp - burnedTsp
     }
 
+    /// Butter Zero score (0-100). 100 = perfect net zero.
+    /// Curve: 0.3 tsp off = 97, 1 tsp = 90, 5 tsp = 50, 10 tsp = 0
+    static func butterZeroScore(netTsp: Double) -> Int {
+        let score = 100.0 - abs(netTsp) * 10.0
+        return max(0, min(100, Int(score.rounded())))
+    }
+
     /// Human-friendly butter description.
     static func butterDescription(tsp: Double) -> String {
         if tsp < 1 {

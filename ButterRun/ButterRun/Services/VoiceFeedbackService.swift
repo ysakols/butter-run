@@ -97,7 +97,12 @@ class VoiceFeedbackService: VoiceFeedback {
         synthesizer.stopSpeaking(at: .immediate)
     }
 
+    /// Override point for testing — called with every announcement text.
+    /// Production implementation is a no-op; test subclasses capture the text.
+    func announceForTesting(_ text: String) {}
+
     private func speak(_ text: String) {
+        announceForTesting(text)
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")

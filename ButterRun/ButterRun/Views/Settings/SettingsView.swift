@@ -21,6 +21,8 @@ struct SettingsView: View {
     @State private var showDeleteConfirmation = false
     @State private var showRecalcConfirmation = false
     @State private var weightDebounceTask: Task<Void, Never>?
+    @EnvironmentObject private var stravaAuth: StravaAuthService
+    @State private var autoShareToStrava: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -84,22 +86,6 @@ struct SettingsView: View {
                             .labelsHidden()
                     }
 
-                    // Strava
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Strava")
-                                .font(.system(.body, design: .rounded))
-                                .foregroundStyle(ButterTheme.textPrimary)
-                            Text("Coming Soon")
-                                .font(.system(.caption, design: .rounded))
-                                .foregroundStyle(ButterTheme.textSecondary)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(ButterTheme.textSecondary)
-                    }
-
                     // Garmin
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -119,15 +105,30 @@ struct SettingsView: View {
                 .listRowBackground(ButterTheme.surface)
 
                 Section {
+                    StravaIntegrationView(autoShareToStrava: $autoShareToStrava)
+                        .onChange(of: autoShareToStrava) { _, _ in saveProfile() }
+                        .onChange(of: stravaAuth.isAuthenticated) { _, connected in
+                            if let p = profile {
+                                p.stravaConnected = connected
+                                if !connected {
+                                    autoShareToStrava = false
+                                    p.autoShareToStrava = false
+                                }
+                            }
+                        }
+                } header: {
+                    Text("Strava")
+                }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+
+                Section {
                     infoRow("1 pat butter", "34 calories")
                     infoRow("1 tbsp butter", "102 calories")
                     infoRow("1 stick butter", "810 calories")
                     infoRow("1 lb butter", "3,240 calories")
                 } header: {
-                    HStack(spacing: 4) {
-                        Text("Butter Math")
-                        InfoButton(title: "What's a pat?", bodyText: "≈ 1 tsp of butter (~34 cals). A fun way to track energy burned.")
-                    }
+                    butterMathHeader
                 }
                 .listRowBackground(ButterTheme.surface)
 
@@ -143,7 +144,7 @@ struct SettingsView: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
 
-                    Link("National Eating Disorders Association", destination: URL(string: "https://www.nationaleatingdisorders.org")!)
+                    Link("National Eating Disorders Association", destination: URL(string: "https://www.nationaleatingdisorders.org") ?? URL(string: "about:blank")!)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                 }
@@ -158,7 +159,7 @@ struct SettingsView: View {
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
 
-                    Link("Privacy Policy", destination: URL(string: "https://butterrun.app/privacy")!)
+                    Link("Privacy Policy", destination: URL(string: "https://butterrun.app/privacy") ?? URL(string: "about:blank")!)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                 }
@@ -214,7 +215,7 @@ struct SettingsView: View {
             .onChange(of: usesMiles) { _, _ in saveProfile() }
             .onChange(of: voiceFeedback) { _, _ in saveProfile() }
             .onChange(of: autoPause) { _, _ in saveProfile() }
-            .onChange(of: healthKit) { _, _ in saveProfile() }
+
             .confirmationDialog(
                 "Delete All Data?",
                 isPresented: $showDeleteConfirmation,
@@ -253,6 +254,13 @@ struct SettingsView: View {
         }
     }
 
+    private var butterMathHeader: some View {
+        HStack(spacing: 4) {
+            Text("Butter Math")
+            InfoButton(title: "What's a pat?", bodyText: "≈ 1 tsp of butter (~34 cals). A fun way to track energy burned.")
+        }
+    }
+
     private func loadProfile() {
         guard !loaded, let p = profile else { return }
         displayName = p.displayName
@@ -268,6 +276,7 @@ struct SettingsView: View {
         voiceFeedback = p.voiceFeedbackEnabled
         autoPause = p.autoPauseEnabled
         healthKit = p.healthKitEnabled
+        autoShareToStrava = p.autoShareToStrava
         loaded = true
     }
 
@@ -275,9 +284,9 @@ struct SettingsView: View {
         guard loaded, let p = profile else { return }
         p.displayName = displayName
         if weightUnitSetting == "lbs" {
-            p.weightKg = weightDisplay / 2.20462
+            p.weightKg = max(1.0, weightDisplay / 2.20462)
         } else {
-            p.weightKg = weightDisplay
+            p.weightKg = max(1.0, weightDisplay)
         }
         weightKg = p.weightKg
         p.weightUnit = weightUnitSetting
@@ -286,9 +295,11 @@ struct SettingsView: View {
         p.voiceFeedbackEnabled = voiceFeedback
         p.autoPauseEnabled = autoPause
         p.healthKitEnabled = healthKit
+        p.autoShareToStrava = autoShareToStrava
     }
 
     private func deleteAllData() {
+        stravaAuth.disconnect()
         do {
             try modelContext.delete(model: Run.self)
             try modelContext.delete(model: Achievement.self)
@@ -301,6 +312,7 @@ struct SettingsView: View {
     }
 
     private func recalculateRuns() {
+        let validatedWeight = max(1.0, weightKg)
         for run in runs {
             guard run.durationSeconds > 0 else { continue }
             let durationMinutes = run.durationSeconds / 60.0
@@ -308,7 +320,7 @@ struct SettingsView: View {
             let speedMph = ButterCalculator.metersPerSecondToMph(speedMps)
             let met = ButterCalculator.metValue(forSpeedMph: speedMph)
             let calories = ButterCalculator.caloriesBurned(
-                weightKg: weightKg,
+                weightKg: validatedWeight,
                 met: met,
                 durationMinutes: durationMinutes
             )

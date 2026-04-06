@@ -6,6 +6,12 @@ enum AutoPauseEvent {
     case autoResumed
 }
 
+/// Detects when a runner stops moving and automatically pauses/resumes the run.
+///
+/// Uses hysteresis to prevent spurious toggling: pauses when speed stays below 0.5 m/s
+/// (≈1.1 mph) for 10 seconds, resumes immediately when speed exceeds 0.8 m/s (≈1.8 mph).
+/// The higher resume threshold prevents rapid pause/resume cycles from GPS speed fluctuations
+/// near the pause boundary.
 class AutoPauseService: ObservableObject {
     @Published private(set) var isPaused = false
 
@@ -14,11 +20,16 @@ class AutoPauseService: ObservableObject {
     private let pauseSpeedThreshold: Double = 0.5   // m/s
     private let resumeSpeedThreshold: Double = 0.8   // m/s
     private let pauseDelay: TimeInterval = 10.0      // seconds
+    private let now: () -> Date
 
     private var slowStartTime: Date?
     private var cancellables = Set<AnyCancellable>()
 
     let eventPublisher = PassthroughSubject<AutoPauseEvent, Never>()
+
+    init(now: @escaping () -> Date = { Date() }) {
+        self.now = now
+    }
 
     func updateSpeed(_ speedMps: Double) {
         guard isEnabled else { return }
@@ -34,10 +45,10 @@ class AutoPauseService: ObservableObject {
             // Check for pause
             if speedMps < pauseSpeedThreshold {
                 if slowStartTime == nil {
-                    slowStartTime = Date()
+                    slowStartTime = now()
                 }
                 if let start = slowStartTime,
-                   Date().timeIntervalSince(start) >= pauseDelay {
+                   now().timeIntervalSince(start) >= pauseDelay {
                     isPaused = true
                     eventPublisher.send(.autoPaused)
                 }

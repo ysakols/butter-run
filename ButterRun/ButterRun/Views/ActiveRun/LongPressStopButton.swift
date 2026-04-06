@@ -60,14 +60,10 @@ struct LongPressStopButton: View {
             timer = nil
         }
         .accessibilityLabel("Stop run")
-        .accessibilityHint(reduceMotion
-            ? "Double-tap to stop the run"
-            : "Press and hold for 3 seconds to stop the run")
+        .accessibilityHint("Double-tap to stop the run")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
-            if reduceMotion {
-                showConfirmation = true
-            }
+            showConfirmation = true
         }
         .confirmationDialog("End this run?", isPresented: $showConfirmation, titleVisibility: .visible) {
             Button("End Run", role: .destructive) {

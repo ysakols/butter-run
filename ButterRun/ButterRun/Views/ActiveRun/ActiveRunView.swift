@@ -6,6 +6,8 @@ struct ActiveRunView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @EnvironmentObject private var stravaAuth: StravaAuthService
+
     let isButterZeroChallenge: Bool
     let isChurnEnabled: Bool
     let churnConfig: ChurnConfiguration?
@@ -92,7 +94,7 @@ struct ActiveRunView: View {
                 // Undo toast
                 if showUndoToast {
                     ToastView(
-                        text: "Added \(String(format: "%.1f", viewModel.butterEntries.last?.teaspoonEquivalent ?? 1.0)) pat",
+                        text: "Added \(ButterFormatters.pats(viewModel.butterEntries.last?.teaspoonEquivalent ?? 1.0))",
                         actionLabel: "Undo",
                         onAction: {
                             _ = viewModel.undoLastButterEntry()
@@ -100,6 +102,7 @@ struct ActiveRunView: View {
                         },
                         isPresented: $showUndoToast
                     )
+                    .id(viewModel.butterEntries.count)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -134,6 +137,7 @@ struct ActiveRunView: View {
                     usesMiles: profile.usesMiles,
                     onDismiss: { dismiss() }
                 )
+                .environmentObject(stravaAuth)
             }
         }
     }
