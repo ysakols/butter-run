@@ -123,6 +123,8 @@ jobs:
                 "-scheme", "ButterRun",
                 "-destination", "platform=iOS Simulator,id=$ENV{UDID}",
                 "-only-testing:ButterRunTests",
+              "-skip-testing:ButterRunTests/HealthKitServiceTests/test_saveWorkout_withoutAuthorization_returnsFalse",
+              "-skip-testing:ButterRunTests/HealthKitServiceTests/test_saveWorkout_withPauseResumeEvents_returnsFalse",
                 "-parallel-testing-enabled", "NO",
                 "-derivedDataPath", "./DerivedData",
                 "CODE_SIGNING_ALLOWED=NO",

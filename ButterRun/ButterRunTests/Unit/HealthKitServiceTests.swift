@@ -4,13 +4,6 @@ import HealthKit
 
 final class HealthKitServiceTests: XCTestCase {
 
-    /// HKWorkoutBuilder.beginCollection hangs indefinitely when the HealthKit entitlement is
-    /// missing (CI builds with CODE_SIGNING_ALLOWED=NO strip entitlements). GitHub Actions
-    /// always sets the CI environment variable, so we use that to skip workout-related tests.
-    private var isCI: Bool {
-        ProcessInfo.processInfo.environment["CI"] != nil
-    }
-
     func test_isAvailable_returnsExpectedValue() {
         let service = HealthKitService()
         // On simulator, HealthKit is available; on macOS it may not be
@@ -18,10 +11,12 @@ final class HealthKitServiceTests: XCTestCase {
         XCTAssertEqual(available, HKHealthStore.isHealthDataAvailable())
     }
 
+    /// Note: This test hangs in CI (CODE_SIGNING_ALLOWED=NO strips the HealthKit entitlement,
+    /// causing HKWorkoutBuilder.beginCollection to block indefinitely). Skipped in CI via
+    /// -skip-testing in the workflow. Runs locally when the app is properly signed.
     func test_saveWorkout_withoutAuthorization_returnsFalse() async throws {
         let service = HealthKitService()
         try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
-        try XCTSkipIf(isCI, "HealthKit entitlement missing in CI (CODE_SIGNING_ALLOWED=NO)")
         let run = Run(startDate: .now, isButterZeroChallenge: false)
         run.endDate = Date()
         run.distanceMeters = 1000
@@ -34,10 +29,10 @@ final class HealthKitServiceTests: XCTestCase {
         XCTAssertFalse(result, "saveWorkout should return false without authorization")
     }
 
+    /// See test_saveWorkout_withoutAuthorization_returnsFalse for CI skip rationale.
     func test_saveWorkout_withPauseResumeEvents_returnsFalse() async throws {
         let service = HealthKitService()
         try XCTSkipUnless(service.isAvailable, "HealthKit not available on this platform")
-        try XCTSkipIf(isCI, "HealthKit entitlement missing in CI (CODE_SIGNING_ALLOWED=NO)")
 
         let run = Run(startDate: Date().addingTimeInterval(-600), isButterZeroChallenge: false)
         run.endDate = Date()
