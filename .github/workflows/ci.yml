@@ -49,7 +49,7 @@ jobs:
           if not available:
               print('ERROR: No available iOS runtimes', file=sys.stderr)
               sys.exit(1)
-          available.sort(key=lambda r: [int(x) for x in r.get('version','0').split('.')], reverse=True)
+          available.sort(key=lambda r: [int(x) for x in r.get('version','0').split('.') if x.isdigit()], reverse=True)
           print(available[0]['identifier'])
           ")
           echo "Runtime: $RUNTIME"
@@ -71,17 +71,19 @@ jobs:
           ")
           echo "Device type: $DEVICE_TYPE"
 
-          # Create and boot simulator
+          # Create simulator and persist UDID early so cleanup works even if boot fails
           UDID=$(xcrun simctl create "CI_Test" "$DEVICE_TYPE" "$RUNTIME")
           echo "Created simulator: $UDID"
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+
           xcrun simctl boot "$UDID"
 
           # Poll for boot completion (120s max, fail explicitly if not booted)
           BOOTED=false
           for i in $(seq 1 60); do
-            STATE=$(xcrun simctl list devices -j | python3 -c "
-          import json, sys
-          udid = '$UDID'
+            STATE=$(xcrun simctl list devices -j | UDID="$UDID" python3 -c "
+          import json, sys, os
+          udid = os.environ['UDID']
           for runtime_devices in json.load(sys.stdin)['devices'].values():
               for d in runtime_devices:
                   if d['udid'] == udid:
@@ -101,8 +103,6 @@ jobs:
             exit 1
           fi
 
-          echo "UDID=$UDID" >> "$GITHUB_ENV"
-
       - name: Build for Testing
         run: |
           xcodebuild build-for-testing \
@@ -115,22 +115,31 @@ jobs:
       - name: Run Unit Tests
         run: |
           perl -e '
+            my $pid = fork();
+            die "fork failed: $!" unless defined $pid;
+            if ($pid == 0) {
+              exec("xcodebuild", "test-without-building",
+                "-project", "ButterRun.xcodeproj",
+                "-scheme", "ButterRun",
+                "-destination", "platform=iOS Simulator,id=$ENV{UDID}",
+                "-only-testing:ButterRunTests",
+                "-parallel-testing-enabled", "NO",
+                "-derivedDataPath", "./DerivedData",
+                "CODE_SIGNING_ALLOWED=NO",
+                "-resultBundlePath", "TestResults.xcresult");
+              die "exec failed: $!";
+            }
             $SIG{ALRM} = sub {
               print STDERR "\nTests exceeded 480s hard timeout, killing...\n";
-              kill -9, getpgrp();
+              kill 9, $pid;
               exit 124;
             };
             alarm 480;
-            my $rc = system("xcodebuild", "test-without-building",
-              "-project", "ButterRun.xcodeproj",
-              "-scheme", "ButterRun",
-              "-destination", "platform=iOS Simulator,id=$ENV{UDID}",
-              "-only-testing:ButterRunTests",
-              "-parallel-testing-enabled", "NO",
-              "-derivedDataPath", "./DerivedData",
-              "CODE_SIGNING_ALLOWED=NO",
-              "-resultBundlePath", "TestResults.xcresult");
+            waitpid($pid, 0);
             alarm 0;
+            my $rc = $?;
+            # Propagate exit code or signal death
+            if ($rc & 127) { exit(128 + ($rc & 127)); }
             exit($rc >> 8);
           '
 
