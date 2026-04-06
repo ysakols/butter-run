@@ -26,18 +26,15 @@ struct ChurnButton: View {
                         )
                     )
                     .frame(width: 130, height: 130)
-                    .shadow(color: ButterTheme.gold.opacity(0.4), radius: 12, y: 6)
+                    .shadow(color: ButterTheme.gold.opacity(0.5), radius: 16, y: 8)
 
                 // Label
                 VStack(spacing: 4) {
-                    Image("butter-pat")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 32, height: 32)
+                    ButterPatView(size: 32, style: .solid)
                         .accessibilityHidden(true)
                     Text("CHURN")
                         .font(.system(.title3, design: .rounded, weight: .black))
-                        .foregroundStyle(ButterTheme.background)
+                        .foregroundStyle(ButterTheme.onPrimaryAction)
                 }
             }
         }

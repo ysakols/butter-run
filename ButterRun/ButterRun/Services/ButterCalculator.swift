@@ -40,15 +40,19 @@ struct ButterCalculator {
                 let ratio = (speed - lower.speedMph) / (upper.speedMph - lower.speedMph)
                 return lower.met + ratio * (upper.met - lower.met)
             }
+
         }
+
 
         return 8.3 // fallback to jogging
     }
+
 
     /// Convert meters/second to miles/hour.
     static func metersPerSecondToMph(_ mps: Double) -> Double {
         mps * 2.23694
     }
+
 
     /// Calculate calories burned.
     /// Formula: Calories/min = (MET × 3.5 × weightKg) / 200
@@ -60,10 +64,12 @@ struct ButterCalculator {
         (met * 3.5 * weightKg / 200.0) * durationMinutes
     }
 
+
     /// Convert calories to teaspoons of butter.
     static func caloriesToButterTsp(_ calories: Double) -> Double {
         calories / caloriesPerTeaspoon
     }
+
 
     /// All-in-one: given weight, speed, and duration, return tsp of butter burned.
     static func butterBurned(
@@ -76,24 +82,18 @@ struct ButterCalculator {
         return caloriesToButterTsp(cal)
     }
 
+
     /// Net butter balance (positive = surplus, negative = deficit, zero = perfect).
     static func netButter(burnedTsp: Double, eatenTsp: Double) -> Double {
         eatenTsp - burnedTsp
     }
 
-    /// Butter Zero score (0-100). 100 = perfect net zero.
-    /// Curve: 0.3 tsp off = 97, 1 tsp = 90, 5 tsp = 50, 10 tsp = 0
-    static func butterZeroScore(netTsp: Double) -> Int {
-        let score = 100.0 - abs(netTsp) * 10.0
-        return max(0, min(100, Int(score)))
-    }
-
     /// Human-friendly butter description.
     static func butterDescription(tsp: Double) -> String {
         if tsp < 1 {
-            return String(format: "%.1f tsp", tsp)
+            return String(format: "%.1f pats", tsp)
         } else if tsp < 3 {
-            return String(format: "%.1f tsp", tsp)
+            return String(format: "%.1f pats", tsp)
         } else if tsp < 24 { // less than 1 stick
             let tbsp = tsp / 3.0
             return String(format: "%.1f tbsp", tbsp)
@@ -101,5 +101,7 @@ struct ButterCalculator {
             let sticks = tsp / 24.0
             return String(format: "%.1f sticks", sticks)
         }
+
     }
+
 }

@@ -54,13 +54,66 @@ final class FormatterTests: XCTestCase {
 
     // MARK: - Butter
 
-    func test_butter_small() {
-        let result = ButterFormatters.butter(tsp: 0.05)
-        XCTAssertEqual(result, "0.0 tsp")
+    func test_pats_small() {
+        let result = ButterFormatters.pats(0.05)
+        XCTAssertEqual(result, "0.0 pats")
     }
 
-    func test_butter_normal() {
-        let result = ButterFormatters.butter(tsp: 3.7)
-        XCTAssertEqual(result, "3.7 tsp")
+    func test_pats_normal() {
+        let result = ButterFormatters.pats(3.7)
+        XCTAssertEqual(result, "3.7 pats")
+    }
+
+    // MARK: - Pats Formatter
+
+    func test_pats_zero() {
+        XCTAssertEqual(ButterFormatters.pats(0.0), "0.0 pats")
+    }
+
+    func test_pats_belowThreshold() {
+        XCTAssertEqual(ButterFormatters.pats(0.05), "0.0 pats")
+    }
+
+    func test_pats_normalValue() {
+        XCTAssertEqual(ButterFormatters.pats(8.4), "8.4 pats")
+    }
+
+    func test_pats_largeValue() {
+        XCTAssertEqual(ButterFormatters.pats(24.0), "24.0 pats")
+    }
+
+    // MARK: - Pats With Detail
+
+    func test_patsWithDetail_zero() {
+        let result = ButterFormatters.patsWithDetail(0.0)
+        XCTAssertTrue(result.contains("0 cals"))
+    }
+
+    func test_patsWithDetail_oneUnit() {
+        let result = ButterFormatters.patsWithDetail(1.0)
+        XCTAssertTrue(result.contains("34 cals"))
+    }
+
+    func test_patsWithDetail_multipleUnits() {
+        let result = ButterFormatters.patsWithDetail(10.0)
+        XCTAssertTrue(result.contains("340 cals"))
+    }
+
+    // MARK: - Net Pats
+
+    func test_netPats_zero() {
+        XCTAssertEqual(ButterFormatters.netPats(0.0), "0.0 pats")
+    }
+
+    func test_netPats_positive() {
+        XCTAssertEqual(ButterFormatters.netPats(2.5), "+2.5 pats")
+    }
+
+    func test_netPats_negative() {
+        XCTAssertEqual(ButterFormatters.netPats(-1.3), "-1.3 pats")
+    }
+
+    func test_netPats_nearZero() {
+        XCTAssertEqual(ButterFormatters.netPats(0.03), "0.0 pats")
     }
 }

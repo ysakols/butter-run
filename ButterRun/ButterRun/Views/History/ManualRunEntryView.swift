@@ -81,7 +81,7 @@ struct ManualRunEntryView: View {
 
                 if estimatedButter > 0 {
                     VStack(spacing: 4) {
-                        Text(String(format: "%.1f tsp", estimatedButter))
+                        Text(String(format: "%.1f pats", estimatedButter))
                             .font(.system(.title, design: .rounded, weight: .bold))
                             .foregroundStyle(ButterTheme.gold)
                         Text("Estimated butter burned")
@@ -100,7 +100,7 @@ struct ManualRunEntryView: View {
                 } label: {
                     Text("Save Run")
                         .font(.system(.body, design: .rounded, weight: .bold))
-                        .foregroundStyle(ButterTheme.background)
+                        .foregroundStyle(ButterTheme.onPrimaryAction)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
@@ -119,7 +119,6 @@ struct ManualRunEntryView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             useMiles = profile?.usesMiles ?? true
         }

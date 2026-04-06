@@ -13,12 +13,10 @@ struct ActiveRunView: View {
 
     @State private var viewModel = ActiveRunViewModel()
     @State private var showEatButterSheet = false
-    @State private var showStopConfirmation = false
     @State private var completedRun: Run?
     @State private var showSummary = false
     @State private var showMap = false
     @State private var showUndoToast = false
-    @State private var undoTimer: Timer?
     @ScaledMetric(relativeTo: .largeTitle) private var heroFontSize: CGFloat = 56
 
     var body: some View {
@@ -28,14 +26,15 @@ struct ActiveRunView: View {
             VStack(spacing: 0) {
                 // GPS signal banners
                 if viewModel.gpsSignalState == .weak {
-                    gpsBanner
+                    BannerView(type: .warn, icon: "location.slash", text: "GPS signal weak — distance may be inaccurate")
                 } else if viewModel.gpsSignalState == .lost {
-                    gpsLostBanner
+                    BannerView(type: .error, icon: "location.slash.fill", text: "GPS signal lost")
                 }
 
                 // Auto-pause banner
                 if viewModel.isAutoPaused {
-                    autoPauseBanner
+                    BannerView(type: .pause, icon: "pause.circle", text: "Auto-paused")
+                        .accessibilityLabel("Run auto-paused due to low speed")
                 }
 
                 // Hero metric
@@ -50,12 +49,7 @@ struct ActiveRunView: View {
                         burnedTsp: viewModel.butterBurnedTsp,
                         eatenTsp: viewModel.butterEatenTsp,
                         churnProgress: viewModel.churnProgress,
-                        churnStage: viewModel.churnStage,
-                        onQuickEat: {
-                            viewModel.eatButter(serving: .teaspoon)
-                            showUndoToast = true
-                            startUndoTimer()
-                        }
+                        churnStage: viewModel.churnStage
                     )
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
@@ -97,10 +91,18 @@ struct ActiveRunView: View {
 
                 // Undo toast
                 if showUndoToast {
-                    undoToastView
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 8)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    ToastView(
+                        text: "Added \(String(format: "%.1f", viewModel.butterEntries.last?.teaspoonEquivalent ?? 1.0)) pat",
+                        actionLabel: "Undo",
+                        onAction: {
+                            _ = viewModel.undoLastButterEntry()
+                            withAnimation { showUndoToast = false }
+                        },
+                        isPresented: $showUndoToast
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
                 // Controls
@@ -122,15 +124,8 @@ struct ActiveRunView: View {
             EatButterSheet { serving, customTsp in
                 viewModel.eatButter(serving: serving, customTsp: customTsp)
                 showUndoToast = true
-                startUndoTimer()
             }
             .presentationDetents([.medium])
-        }
-        .confirmationDialog("End run?", isPresented: $showStopConfirmation) {
-            Button("Finish Run", role: .destructive) {
-                finishRun()
-            }
-            Button("Cancel", role: .cancel) {}
         }
         .fullScreenCover(isPresented: $showSummary) {
             if let run = completedRun {
@@ -141,68 +136,13 @@ struct ActiveRunView: View {
                 )
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Subviews
 
-    private var gpsBanner: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "location.slash")
-                .font(.caption)
-            Text("GPS signal weak — distance paused")
-                .font(.system(.caption, design: .rounded))
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(ButterTheme.deficit.opacity(0.8))
-        .accessibilityLabel("GPS signal weak, distance tracking paused")
-        .onAppear {
-            UIAccessibility.post(notification: .announcement, argument: "GPS signal weak, distance tracking paused")
-        }
-    }
-
-    private var gpsLostBanner: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "location.slash.fill")
-                .font(.caption)
-            Text("GPS signal lost")
-                .font(.system(.caption, design: .rounded))
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(ButterTheme.deficit)
-        .accessibilityLabel("GPS signal lost")
-        .onAppear {
-            UIAccessibility.post(notification: .announcement, argument: "GPS signal lost")
-        }
-    }
-
-    private var autoPauseBanner: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "pause.circle")
-                .font(.caption)
-            Text("Auto-paused")
-                .font(.system(.caption, design: .rounded))
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(ButterTheme.goldDim.opacity(0.8))
-        .accessibilityLabel("Run auto-paused due to low speed")
-    }
-
     private var butterHeroSection: some View {
         VStack(spacing: 4) {
-            Image("butter-pat")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 36, height: 36)
+            ButterPatView(size: 36, style: .solid)
                 .accessibilityHidden(true)
 
             Text(viewModel.formattedButter)
@@ -212,30 +152,12 @@ struct ActiveRunView: View {
                 .animation(reduceMotion ? nil : .default, value: viewModel.formattedButter)
                 .minimumScaleFactor(0.5)
 
-            Text("teaspoons melted")
+            Text("pats burned")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(ButterTheme.textSecondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(viewModel.formattedButter) teaspoons of butter melted")
-    }
-
-    private var undoToastView: some View {
-        HStack {
-            Text("Added \(String(format: "%.1f", viewModel.butterEntries.last?.teaspoonEquivalent ?? 1.0)) tsp")
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(ButterTheme.textPrimary)
-            Spacer()
-            Button("Undo") {
-                _ = viewModel.undoLastButterEntry()
-                withAnimation { showUndoToast = false }
-            }
-            .font(.system(.caption, design: .rounded, weight: .bold))
-            .foregroundStyle(ButterTheme.gold)
-        }
-        .padding(12)
-        .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .accessibilityLabel("\(viewModel.formattedButter) pats of butter burned")
     }
 
     private var controlsSection: some View {
@@ -266,7 +188,7 @@ struct ActiveRunView: View {
                 }
             } label: {
                 Circle()
-                    .fill(viewModel.state == .running ? .white.opacity(0.2) : ButterTheme.success)
+                    .fill(viewModel.state == .running ? ButterTheme.surfaceBorder : ButterTheme.success)
                     .frame(width: 70, height: 70)
                     .overlay {
                         Image(systemName: viewModel.state == .running ? "pause.fill" : "play.fill")
@@ -276,20 +198,10 @@ struct ActiveRunView: View {
             }
             .accessibilityLabel(viewModel.state == .running ? "Pause run" : "Resume run")
 
-            // Stop
-            Button {
-                showStopConfirmation = true
-            } label: {
-                VStack(spacing: 4) {
-                    Image(systemName: "stop.circle.fill")
-                        .font(.system(size: 28))
-                    Text("Stop")
-                        .font(.system(.caption, design: .rounded))
-                }
-                .foregroundStyle(ButterTheme.deficit)
-                .frame(minWidth: 44, minHeight: 44)
+            // Stop (long-press)
+            LongPressStopButton {
+                finishRun()
             }
-            .accessibilityLabel("Stop run")
         }
     }
 
@@ -305,12 +217,4 @@ struct ActiveRunView: View {
         showSummary = true
     }
 
-    private func startUndoTimer() {
-        undoTimer?.invalidate()
-        undoTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: false) { _ in
-            DispatchQueue.main.async {
-                withAnimation { showUndoToast = false }
-            }
-        }
-    }
 }

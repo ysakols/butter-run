@@ -13,6 +13,10 @@ struct ChurnResult: Codable {
 }
 
 enum ChurnStage: Int, CaseIterable, Comparable {
+    static func < (lhs: ChurnStage, rhs: ChurnStage) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+
     case liquid = 0
     case foamy = 1
     case whipped = 2

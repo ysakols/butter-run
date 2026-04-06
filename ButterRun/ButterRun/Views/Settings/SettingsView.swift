@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var displayName: String = ""
     @State private var weightKg: Double = 70.0
     @State private var previousWeightKg: Double = 70.0
+    @State private var weightDisplay: Double = 154.0
+    @State private var weightUnitSetting: String = "lbs"
     @State private var usesMiles: Bool = true
     @State private var voiceFeedback: Bool = true
     @State private var autoPause: Bool = true
@@ -18,6 +20,7 @@ struct SettingsView: View {
     @State private var loaded = false
     @State private var showDeleteConfirmation = false
     @State private var showRecalcConfirmation = false
+    @State private var weightDebounceTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -27,16 +30,23 @@ struct SettingsView: View {
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.textPrimary)
 
-                    HStack {
-                        Text("Weight")
-                            .foregroundStyle(ButterTheme.textPrimary)
-                        Spacer()
-                        TextField("kg", value: $weightKg, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                            .keyboardType(.decimalPad)
-                        Text("kg")
-                            .foregroundStyle(ButterTheme.textSecondary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Weight")
+                                .foregroundStyle(ButterTheme.textPrimary)
+                            InfoButton(title: "Why weight?", bodyText: "Heavier runners burn more per mile. Include pack weight for accuracy.")
+                            Spacer()
+                            TextField("0", value: $weightDisplay, format: .number)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 80)
+                                .keyboardType(.decimalPad)
+                            Picker("", selection: $weightUnitSetting) {
+                                Text("lbs").tag("lbs")
+                                Text("kg").tag("kg")
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(width: 100)
+                        }
                     }
                 }
                 .listRowBackground(ButterTheme.surface)
@@ -54,22 +64,70 @@ struct SettingsView: View {
                         .tint(ButterTheme.gold)
                     Toggle("Auto-Pause", isOn: $autoPause)
                         .tint(ButterTheme.gold)
+                }
+                .listRowBackground(ButterTheme.surface)
+
+                Section("Integrations") {
+                    // Apple Health
                     HStack {
-                        Toggle("HealthKit", isOn: .constant(false))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Apple Health")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundStyle(ButterTheme.textPrimary)
+                            Text("Sync workouts & calories")
+                                .font(.system(.caption, design: .rounded))
+                                .foregroundStyle(ButterTheme.textSecondary)
+                        }
+                        Spacer()
+                        Toggle("", isOn: $healthKit)
                             .tint(ButterTheme.gold)
-                            .disabled(true)
-                        Text("Coming Soon")
-                            .font(.system(.caption, design: .rounded))
+                            .labelsHidden()
+                    }
+
+                    // Strava
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Strava")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundStyle(ButterTheme.textPrimary)
+                            Text("Coming Soon")
+                                .font(.system(.caption, design: .rounded))
+                                .foregroundStyle(ButterTheme.textSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(ButterTheme.textSecondary)
+                    }
+
+                    // Garmin
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Garmin")
+                                .font(.system(.body, design: .rounded))
+                                .foregroundStyle(ButterTheme.textPrimary)
+                            Text("Coming Soon")
+                                .font(.system(.caption, design: .rounded))
+                                .foregroundStyle(ButterTheme.textSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
                 }
                 .listRowBackground(ButterTheme.surface)
 
-                Section("Butter Math") {
-                    infoRow("1 tsp butter", "34 calories")
+                Section {
+                    infoRow("1 pat butter", "34 calories")
                     infoRow("1 tbsp butter", "102 calories")
                     infoRow("1 stick butter", "810 calories")
                     infoRow("1 lb butter", "3,240 calories")
+                } header: {
+                    HStack(spacing: 4) {
+                        Text("Butter Math")
+                        InfoButton(title: "What's a pat?", bodyText: "≈ 1 tsp of butter (~34 cals). A fun way to track energy burned.")
+                    }
                 }
                 .listRowBackground(ButterTheme.surface)
 
@@ -125,11 +183,33 @@ struct SettingsView: View {
             .background(ButterTheme.background.ignoresSafeArea())
             .onAppear { loadProfile() }
             .onChange(of: displayName) { _, _ in saveProfile() }
-            .onChange(of: weightKg) { _, newWeight in
-                saveProfile()
-                if loaded && abs(newWeight - previousWeightKg) > 0.1 && !runs.isEmpty {
-                    showRecalcConfirmation = true
+            .onChange(of: weightDisplay) { _, _ in
+                // Convert display value to kg for internal tracking
+                if weightUnitSetting == "lbs" {
+                    weightKg = weightDisplay / 2.20462
+                } else {
+                    weightKg = weightDisplay
                 }
+                saveProfile()
+                // Debounce recalculation prompt to avoid firing on every keystroke
+                weightDebounceTask?.cancel()
+                if loaded && !runs.isEmpty {
+                    weightDebounceTask = Task {
+                        try? await Task.sleep(for: .seconds(1.5))
+                        guard !Task.isCancelled else { return }
+                        if abs(weightKg - previousWeightKg) > 0.1 {
+                            showRecalcConfirmation = true
+                        }
+                    }
+                }
+            }
+            .onChange(of: weightUnitSetting) { oldUnit, newUnit in
+                if oldUnit == "kg" && newUnit == "lbs" {
+                    weightDisplay = weightDisplay * 2.20462
+                } else if oldUnit == "lbs" && newUnit == "kg" {
+                    weightDisplay = weightDisplay / 2.20462
+                }
+                saveProfile()
             }
             .onChange(of: usesMiles) { _, _ in saveProfile() }
             .onChange(of: voiceFeedback) { _, _ in saveProfile() }
@@ -159,7 +239,6 @@ struct SettingsView: View {
                 Text("Your weight changed. Would you like to recalculate butter burned for all past runs with your new weight?")
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     private func infoRow(_ label: String, _ value: String) -> some View {
@@ -179,6 +258,12 @@ struct SettingsView: View {
         displayName = p.displayName
         weightKg = p.weightKg
         previousWeightKg = p.weightKg
+        weightUnitSetting = p.weightUnit
+        if weightUnitSetting == "lbs" {
+            weightDisplay = p.weightKg * 2.20462
+        } else {
+            weightDisplay = p.weightKg
+        }
         usesMiles = p.usesMiles
         voiceFeedback = p.voiceFeedbackEnabled
         autoPause = p.autoPauseEnabled
@@ -189,7 +274,13 @@ struct SettingsView: View {
     private func saveProfile() {
         guard loaded, let p = profile else { return }
         p.displayName = displayName
-        p.weightKg = weightKg
+        if weightUnitSetting == "lbs" {
+            p.weightKg = weightDisplay / 2.20462
+        } else {
+            p.weightKg = weightDisplay
+        }
+        weightKg = p.weightKg
+        p.weightUnit = weightUnitSetting
         p.preferredUnit = usesMiles ? "miles" : "kilometers"
         p.splitDistance = usesMiles ? "mile" : "kilometer"
         p.voiceFeedbackEnabled = voiceFeedback
@@ -211,6 +302,7 @@ struct SettingsView: View {
 
     private func recalculateRuns() {
         for run in runs {
+            guard run.durationSeconds > 0 else { continue }
             let durationMinutes = run.durationSeconds / 60.0
             let speedMps = run.distanceMeters > 0 ? run.distanceMeters / run.durationSeconds : 0
             let speedMph = ButterCalculator.metersPerSecondToMph(speedMps)

@@ -67,11 +67,6 @@ struct ShareCardContent: View {
         }
     }
 
-    /// Use BZ score as hero when active and score >= 80
-    private var bzIsHero: Bool {
-        run.isButterZeroChallenge && run.butterZeroScore >= 80
-    }
-
     /// Format butter in the most shareable unit
     private var heroButterText: String {
         let tsp = run.totalButterBurnedTsp
@@ -80,7 +75,7 @@ struct ShareCardContent: View {
         } else if tsp >= 3 {
             return String(format: "%.1f tablespoons", tsp / 3.0)
         } else {
-            return String(format: "%.1f teaspoons", tsp)
+            return String(format: "%.1f pats", tsp)
         }
     }
 
@@ -90,10 +85,7 @@ struct ShareCardContent: View {
 
             // Brand header
             VStack(spacing: 8) {
-                Image("butter-pat")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 56, height: 56)
+                ButterPatView(size: 56, style: .solid)
 
                 Text("BUTTER RUN")
                     .font(.system(.title3, design: .rounded, weight: .bold))
@@ -104,71 +96,36 @@ struct ShareCardContent: View {
             Spacer(minLength: mode == .story ? 40 : 16)
 
             // Hero section
-            if bzIsHero {
-                // BZ score as hero
-                VStack(spacing: 8) {
-                    Text("I ran off")
-                        .font(.system(.body, design: .rounded))
-                        .foregroundStyle(ButterTheme.textSecondary)
+            VStack(spacing: 8) {
+                Text("I ran off")
+                    .font(.system(.body, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
 
-                    Text(heroButterText)
-                        .font(.system(size: 36, weight: .black, design: .rounded))
-                        .foregroundStyle(ButterTheme.gold)
+                Text(heroButterText)
+                    .font(.system(size: 42, weight: .black, design: .rounded))
+                    .foregroundStyle(ButterTheme.gold)
+                    .minimumScaleFactor(0.7)
 
-                    Text("of butter")
-                        .font(.system(.body, design: .rounded))
-                        .foregroundStyle(ButterTheme.textSecondary)
-                }
+                Text("of butter")
+                    .font(.system(.body, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+            }
 
-                Spacer(minLength: 20)
-
-                // BZ hero card
+            if run.isButterZeroChallenge {
+                Spacer(minLength: 16)
                 VStack(spacing: 4) {
-                    Text("\(run.butterZeroScore)")
-                        .font(.system(size: 48, weight: .black, design: .rounded))
+                    Text(ButterFormatters.netPats(run.netButterTsp))
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
                         .foregroundStyle(ButterTheme.gold)
-                    Text("Butter Zero Score")
-                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                        .foregroundStyle(ButterTheme.textSecondary)
-                    Text("Net: \(String(format: "%+.1f", run.netButterTsp)) tsp")
+                    Text("net pats")
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
                 }
-                .padding(16)
+                .padding(12)
                 .frame(maxWidth: .infinity)
                 .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
                 .padding(.horizontal, 24)
-            } else {
-                // Standard butter hero
-                VStack(spacing: 8) {
-                    Text("I ran off")
-                        .font(.system(.body, design: .rounded))
-                        .foregroundStyle(ButterTheme.textSecondary)
-
-                    Text(heroButterText)
-                        .font(.system(size: 42, weight: .black, design: .rounded))
-                        .foregroundStyle(ButterTheme.gold)
-                        .minimumScaleFactor(0.7)
-
-                    Text("of butter")
-                        .font(.system(.body, design: .rounded))
-                        .foregroundStyle(ButterTheme.textSecondary)
-                }
-
-                if run.isButterZeroChallenge {
-                    Spacer(minLength: 16)
-                    VStack(spacing: 2) {
-                        Text("Butter Zero: \(run.butterZeroScore)")
-                            .font(.system(.subheadline, design: .rounded, weight: .bold))
-                            .foregroundStyle(ButterTheme.gold)
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity)
-                    .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
-                    .padding(.horizontal, 24)
-                }
             }
 
             // Churn result (when churn was active and progress is meaningful)
@@ -189,7 +146,7 @@ struct ShareCardContent: View {
                 .padding(12)
                 .frame(maxWidth: .infinity)
                 .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
                 .padding(.horizontal, 24)
             }
 
@@ -217,7 +174,7 @@ struct ShareCardContent: View {
                 Text("#ButterRun")
                     .font(.system(.caption, design: .rounded, weight: .semibold))
                     .foregroundStyle(ButterTheme.textSecondary)
-                Text("#ButterRunChallenge  #ButterZero")
+                Text("#ButterRunChallenge")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary.opacity(0.7))
             }

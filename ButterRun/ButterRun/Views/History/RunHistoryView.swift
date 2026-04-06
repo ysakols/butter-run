@@ -26,7 +26,7 @@ struct RunHistoryView: View {
                             HStack(spacing: 24) {
                                 summaryItem(
                                     value: String(format: "%.1f", viewModel.allTimeButterTsp),
-                                    unit: "tsp",
+                                    unit: "pats",
                                     label: "Total Butter"
                                 )
                                 summaryItem(
@@ -102,7 +102,6 @@ struct RunHistoryView: View {
                 Text("This cannot be undone.")
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             viewModel.load(runs: runs)
         }
@@ -110,10 +109,8 @@ struct RunHistoryView: View {
 
     private var emptyState: some View {
         VStack(spacing: 16) {
-            Image("butter-pat")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 60, height: 60)
+            ButterPatView(size: 60, style: .solid)
+                .opacity(0.4)
                 .accessibilityHidden(true)
             Text("No runs yet")
                 .font(.system(.title3, design: .rounded, weight: .bold))
@@ -179,7 +176,10 @@ struct RunRowView: View {
                 Text(String(format: "%.1f", run.totalButterBurnedTsp))
                     .font(.system(.title3, design: .rounded, weight: .bold))
                     .foregroundStyle(ButterTheme.gold)
-                Text("tsp")
+                Text("pats")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+                Text("\(Int(round(run.totalButterBurnedTsp * 34))) cal")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
             }

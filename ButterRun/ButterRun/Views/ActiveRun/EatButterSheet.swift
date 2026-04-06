@@ -9,10 +9,7 @@ struct EatButterSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                Image("butter-pat")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 48, height: 48)
+                ButterPatView(size: 48, style: .solid)
                     .accessibilityHidden(true)
 
                 Text("How much butter?")
@@ -21,7 +18,7 @@ struct EatButterSheet: View {
 
                 VStack(spacing: 12) {
                     ForEach(
-                        [ButterServing.teaspoon, .pat, .tablespoon, .halfStick],
+                        [ButterServing.pat, .tablespoon, .halfStick],
                         id: \.rawValue
                     ) { serving in
                         Button {
@@ -51,19 +48,21 @@ struct EatButterSheet: View {
                             .font(.system(.body, design: .rounded, weight: .semibold))
                             .foregroundStyle(ButterTheme.textPrimary)
                         Spacer()
-                        TextField("tsp", value: $customTsp, format: .number)
+                        TextField("pats", value: $customTsp, format: .number)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 60)
                             .keyboardType(.decimalPad)
-                            .accessibilityLabel("Custom amount in teaspoons")
-                        Text("tsp")
+                            .accessibilityLabel("Custom amount in pats")
+                        Text("pats")
                             .foregroundStyle(ButterTheme.textSecondary)
                         Button("Add") {
+                            guard customTsp > 0 else { return }
                             onEat(.custom, customTsp)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(ButterTheme.gold)
+                        .disabled(customTsp <= 0)
                         .frame(minWidth: 44, minHeight: 44)
                     }
                     .padding(16)
@@ -83,6 +82,5 @@ struct EatButterSheet: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
     }
 }

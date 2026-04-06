@@ -15,6 +15,9 @@ class UserProfile {
     var autoPauseEnabled: Bool = true
     var healthKitEnabled: Bool = false
 
+    // V3 fields
+    var weightUnit: String = "kg"  // "kg" or "lbs"
+
     init(
         displayName: String,
         weightKg: Double,

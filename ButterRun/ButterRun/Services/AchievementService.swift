@@ -13,7 +13,7 @@ class AchievementService {
         var newAwards: [AchievementType] = []
 
         func award(_ type: AchievementType) {
-            guard !unlockedTypes.contains(type) else { return }
+            guard !unlockedTypes.contains(type), !newAwards.contains(type) else { return }
             let achievement = Achievement(type: type)
             context.insert(achievement)
             newAwards.append(type)
@@ -39,10 +39,37 @@ class AchievementService {
             award(.perfectZero)
         }
 
+        // Pat on the Back: complete first run
+        award(.patOnTheBack)
+
+        // Pound Pounder: burn 1 lb butter cumulative (3240 cal / 34 = ~95.3 tsp)
+        let totalTsp = allRuns.reduce(0.0) { $0 + $1.totalButterBurnedTsp }
+        if totalTsp >= 95.3 {
+            award(.poundPounder)
+        }
+
+        // Butter Sculptor: 50 runs completed
+        if allRuns.count >= 50 {
+            award(.butterSculptor)
+        }
+
+        // Five Run Streak: 5 runs in one week
+        let calendar = Calendar.current
+        let oneWeekAgo = calendar.date(byAdding: .day, value: -7, to: run.startDate) ?? run.startDate
+        let runsThisWeek = allRuns.filter { $0.startDate >= oneWeekAgo && $0.startDate <= run.startDate }
+        if runsThisWeek.count >= 5 {
+            award(.fiveRunStreak)
+        }
+
         // Marathon Melt: 26.2 miles total (cumulative)
         let totalMiles = allRuns.reduce(0.0) { $0 + $1.distanceMiles }
         if totalMiles >= 26.2 {
             award(.marathonMelt)
+        }
+
+        // Butter Fingers: eat butter 10 times in one run
+        if run.butterEntries.count >= 10 {
+            award(.butterFingers)
         }
 
         if !newAwards.isEmpty {

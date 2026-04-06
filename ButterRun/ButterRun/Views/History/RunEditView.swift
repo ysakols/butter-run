@@ -1,12 +1,18 @@
 import SwiftUI
+import SwiftData
 
 struct RunEditView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query private var profiles: [UserProfile]
     @Bindable var run: Run
     let usesMiles: Bool
 
     @State private var distanceValue: Double = 0
     @State private var notes: String = ""
+    @State private var durationHours: Int = 0
+    @State private var durationMinutes: Int = 0
+    @State private var durationSeconds: Int = 0
+    @State private var runDate: Date = .now
 
     var body: some View {
         NavigationStack {
@@ -25,23 +31,35 @@ struct RunEditView: View {
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
 
-                    // Duration (read-only)
+                    // Duration (editable)
                     HStack {
                         Text("Duration")
                             .foregroundStyle(ButterTheme.textPrimary)
                         Spacer()
-                        Text(run.formattedDuration)
+                        TextField("0", value: $durationHours, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 50)
+                            .keyboardType(.numberPad)
+                        Text("h")
+                            .foregroundStyle(ButterTheme.textSecondary)
+                        TextField("0", value: $durationMinutes, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 50)
+                            .keyboardType(.numberPad)
+                        Text("m")
+                            .foregroundStyle(ButterTheme.textSecondary)
+                        TextField("0", value: $durationSeconds, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 50)
+                            .keyboardType(.numberPad)
+                        Text("s")
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
 
-                    // Date (read-only)
-                    HStack {
-                        Text("Date")
-                            .foregroundStyle(ButterTheme.textPrimary)
-                        Spacer()
-                        Text(run.startDate, format: .dateTime.month().day().year())
-                            .foregroundStyle(ButterTheme.textSecondary)
-                    }
+                    // Date (editable)
+                    DatePicker("Date", selection: $runDate, displayedComponents: .date)
+                        .foregroundStyle(ButterTheme.textPrimary)
+                        .tint(ButterTheme.gold)
 
                     Divider()
 
@@ -66,7 +84,7 @@ struct RunEditView: View {
                 } label: {
                     Text("Save Changes")
                         .font(.system(.body, design: .rounded, weight: .bold))
-                        .foregroundStyle(ButterTheme.background)
+                        .foregroundStyle(ButterTheme.onPrimaryAction)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
@@ -84,10 +102,14 @@ struct RunEditView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             distanceValue = usesMiles ? run.distanceMiles : run.distanceKm
             notes = run.notes ?? ""
+            let totalSeconds = Int(run.durationSeconds)
+            durationHours = totalSeconds / 3600
+            durationMinutes = (totalSeconds % 3600) / 60
+            durationSeconds = totalSeconds % 60
+            runDate = run.startDate
         }
     }
 
@@ -96,9 +118,31 @@ struct RunEditView: View {
         run.distanceMeters = newDistanceMeters
         run.notes = notes.isEmpty ? nil : notes
 
+        // Update duration
+        let newDurationSeconds = Double(durationHours * 3600 + durationMinutes * 60 + durationSeconds)
+        run.durationSeconds = newDurationSeconds
+
+        // Update date
+        run.startDate = runDate
+
         // Recalculate pace
-        if newDistanceMeters > 0 {
-            run.averagePaceSecondsPerKm = run.durationSeconds / (newDistanceMeters / 1000.0)
+        if newDistanceMeters > 0 && newDurationSeconds > 0 {
+            run.averagePaceSecondsPerKm = newDurationSeconds / (newDistanceMeters / 1000.0)
+        }
+
+        // Recalculate butter burned
+        if newDurationSeconds > 0 {
+            let weightKg = profiles.first?.weightKg ?? 70.0
+            let durationMinutes = newDurationSeconds / 60.0
+            let speedMps = newDistanceMeters > 0 ? newDistanceMeters / newDurationSeconds : 0
+            let speedMph = ButterCalculator.metersPerSecondToMph(speedMps)
+            let met = ButterCalculator.metValue(forSpeedMph: speedMph)
+            let calories = ButterCalculator.caloriesBurned(
+                weightKg: weightKg, met: met, durationMinutes: durationMinutes
+            )
+            run.totalCaloriesBurned = calories
+            run.totalButterBurnedTsp = ButterCalculator.caloriesToButterTsp(calories)
+            run.netButterTsp = run.totalButterEatenTsp - run.totalButterBurnedTsp
         }
 
         dismiss()

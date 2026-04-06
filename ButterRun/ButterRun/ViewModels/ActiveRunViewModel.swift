@@ -90,10 +90,6 @@ class ActiveRunViewModel {
         butterEatenTsp - butterBurnedTsp
     }
 
-    var butterZeroScore: Int {
-        ButterCalculator.butterZeroScore(netTsp: netButterTsp)
-    }
-
     var formattedDuration: String {
         ButterFormatters.duration(elapsedSeconds)
     }
@@ -320,7 +316,7 @@ class ActiveRunViewModel {
 
         // Show undo toast
         showUndoToast = true
-        UIAccessibility.post(notification: .announcement, argument: "Added \(String(format: "%.1f", entry.teaspoonEquivalent)) teaspoons. Double-tap Undo to reverse.")
+        UIAccessibility.post(notification: .announcement, argument: "Added \(String(format: "%.1f", entry.teaspoonEquivalent)) pats. Double-tap Undo to reverse.")
 
         // Check Butter Zero crossing
         if isButterZeroChallenge && abs(netButterTsp) < 0.3 {
