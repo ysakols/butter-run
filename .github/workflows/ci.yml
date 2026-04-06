@@ -110,10 +110,7 @@ jobs:
             -scheme ButterRun \
             -destination "platform=iOS Simulator,id=$UDID" \
             -derivedDataPath ./DerivedData \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            DEVELOPMENT_TEAM=""
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Run Unit Tests
         run: |
@@ -128,10 +125,7 @@ jobs:
                 "-only-testing:ButterRunTests",
                 "-parallel-testing-enabled", "NO",
                 "-derivedDataPath", "./DerivedData",
-                "CODE_SIGN_IDENTITY=-",
-                "CODE_SIGNING_REQUIRED=NO",
-                "PROVISIONING_PROFILE_SPECIFIER=",
-                "DEVELOPMENT_TEAM=",
+                "CODE_SIGNING_ALLOWED=NO",
                 "-resultBundlePath", "TestResults.xcresult");
               die "exec failed: $!";
             }
