@@ -1,6 +1,19 @@
 import Foundation
 import HealthKit
 
+/// Thread-safe one-shot flag for racing unstructured tasks against a timeout.
+private final class ResumeOnce: @unchecked Sendable {
+    private let lock = NSLock()
+    private var resumed = false
+    func tryAcquire() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if resumed { return false }
+        resumed = true
+        return true
+    }
+}
+
 class HealthKitService {
     private let healthStore = HKHealthStore()
 
@@ -76,18 +89,27 @@ class HealthKitService {
 
         do {
             // beginCollection hangs indefinitely when the HealthKit entitlement
-            // is absent (e.g. unsigned CI builds). Race against a timeout so the
-            // method fails gracefully instead of blocking forever.
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                group.addTask {
-                    try await builder.beginCollection(at: startDate)
+            // is absent (e.g. unsigned CI builds) and does not respond to
+            // cooperative cancellation. Use unstructured tasks so the timeout
+            // can fire without waiting for the hung call to finish.
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let flag = ResumeOnce()
+
+                Task {
+                    do {
+                        try await builder.beginCollection(at: startDate)
+                        if flag.tryAcquire() { continuation.resume() }
+                    } catch {
+                        if flag.tryAcquire() { continuation.resume(throwing: error) }
+                    }
                 }
-                group.addTask {
-                    try await Task.sleep(nanoseconds: 5_000_000_000)
-                    throw CancellationError()
+
+                Task {
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    if flag.tryAcquire() {
+                        continuation.resume(throwing: CancellationError())
+                    }
                 }
-                try await group.next()
-                group.cancelAll()
             }
 
             // Add energy burned sample
