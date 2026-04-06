@@ -1,11 +1,19 @@
 import Foundation
 import HealthKit
+import Security
 
 class HealthKitService {
     private let healthStore = HKHealthStore()
 
     var isAvailable: Bool {
         HKHealthStore.isHealthDataAvailable()
+    }
+
+    static func hasHealthKitEntitlement() -> Bool {
+        guard let task = SecTaskCreateFromSelf(nil) else { return false }
+        let value = SecTaskCopyValueForEntitlement(
+            task, "com.apple.developer.healthkit" as CFString, nil)
+        return value != nil
     }
 
     func requestAuthorization() async -> Bool {
@@ -59,7 +67,7 @@ class HealthKitService {
     }
 
     func saveWorkout(run: Run, pauseResumeEvents: [(pauseDate: Date, resumeDate: Date)] = []) async -> Bool {
-        guard isAvailable else { return false }
+        guard isAvailable && Self.hasHealthKitEntitlement() else { return false }
 
         let startDate = run.startDate
         let endDate = run.endDate ?? Date()
