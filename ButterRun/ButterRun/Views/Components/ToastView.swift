@@ -42,9 +42,11 @@ struct ToastView: View {
         .accessibilityElement(children: .combine)
         .onAppear {
             UIAccessibility.post(notification: .announcement, argument: text)
-            DispatchQueue.main.asyncAfter(deadline: .now() + autoDismissSeconds) {
-                withAnimation { isPresented = false }
-            }
+        }
+        .task {
+            try? await Task.sleep(for: .seconds(autoDismissSeconds))
+            guard !Task.isCancelled else { return }
+            withAnimation { isPresented = false }
         }
     }
 }

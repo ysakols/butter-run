@@ -36,9 +36,9 @@ final class StravaTests: XCTestCase {
         let miles = run.distanceMeters / 1609.344
         let milesFormatted = String(format: "%.1f", miles)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
-        let expectedName = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) tsp)"
+        let expectedName = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) pats)"
 
-        XCTAssertEqual(expectedName, "Butter Run - 3.1 mi (burned 2.5 tsp)")
+        XCTAssertEqual(expectedName, "Butter Run - 3.1 mi (burned 2.5 pats)")
     }
 
     func test_activityName_zeroDistance() {
@@ -48,9 +48,9 @@ final class StravaTests: XCTestCase {
         let miles = run.distanceMeters / 1609.344
         let milesFormatted = String(format: "%.1f", miles)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
-        let expectedName = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) tsp)"
+        let expectedName = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) pats)"
 
-        XCTAssertEqual(expectedName, "Butter Run - 0.0 mi (burned 0.0 tsp)")
+        XCTAssertEqual(expectedName, "Butter Run - 0.0 mi (burned 0.0 pats)")
     }
 
     func test_activityDescription_includesElevation_whenPositive() {
@@ -67,7 +67,7 @@ final class StravaTests: XCTestCase {
 
         var description = "Tracked with Butter Run"
         description += "\nDistance: \(milesFormatted) mi"
-        description += "\nButter burned: \(butterFormatted) tsp"
+        description += "\nButter burned: \(butterFormatted) pats"
         description += "\nCalories: \(String(format: "%.0f", run.totalCaloriesBurned))"
         if run.elevationGainMeters > 0 {
             description += "\nElevation gain: \(String(format: "%.0f", run.elevationGainMeters)) m"
@@ -90,7 +90,7 @@ final class StravaTests: XCTestCase {
 
         var description = "Tracked with Butter Run"
         description += "\nDistance: \(milesFormatted) mi"
-        description += "\nButter burned: \(butterFormatted) tsp"
+        description += "\nButter burned: \(butterFormatted) pats"
         description += "\nCalories: \(String(format: "%.0f", run.totalCaloriesBurned))"
         if run.elevationGainMeters > 0 {
             description += "\nElevation gain: \(String(format: "%.0f", run.elevationGainMeters)) m"

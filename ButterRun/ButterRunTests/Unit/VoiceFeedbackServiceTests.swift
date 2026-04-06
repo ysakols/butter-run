@@ -23,7 +23,7 @@ final class VoiceFeedbackServiceTests: XCTestCase {
         let service = makeService()
         service.checkMilestones(butterTsp: 0.5, distanceMeters: 0, pace: "5:00", isButterZero: false, netButter: 0, usesMiles: true)
         XCTAssertEqual(service.spokenMessages.count, 1)
-        XCTAssertTrue(service.spokenMessages[0].contains("Half a teaspoon"))
+        XCTAssertTrue(service.spokenMessages[0].contains("Half a pat"))
     }
 
     // MARK: - Reset
@@ -161,6 +161,6 @@ final class VoiceFeedbackServiceTests: XCTestCase {
         let service = makeService()
         service.announceRunEnd(totalButterTsp: 3.0, netButter: 0.1, isButterZero: true)
         XCTAssertEqual(service.spokenMessages.count, 1)
-        XCTAssertTrue(service.spokenMessages[0].contains("Butter Zero score"))
+        XCTAssertTrue(service.spokenMessages[0].contains("Butter Zero"))
     }
 }

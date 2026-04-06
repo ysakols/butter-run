@@ -85,7 +85,7 @@ class StravaUploadService {
         let miles = run.distanceMeters / 1609.344
         let milesFormatted = String(format: "%.1f", miles)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
-        let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) tsp)"
+        let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) pats)"
 
         // Strava expects start_date_local as local time WITHOUT timezone
         let localFormatter = DateFormatter()
@@ -95,13 +95,13 @@ class StravaUploadService {
 
         var description = "Tracked with Butter Run"
         description += "\nDistance: \(milesFormatted) mi"
-        description += "\nButter burned: \(butterFormatted) tsp"
+        description += "\nButter burned: \(butterFormatted) pats"
         description += "\nCalories: \(String(format: "%.0f", run.totalCaloriesBurned))"
         if run.elevationGainMeters > 0 {
             description += "\nElevation gain: \(String(format: "%.0f", run.elevationGainMeters)) m"
         }
         if let notes = run.notes, !notes.isEmpty {
-            description += "\n\n\(notes)"
+            description += "\n\n\(String(notes.prefix(500)))"
         }
 
         let body: [String: Any] = [
@@ -125,7 +125,7 @@ class StravaUploadService {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode)
         else {
-            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            let message = String((String(data: data, encoding: .utf8) ?? "Unknown error").prefix(200))
             throw StravaUploadError.uploadFailed(message)
         }
 
@@ -159,10 +159,10 @@ class StravaUploadService {
         let miles = run.distanceMeters / 1609.344
         let milesFormatted = String(format: "%.1f", miles)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
-        let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) tsp)"
+        let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) pats)"
 
         var description = "Tracked with Butter Run"
-        description += "\nButter burned: \(butterFormatted) tsp"
+        description += "\nButter burned: \(butterFormatted) pats"
         description += "\nCalories: \(String(format: "%.0f", run.totalCaloriesBurned))"
 
         var body = Data()
@@ -192,7 +192,7 @@ class StravaUploadService {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode)
         else {
-            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            let message = String((String(data: data, encoding: .utf8) ?? "Unknown error").prefix(200))
             throw StravaUploadError.uploadFailed(message)
         }
 
@@ -222,7 +222,7 @@ class StravaUploadService {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode)
         else {
-            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            let message = String((String(data: data, encoding: .utf8) ?? "Unknown error").prefix(200))
             throw StravaUploadError.uploadFailed(message)
         }
 
@@ -305,6 +305,7 @@ class StravaUploadService {
             guard coord.count >= 2 else { continue }
             let lat = coord[0]
             let lng = coord[1]
+            guard (-90...90).contains(lat), (-180...180).contains(lng) else { continue }
             let pointTime = Date(timeIntervalSince1970: startTime + timeInterval * Double(index))
             let timeString = iso8601Formatter.string(from: pointTime)
 

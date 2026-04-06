@@ -65,13 +65,13 @@ struct ButterCalculator {
     }
 
 
-    /// Convert calories to teaspoons of butter.
+    /// Convert calories to pats of butter (1 pat = 1 tsp = 34 cal).
     static func caloriesToButterTsp(_ calories: Double) -> Double {
         calories / caloriesPerTeaspoon
     }
 
 
-    /// All-in-one: given weight, speed, and duration, return tsp of butter burned.
+    /// All-in-one: given weight, speed, and duration, return pats of butter burned.
     static func butterBurned(
         weightKg: Double,
         speedMph: Double,
@@ -83,23 +83,9 @@ struct ButterCalculator {
     }
 
 
-    /// Net butter balance (positive = surplus, negative = deficit, zero = perfect).
-    static func netButter(burnedTsp: Double, eatenTsp: Double) -> Double {
-        eatenTsp - burnedTsp
-    }
-
-    /// Butter Zero score (0-100). 100 = perfect net zero.
-    /// Curve: 0.3 tsp off = 97, 1 tsp = 90, 5 tsp = 50, 10 tsp = 0
-    static func butterZeroScore(netTsp: Double) -> Int {
-        let score = 100.0 - abs(netTsp) * 10.0
-        return max(0, min(100, Int(score.rounded())))
-    }
-
     /// Human-friendly butter description.
     static func butterDescription(tsp: Double) -> String {
-        if tsp < 1 {
-            return String(format: "%.1f pats", tsp)
-        } else if tsp < 3 {
+        if tsp < 3 {
             return String(format: "%.1f pats", tsp)
         } else if tsp < 24 { // less than 1 stick
             let tbsp = tsp / 3.0

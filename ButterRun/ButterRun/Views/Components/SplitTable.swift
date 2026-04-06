@@ -47,6 +47,8 @@ struct SplitTable: View {
                 .foregroundStyle(ButterTheme.textPrimary)
                 .padding(.vertical, 4)
                 .opacity(split.isPartial ? 0.6 : 1.0)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Split \(split.index): pace \(split.pace), \(split.pats) pats, elevation \(split.elevation)")
 
                 if split.id != splits.last?.id {
                     Divider()

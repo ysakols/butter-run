@@ -8,6 +8,7 @@ struct ContextualStrip: View {
     let eatenTsp: Double
     let churnProgress: Double
     let churnStage: ChurnStage
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var netTsp: Double { eatenTsp - burnedTsp }
     private var isNearZero: Bool { abs(netTsp) < 0.3 }
@@ -50,7 +51,7 @@ struct ContextualStrip: View {
                             Capsule()
                                 .fill(ButterTheme.gold)
                                 .frame(width: width * min(1, churnProgress), height: 8)
-                                .animation(.easeOut(duration: 0.3), value: churnProgress)
+                                .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: churnProgress)
                         }
                     }
                     .frame(height: 8)

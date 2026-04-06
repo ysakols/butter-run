@@ -148,6 +148,7 @@ struct RunEditView: View {
             run.netButterTsp = run.totalButterEatenTsp
         }
 
+        try? run.modelContext?.save()
         dismiss()
     }
 }

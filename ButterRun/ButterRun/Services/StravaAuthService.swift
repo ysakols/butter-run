@@ -10,6 +10,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     @Published var athleteName: String?
 
     private var authSession: ASWebAuthenticationSession?
+    private var expectedOAuthState: String?
 
     private enum Keys {
         static let accessToken = "strava_access_token"
@@ -57,11 +58,15 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     func authorize() {
         guard StravaConfig.isConfigured else {
+            #if DEBUG
             print("Strava is not configured. Set clientID and clientSecret in StravaConfig.")
+            #endif
             return
         }
 
-        guard let url = buildAuthorizeURL() else { return }
+        let state = UUID().uuidString
+        expectedOAuthState = state
+        guard let url = buildAuthorizeURL(state: state) else { return }
 
         isAuthorizing = true
 
@@ -74,31 +79,41 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
                 defer { self.isAuthorizing = false }
 
                 if let error {
+                    #if DEBUG
                     print("Strava auth error: \(error.localizedDescription)")
+                    #endif
                     self.authSession = nil
                     return
                 }
 
                 guard let callbackURL,
                       let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
-                      let code = components.queryItems?.first(where: { $0.name == "code" })?.value
+                      let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
+                      let returnedState = components.queryItems?.first(where: { $0.name == "state" })?.value,
+                      returnedState == self.expectedOAuthState
                 else {
-                    print("Strava auth: missing code in callback URL.")
+                    #if DEBUG
+                    print("Strava auth: missing code or state mismatch in callback URL.")
+                    #endif
+                    self.expectedOAuthState = nil
                     self.authSession = nil
                     return
                 }
+                self.expectedOAuthState = nil
 
                 do {
                     try await self.exchangeToken(code: code)
                 } catch {
+                    #if DEBUG
                     print("Strava token exchange failed: \(error.localizedDescription)")
+                    #endif
                 }
                 self.authSession = nil
             }
         }
 
         authSession?.presentationContextProvider = self
-        authSession?.prefersEphemeralWebBrowserSession = false
+        authSession?.prefersEphemeralWebBrowserSession = true
         authSession?.start()
     }
 
@@ -201,14 +216,15 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     // MARK: - Private Helpers
 
-    private func buildAuthorizeURL() -> URL? {
+    private func buildAuthorizeURL(state: String) -> URL? {
         var components = URLComponents(string: StravaConfig.authorizeURL)
         components?.queryItems = [
             URLQueryItem(name: "client_id", value: StravaConfig.clientID),
             URLQueryItem(name: "redirect_uri", value: StravaConfig.redirectURI),
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "approval_prompt", value: "auto"),
-            URLQueryItem(name: "scope", value: StravaConfig.scopes)
+            URLQueryItem(name: "scope", value: StravaConfig.scopes),
+            URLQueryItem(name: "state", value: state)
         ]
         return components?.url
     }

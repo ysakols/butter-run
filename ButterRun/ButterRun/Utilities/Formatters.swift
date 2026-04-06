@@ -38,16 +38,15 @@ enum ButterFormatters {
     }
 
     /// Format butter amount with appropriate unit.
+    @available(*, deprecated, message: "Use pats() instead")
     static func butter(tsp: Double) -> String {
-        if abs(tsp) < 0.1 {
-            return "0.0 tsp"
-        }
-        return String(format: "%.1f tsp", tsp)
+        pats(tsp)
     }
 
     /// Format butter with emoji.
+    @available(*, deprecated, message: "Use pats() instead")
     static func butterWithEmoji(tsp: Double) -> String {
-        "🧈 \(butter(tsp: tsp))"
+        "🧈 \(pats(tsp))"
     }
 
     /// Speed in mph from m/s.
@@ -69,14 +68,14 @@ enum ButterFormatters {
         return String(format: "%.1f pats", tsp)
     }
 
-    /// Format pats with tsp and calorie detail for secondary display.
-    /// Returns "≈ 8.4 tsp (286 cals)" for use beneath the hero number.
+    /// Format pats with calorie detail for secondary display.
+    /// Returns "≈ 8.4 pats (286 cals)" for use beneath the hero number.
     static func patsWithDetail(_ tsp: Double) -> String {
         let cals = Int(round(tsp * 34))
         if abs(tsp) < 0.1 {
-            return "≈ 0.0 tsp (0 cals)"
+            return "≈ 0.0 pats (0 cals)"
         }
-        return String(format: "≈ %.1f tsp (%d cals)", tsp, cals)
+        return String(format: "≈ %.1f pats (%d cals)", tsp, cals)
     }
 
     /// Format net pats with +/- sign for Butter Zero display.

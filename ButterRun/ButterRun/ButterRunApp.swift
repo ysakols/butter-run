@@ -55,6 +55,8 @@ struct ButterRunApp: App {
     let containerError: Error?
 
     init() {
+        let isUITesting = ProcessInfo.processInfo.arguments.contains("--reset-state")
+
         do {
             let schema = Schema([
                 Run.self,
@@ -64,10 +66,15 @@ struct ButterRunApp: App {
                 Achievement.self,
                 RunDraft.self,
             ])
-            let config = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
+            let config: ModelConfiguration
+            if isUITesting {
+                config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            } else {
+                config = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
+            }
             container = try ModelContainer(
                 for: schema,
-                migrationPlan: ButterRunMigrationPlan.self,
+                migrationPlan: isUITesting ? nil : ButterRunMigrationPlan.self,
                 configurations: [config]
             )
             containerError = nil
@@ -125,10 +132,11 @@ struct DatabaseErrorView: View {
 struct ContentView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
+    private let skipOnboarding = ProcessInfo.processInfo.arguments.contains("--skip-onboarding")
 
     var body: some View {
         Group {
-            if profiles.isEmpty {
+            if profiles.isEmpty && !skipOnboarding {
                 OnboardingWalkthroughView()
             } else {
                 CrashRecoveryWrapper {
@@ -137,6 +145,18 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            // UI testing: create a default profile when skipping onboarding
+            if skipOnboarding && profiles.isEmpty {
+                let profile = UserProfile(
+                    displayName: "Test Runner",
+                    weightKg: 70.0,
+                    preferredUnit: "miles",
+                    voiceFeedbackEnabled: false,
+                    splitDistance: "mile"
+                )
+                modelContext.insert(profile)
+            }
+
             // Enforce UserProfile singleton — delete duplicates if any
             if profiles.count > 1 {
                 for extra in profiles.dropFirst() {

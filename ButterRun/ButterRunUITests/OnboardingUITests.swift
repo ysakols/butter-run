@@ -58,7 +58,7 @@ final class OnboardingUITests: XCTestCase {
         XCTAssertTrue(greeting.waitForExistence(timeout: 5))
     }
 
-    func test_onboarding_zeroWeight_showsError() {
+    func test_onboarding_zeroWeight_buttonDisabled() {
         // Navigate to page 4 (profile) by tapping Next 3 times
         for _ in 0..<3 {
             let nextButton = app.buttons["Next"]
@@ -81,8 +81,10 @@ final class OnboardingUITests: XCTestCase {
         // Trigger validation by tapping elsewhere
         nameField.tap()
 
-        let error = app.staticTexts["Weight must be greater than zero"]
-        XCTAssertTrue(error.waitForExistence(timeout: 3))
+        // Button should be disabled when weight is zero
+        let button = app.buttons.matching(NSPredicate(format: "label CONTAINS \"Let's Churn\"")).firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 3))
+        XCTAssertFalse(button.isEnabled)
     }
 }
 

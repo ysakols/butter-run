@@ -105,7 +105,7 @@ struct ActiveRunView: View {
                     .id(viewModel.butterEntries.count)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(.opacity)
                 }
 
                 // Controls
@@ -212,8 +212,10 @@ struct ActiveRunView: View {
     // MARK: - Actions
 
     private func finishRun() {
+        guard completedRun == nil else { return }
         let run = viewModel.stopRun()
         modelContext.insert(run)
+        try? modelContext.save()
         // Delete draft on successful finish
         let draftService = RunDraftService(container: modelContext.container)
         draftService.deleteDraft(context: modelContext)

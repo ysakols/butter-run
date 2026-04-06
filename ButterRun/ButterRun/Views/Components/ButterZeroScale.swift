@@ -5,6 +5,7 @@ struct ButterZeroScale: View {
     let maxAbsNetPats: Double
     let showLabels: Bool
     let showDetail: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(netPats: Double, maxAbsNetPats: Double = 5.0, showLabels: Bool = true, showDetail: Bool = false) {
         self.netPats = netPats
@@ -65,7 +66,7 @@ struct ButterZeroScale: View {
                         .frame(width: 12, height: 12)
                         .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
                         .offset(x: dotX - 6)
-                        .animation(.spring(response: 0.3), value: netPats)
+                        .animation(reduceMotion ? nil : .spring(response: 0.3), value: netPats)
                 }
             }
             .frame(height: 12)

@@ -158,7 +158,7 @@ class HealthKitService {
 
             try await builder.endCollection(at: endDate)
             try await builder.addMetadata([
-                "ButterBurnedTsp": run.totalButterBurnedTsp,
+                "ButterBurnedPats": run.totalButterBurnedTsp,
                 "Source": "Butter Run"
             ])
             try await builder.finishWorkout()

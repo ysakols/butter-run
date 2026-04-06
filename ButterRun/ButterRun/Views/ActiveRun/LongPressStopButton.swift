@@ -43,7 +43,7 @@ struct LongPressStopButton: View {
             }
         }
         .scaleEffect(isPressed ? 0.92 : 1.0)
-        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.1), value: isPressed)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
@@ -60,7 +60,7 @@ struct LongPressStopButton: View {
             timer = nil
         }
         .accessibilityLabel("Stop run")
-        .accessibilityHint("Double-tap to stop the run")
+        .accessibilityHint("Double-tap to confirm stopping the run")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction {
             showConfirmation = true
@@ -111,8 +111,8 @@ struct LongPressStopButton: View {
                 showConfirmation = true
             }
         }
-        RunLoop.current.add(newTimer, forMode: .common)
         timer = newTimer
+        RunLoop.current.add(newTimer, forMode: .common)
     }
 
     private func cancelHold() {

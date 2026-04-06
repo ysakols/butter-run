@@ -28,6 +28,8 @@ struct StatRow: View {
                         .textCase(.uppercase)
                 }
                 .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(stat.label): \(stat.value)")
             }
         }
         .padding(.top, 10)

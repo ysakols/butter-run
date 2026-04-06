@@ -3,12 +3,13 @@ import SwiftUI
 struct ButterSegmentedControl: View {
     @Binding var selection: Int
     let options: [String]
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(options.enumerated()), id: \.offset) { index, option in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
                         selection = index
                     }
                 } label: {
@@ -30,5 +31,7 @@ struct ButterSegmentedControl: View {
         .padding(2)
         .background(Color.gray.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 9))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Segment selector")
     }
 }

@@ -6,6 +6,7 @@ struct AchievementUnlockOverlay: View {
 
     @State private var currentIndex = 0
     @State private var showContent = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var current: AchievementType? {
         guard currentIndex < achievements.count else { return nil }
@@ -56,12 +57,12 @@ struct AchievementUnlockOverlay: View {
                     // Button
                     Button {
                         if currentIndex < achievements.count - 1 {
-                            withAnimation(.spring(response: 0.4)) {
+                            withAnimation(reduceMotion ? nil : .spring(response: 0.4)) {
                                 showContent = false
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + (reduceMotion ? 0.05 : 0.3)) {
                                 currentIndex += 1
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                withAnimation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.7)) {
                                     showContent = true
                                 }
                             }
@@ -87,7 +88,7 @@ struct AchievementUnlockOverlay: View {
                 DispatchQueue.main.async { onDismiss() }
                 return
             }
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2)) {
+            withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.7).delay(0.2)) {
                 showContent = true
             }
             if let achievement = current {

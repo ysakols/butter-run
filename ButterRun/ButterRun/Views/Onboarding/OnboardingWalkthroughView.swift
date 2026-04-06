@@ -10,6 +10,7 @@ struct OnboardingWalkthroughView: View {
     @State private var weightUnit: String = Locale.current.measurementSystem == .us ? "lbs" : "kg"
     @State private var useMiles: Bool = Locale.current.measurementSystem == .us
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let totalPages = 4
 
     private var weightKgForStorage: Double {
@@ -31,7 +32,7 @@ struct OnboardingWalkthroughView: View {
             profilePage.tag(3)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .animation(.easeInOut(duration: 0.3), value: currentPage)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: currentPage)
         .background(ButterTheme.background.ignoresSafeArea())
     }
 
@@ -269,7 +270,7 @@ struct OnboardingWalkthroughView: View {
     private func navigationButtons(page: Int) -> some View {
         VStack(spacing: 8) {
             Button {
-                withAnimation { currentPage = page + 1 }
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = page + 1 }
             } label: {
                 Text("Next")
                     .font(ButterTypography.buttonText)
@@ -284,7 +285,7 @@ struct OnboardingWalkthroughView: View {
             .padding(.horizontal, 24)
 
             Button {
-                withAnimation { currentPage = 3 }
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = 3 }
             } label: {
                 Text("Skip")
                     .font(.system(size: 15, weight: .medium, design: .rounded))
@@ -301,8 +302,9 @@ struct OnboardingWalkthroughView: View {
 
     private func createProfile() {
         guard weightValue > 0 else { return }
+        let trimmedName = String(displayName.trimmingCharacters(in: .whitespaces).prefix(100))
         let profile = UserProfile(
-            displayName: displayName.trimmingCharacters(in: .whitespaces),
+            displayName: trimmedName,
             weightKg: weightKgForStorage,
             preferredUnit: useMiles ? "miles" : "kilometers",
             voiceFeedbackEnabled: true,

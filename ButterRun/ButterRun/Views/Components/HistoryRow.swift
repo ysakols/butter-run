@@ -38,5 +38,7 @@ struct HistoryRow: View {
             }
         }
         .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(date), \(subtitle), \(pats), \(calories)")
     }
 }

@@ -36,5 +36,7 @@ struct MetricCell: View {
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(ButterTheme.goldDim.opacity(0.2), lineWidth: 1.5)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
