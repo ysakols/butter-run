@@ -5,7 +5,10 @@ final class TabNavigationUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
-        app.launchArguments = ["--skip-onboarding", "--reset-state"]
+        // --reset-state: wipe UserDefaults + in-memory DB
+        // --skip-onboarding: auto-create test profile
+        // --skip-tos: bypass Terms of Service gate
+        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos"]
         app.launch()
     }
 

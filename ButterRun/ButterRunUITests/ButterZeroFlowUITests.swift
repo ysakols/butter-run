@@ -5,7 +5,7 @@ final class ButterZeroFlowUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
-        app.launchArguments = ["--skip-onboarding", "--reset-state"]
+        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos"]
         app.launch()
 
         // Handle system location permission dialog on fresh simulators
