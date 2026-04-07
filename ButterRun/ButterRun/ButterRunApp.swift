@@ -38,11 +38,24 @@ enum SchemaV3: VersionedSchema {
     ]
 }
 
+enum SchemaV4: VersionedSchema {
+    static var versionIdentifier = Schema.Version(4, 0, 0)
+    static var models: [any PersistentModel.Type] = [
+        Run.self,
+        UserProfile.self,
+        Split.self,
+        ButterEntry.self,
+        Achievement.self,
+        RunDraft.self
+    ]
+}
+
 enum ButterRunMigrationPlan: SchemaMigrationPlan {
-    static var schemas: [any VersionedSchema.Type] = [SchemaV1.self, SchemaV2.self, SchemaV3.self]
+    static var schemas: [any VersionedSchema.Type] = [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
     static var stages: [MigrationStage] = [
         .lightweight(fromVersion: SchemaV1.self, toVersion: SchemaV2.self),
-        .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self)
+        .lightweight(fromVersion: SchemaV2.self, toVersion: SchemaV3.self),
+        .lightweight(fromVersion: SchemaV3.self, toVersion: SchemaV4.self)
     ]
 }
 
