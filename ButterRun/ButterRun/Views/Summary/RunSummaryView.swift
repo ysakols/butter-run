@@ -5,6 +5,8 @@ struct RunSummaryView: View {
     let run: Run
     let usesMiles: Bool
     let onDismiss: () -> Void
+    var healthKitEnabled: Bool = false
+    var pauseResumeEvents: [(pauseDate: Date, resumeDate: Date)] = []
 
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
@@ -16,6 +18,8 @@ struct RunSummaryView: View {
     @State private var stravaUploading = false
     @State private var stravaUploaded = false
     @State private var stravaError: String?
+    @State private var healthKitSynced = false
+    @State private var healthKitError: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.modelContext) private var modelContext
 
@@ -125,6 +129,16 @@ struct RunSummaryView: View {
                     .padding(.horizontal)
                     .accessibilityLabel("Share run results")
 
+                    // HealthKit status
+                    if run.healthKitSynced || healthKitSynced {
+                        healthKitSyncedBadge
+                    } else if let error = healthKitError {
+                        Text(error)
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundStyle(ButterTheme.deficit)
+                            .padding(.horizontal)
+                    }
+
                     // Strava upload
                     if stravaAuth.isAuthenticated && run.stravaActivityId == nil {
                         stravaUploadSection
@@ -160,6 +174,11 @@ struct RunSummaryView: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         showAchievementOverlay = true
                     }
+                }
+
+                // Auto-sync to HealthKit if enabled
+                if healthKitEnabled && !run.healthKitSynced {
+                    syncToHealthKit()
                 }
             }
             .overlay {
@@ -278,6 +297,32 @@ struct RunSummaryView: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var healthKitSyncedBadge: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(ButterTheme.success.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(ButterTheme.success)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Saved to Apple Health")
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(ButterTheme.success)
+                Text("Workout synced to the Health app")
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(ButterTheme.success.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(ButterTheme.success.opacity(0.2), lineWidth: 1))
+        .padding(.horizontal)
+    }
+
     private var stravaUploadedBadge: some View {
         HStack(spacing: 10) {
             ZStack {
@@ -363,6 +408,20 @@ struct RunSummaryView: View {
         .padding(.horizontal)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(stravaUploaded ? "Uploaded to Strava" : "Upload to Strava")
+    }
+
+    private func syncToHealthKit() {
+        Task {
+            let service = HealthKitService()
+            let success = await service.saveWorkout(run: run, pauseResumeEvents: pauseResumeEvents)
+            if success {
+                run.healthKitSynced = true
+                try? modelContext.save()
+                healthKitSynced = true
+            } else {
+                healthKitError = "Could not save to Apple Health. Check permissions in Settings."
+            }
+        }
     }
 
     private func uploadToStrava() {
