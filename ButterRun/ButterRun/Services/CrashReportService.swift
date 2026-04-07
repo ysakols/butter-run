@@ -129,31 +129,34 @@ enum CrashReportService {
             _ = write(fd, hdr, headerLength)
         }
 
-        // Write signal name using only C string literals
-        let sigName: UnsafePointer<CChar>
+        // Write signal name
         switch sig {
-        case SIGABRT: sigName = "SIGABRT\n"
-        case SIGSEGV: sigName = "SIGSEGV\n"
-        case SIGBUS:  sigName = "SIGBUS\n"
-        case SIGFPE:  sigName = "SIGFPE\n"
-        case SIGILL:  sigName = "SIGILL\n"
-        default:      sigName = "UNKNOWN\n"
+        case SIGABRT: writeCString(fd, "SIGABRT\n")
+        case SIGSEGV: writeCString(fd, "SIGSEGV\n")
+        case SIGBUS:  writeCString(fd, "SIGBUS\n")
+        case SIGFPE:  writeCString(fd, "SIGFPE\n")
+        case SIGILL:  writeCString(fd, "SIGILL\n")
+        default:      writeCString(fd, "UNKNOWN\n")
         }
-        _ = write(fd, sigName, strlen(sigName))
 
-        let btHeader: UnsafePointer<CChar> = "\n--- Backtrace ---\n"
-        _ = write(fd, btHeader, strlen(btHeader))
+        writeCString(fd, "\n--- Backtrace ---\n")
 
         // backtrace + backtrace_symbols_fd are async-signal-safe on Darwin
         let frames = backtrace(backtraceBuffer, 128)
         backtrace_symbols_fd(backtraceBuffer, frames, fd)
 
-        let footer: UnsafePointer<CChar> = "\n=== End of Report ===\n"
-        _ = write(fd, footer, strlen(footer))
+        writeCString(fd, "\n=== End of Report ===\n")
 
         close(fd)
         signal(sig, SIG_DFL)
         raise(sig)
+    }
+
+    /// Write a StaticString to a file descriptor — no ARC, no heap allocation.
+    private static func writeCString(_ fd: Int32, _ str: StaticString) {
+        str.withUTF8Buffer { buffer in
+            _ = write(fd, buffer.baseAddress, buffer.count)
+        }
     }
 
     // MARK: - Rich report (exception path only — safe to allocate)

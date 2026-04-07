@@ -4,7 +4,8 @@ import OSLog
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.butterrun", category: "RunDraftService")
 
-@MainActor
+/// Thread safety: all methods must be called from the main thread.
+/// ModelContext is not thread-safe; callers are responsible for main-thread dispatch.
 class RunDraftService {
     private let container: ModelContainer
     /// Persistent context for draft saves. Must only be accessed from the main thread.
