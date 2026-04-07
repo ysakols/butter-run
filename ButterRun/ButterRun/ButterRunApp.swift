@@ -68,6 +68,9 @@ struct ButterRunApp: App {
     let containerError: Error?
 
     init() {
+        // Install lightweight crash handlers before anything else
+        CrashReportService.install()
+
         #if DEBUG
         let isUITesting = ProcessInfo.processInfo.arguments.contains("--reset-state")
         #else
@@ -167,6 +170,12 @@ struct ContentView: View {
     #endif
     @AppStorage("tosAcceptedVersion") private var tosAcceptedVersion: String = ""
 
+    // Crash report state
+    @State private var showCrashReportAlert = false
+    @State private var showCrashMailComposer = false
+    @State private var pendingCrashReport: String?
+    @State private var showCopiedToast = false
+
     /// Increment this when the ToS changes materially to re-trigger acceptance.
     private static let currentTosVersion = "2026-04-07-v2"
 
@@ -181,6 +190,52 @@ struct ContentView: View {
             } else {
                 CrashRecoveryWrapper {
                     MainTabView()
+                }
+                .alert("Crash Report", isPresented: $showCrashReportAlert) {
+                    if CrashReportMailView.canSendMail {
+                        Button("Send Report") {
+                            showCrashMailComposer = true
+                        }
+                    } else {
+                        Button("Copy to Clipboard") {
+                            if let report = pendingCrashReport {
+                                UIPasteboard.general.string = report
+                                showCopiedToast = true
+                            }
+                            CrashReportService.deletePendingReport()
+                            pendingCrashReport = nil
+                        }
+                    }
+                    Button("Dismiss", role: .cancel) {
+                        CrashReportService.deletePendingReport()
+                        pendingCrashReport = nil
+                    }
+                } message: {
+                    if CrashReportMailView.canSendMail {
+                        Text("Butter Run encountered an issue last time. Would you like to send a report?")
+                    } else {
+                        Text("Butter Run encountered an issue last time. Would you like to copy the report to your clipboard?")
+                    }
+                }
+                .sheet(isPresented: $showCrashMailComposer) {
+                    if let report = pendingCrashReport {
+                        CrashReportMailView(reportText: report) {
+                            CrashReportService.deletePendingReport()
+                            pendingCrashReport = nil
+                        }
+                    }
+                }
+                .overlay(alignment: .bottom) {
+                    if showCopiedToast {
+                        ToastView(
+                            text: "Crash report copied to clipboard",
+                            autoDismissSeconds: 2.5,
+                            isPresented: $showCopiedToast
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, ButterSpacing.tabBarHeight + 16)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
             }
         }
@@ -212,6 +267,12 @@ struct ContentView: View {
             // Purge stale drafts on launch
             let service = RunDraftService(container: modelContext.container)
             service.purgeStale(context: modelContext)
+
+            // Check for a crash report from a previous session (guard against re-trigger)
+            if pendingCrashReport == nil, let report = CrashReportService.pendingReport() {
+                pendingCrashReport = report
+                showCrashReportAlert = true
+            }
         }
     }
 }
@@ -365,7 +426,7 @@ struct LegalAcceptanceView: View {
                 privacyAccepted = true
                 // Log consent locally
                 UserDefaults.standard.set(Date().ISO8601Format(), forKey: "tosConsentTimestamp")
-                UserDefaults.standard.set(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown", forKey: "tosConsentAppVersion")
+                UserDefaults.standard.set(Bundle.main.appVersion, forKey: "tosConsentAppVersion")
                 onAccept()
             }
             .id("privacy") // Distinct identity ensures hasScrolledToBottom resets

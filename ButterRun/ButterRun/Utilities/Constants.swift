@@ -76,6 +76,15 @@ extension Color {
 
 
 
+extension Bundle {
+    var appVersion: String {
+        infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+    }
+    var buildNumber: String {
+        infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
+    }
+}
+
 enum ButterFacts {
     static let trivia: [String] = [
         "It takes 21 pounds of whole milk to make 1 pound of butter.",

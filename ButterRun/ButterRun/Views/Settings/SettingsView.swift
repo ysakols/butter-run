@@ -170,7 +170,7 @@ struct SettingsView: View {
                         Text("Version")
                             .foregroundStyle(ButterTheme.textPrimary)
                         Spacer()
-                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
+                        Text(Bundle.main.appVersion)
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
 
