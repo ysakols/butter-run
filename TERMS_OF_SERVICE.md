@@ -279,7 +279,7 @@ These Terms shall be governed by and construed in accordance with the laws of th
 
 ## 22. Contact
 
-If you have questions about these Terms of Service, wish to exercise your arbitration opt-out right under Section 11.7, or need to contact the Developer for any reason, please open an issue on the [Butter Run GitHub repository](https://github.com/ysakols/butter-run) or email [Your Contact Email].
+If you have questions about these Terms of Service, wish to exercise your arbitration opt-out right under Section 11.7, or need to contact the Developer for any reason, please open an issue on the [Butter Run GitHub repository](https://github.com/ysakols/butter-run) or email spltr3app@gmail.com.
 
 ## 23. Acknowledgment
 
