@@ -2,8 +2,8 @@ import Foundation
 import SwiftData
 
 enum AchievementType: String, CaseIterable, Codable {
-    case patOnTheBack     // Burn 1 pat (36 cal)
-    case teaspoonToast    // Burn 1 tsp
+    case patOnTheBack     // Complete first run (34 cal per pat)
+    case teaspoonToast    // Burn 1 pat in a single run
     case tablespoonTriumph // Burn 1 tbsp
     case stickSlayer      // Burn 1 stick (810 cal)
     case poundPounder     // Burn 1 lb butter (3240 cal)
@@ -30,13 +30,13 @@ enum AchievementType: String, CaseIterable, Codable {
 
     var description: String {
         switch self {
-        case .patOnTheBack: return "Burn 1 pat of butter in a single run"
-        case .teaspoonToast: return "Burn your first teaspoon"
+        case .patOnTheBack: return "Complete your first run"
+        case .teaspoonToast: return "Burn 1 pat of butter in a single run"
         case .tablespoonTriumph: return "Burn a full tablespoon in one run"
         case .stickSlayer: return "Burn an entire stick of butter"
         case .poundPounder: return "Burn a full pound of butter (cumulative)"
         case .butterSculptor: return "Complete 50 runs"
-        case .perfectZero: return "Finish a Butter Zero run within ±0.5 tsp"
+        case .perfectZero: return "Finish a Butter Zero run within ±0.5 pats"
         case .fiveRunStreak: return "Run 5 times in one week"
         case .marathonMelt: return "Run 26.2 miles total"
         case .butterFingers: return "Eat butter 10 times in one run"

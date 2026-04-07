@@ -24,18 +24,17 @@ final class HistoryUITests: XCTestCase {
     }
 
     func test_runAppearsInHistory() {
-        // Start and quickly finish a run
+        // Start a run
         let churnButton = app.buttons["Start run"]
         XCTAssertTrue(churnButton.waitForExistence(timeout: 5))
         churnButton.tap()
 
-        // Wait for active run UI to be ready
+        sleep(2) // Let it run briefly
+
+        // Stop via long press (LongPressStopButton requires 3-second hold)
         let stopButton = app.buttons["Stop run"]
         XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
-        stopButton.tap()
-        let finishButton = app.buttons["Finish Run"]
-        XCTAssertTrue(finishButton.waitForExistence(timeout: 3))
-        finishButton.tap()
+        stopButton.press(forDuration: 3.5)
 
         // Dismiss summary
         let doneButton = app.buttons["Done"]

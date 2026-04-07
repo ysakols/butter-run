@@ -38,20 +38,58 @@ enum ButterFormatters {
     }
 
     /// Format butter amount with appropriate unit.
+    @available(*, deprecated, message: "Use pats() instead")
     static func butter(tsp: Double) -> String {
-        if abs(tsp) < 0.1 {
-            return "0.0 tsp"
-        }
-        return String(format: "%.1f tsp", tsp)
+        pats(tsp)
     }
 
     /// Format butter with emoji.
+    @available(*, deprecated, message: "Use pats() instead")
     static func butterWithEmoji(tsp: Double) -> String {
-        "🧈 \(butter(tsp: tsp))"
+        "🧈 \(pats(tsp))"
     }
 
     /// Speed in mph from m/s.
     static func speedMph(metersPerSecond: Double) -> Double {
         metersPerSecond * 2.23694
+    }
+
+    // MARK: - Pat Formatters (v2 — pats as primary unit)
+
+    /// Format butter amount in pats (1 pat = 1 tsp = 34 cal).
+    @available(*, deprecated, message: "Use pats() instead")
+    static func _butterLegacy(tsp: Double) -> String { butter(tsp: tsp) }
+
+    /// Format butter amount as pats.
+    static func pats(_ tsp: Double) -> String {
+        if abs(tsp) < 0.1 {
+            return "0.0 pats"
+        }
+        return String(format: "%.1f pats", tsp)
+    }
+
+    /// Format pats with calorie detail for secondary display.
+    /// Returns "≈ 8.4 pats (286 cals)" for use beneath the hero number.
+    static func patsWithDetail(_ tsp: Double) -> String {
+        let cals = Int(round(tsp * 34))
+        if abs(tsp) < 0.1 {
+            return "≈ 0.0 pats (0 cals)"
+        }
+        return String(format: "≈ %.1f pats (%d cals)", tsp, cals)
+    }
+
+    /// Format net pats with +/- sign for Butter Zero display.
+    /// Returns "+0.3 pats" or "-1.2 pats" or "0.0 pats".
+    static func netPats(_ netTsp: Double) -> String {
+        if abs(netTsp) < 0.05 {
+            return "0.0 pats"
+        }
+        let sign = netTsp > 0 ? "+" : ""
+        return String(format: "%@%.1f pats", sign, netTsp)
+    }
+
+    /// Format pats with emoji.
+    static func patsWithEmoji(_ tsp: Double) -> String {
+        "🧈 \(pats(tsp))"
     }
 }

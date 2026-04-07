@@ -55,6 +55,8 @@ struct ButterRunApp: App {
     let containerError: Error?
 
     init() {
+        let isUITesting = ProcessInfo.processInfo.arguments.contains("--reset-state")
+
         do {
             let schema = Schema([
                 Run.self,
@@ -64,34 +66,43 @@ struct ButterRunApp: App {
                 Achievement.self,
                 RunDraft.self,
             ])
-            let config = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
+            let config: ModelConfiguration
+            if isUITesting {
+                config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            } else {
+                config = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
+            }
             container = try ModelContainer(
                 for: schema,
-                migrationPlan: ButterRunMigrationPlan.self,
+                migrationPlan: isUITesting ? nil : ButterRunMigrationPlan.self,
                 configurations: [config]
             )
             containerError = nil
         } catch {
             // Fallback: create an in-memory container so the app can launch
             containerError = error
-            guard let fallback = try? ModelContainer(
-                for: Schema([Run.self, Split.self, ButterEntry.self, UserProfile.self, Achievement.self, RunDraft.self]),
-                configurations: [ModelConfiguration(isStoredInMemoryOnly: true)]
-            ) else {
-                fatalError("Cannot create even an in-memory database: \(error)")
+            do {
+                container = try ModelContainer(
+                    for: Schema([Run.self, Split.self, ButterEntry.self, UserProfile.self, Achievement.self, RunDraft.self]),
+                    configurations: [ModelConfiguration(isStoredInMemoryOnly: true)]
+                )
+            } catch {
+                fatalError("Failed to create even an in-memory ModelContainer: \(error)")
             }
-            container = fallback
         }
     }
 
     var body: some Scene {
         WindowGroup {
-            if let error = containerError {
-                DatabaseErrorView(error: error)
-            } else {
-                ContentView()
-                    .environmentObject(stravaAuth)
+            Group {
+                if let error = containerError {
+                    DatabaseErrorView(error: error)
+                } else {
+                    ContentView()
+                        .environmentObject(stravaAuth)
+                }
             }
+            .preferredColorScheme(.light)
         }
         .modelContainer(container)
     }
@@ -121,11 +132,12 @@ struct DatabaseErrorView: View {
 struct ContentView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
+    private let skipOnboarding = ProcessInfo.processInfo.arguments.contains("--skip-onboarding")
 
     var body: some View {
         Group {
-            if profiles.isEmpty {
-                OnboardingView()
+            if profiles.isEmpty && !skipOnboarding {
+                OnboardingWalkthroughView()
             } else {
                 CrashRecoveryWrapper {
                     MainTabView()
@@ -133,6 +145,18 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            // UI testing: create a default profile when skipping onboarding
+            if skipOnboarding && profiles.isEmpty {
+                let profile = UserProfile(
+                    displayName: "Test Runner",
+                    weightKg: 70.0,
+                    preferredUnit: "miles",
+                    voiceFeedbackEnabled: false,
+                    splitDistance: "mile"
+                )
+                modelContext.insert(profile)
+            }
+
             // Enforce UserProfile singleton — delete duplicates if any
             if profiles.count > 1 {
                 for extra in profiles.dropFirst() {
@@ -250,118 +274,16 @@ struct MainTabView: View {
                     Label("History", systemImage: "clock.arrow.circlepath")
                 }
 
+            ChurnGuideView()
+                .tabItem {
+                    Label("Guide", systemImage: "book")
+                }
+
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
                 }
         }
         .tint(ButterTheme.gold)
-    }
-}
-
-struct OnboardingView: View {
-    @Environment(\.modelContext) private var modelContext
-    @State private var weightKg: Double = 70.0
-    @State private var displayName: String = ""
-    @State private var useMiles: Bool = Locale.current.measurementSystem == .us
-    @State private var weightError: String?
-
-    private var isFormValid: Bool {
-        !displayName.trimmingCharacters(in: .whitespaces).isEmpty && weightKg > 0
-    }
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 32) {
-                Spacer()
-
-                Image("butter-pat")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80, height: 80)
-                    .accessibilityHidden(true)
-
-                Text("Butter Run")
-                    .font(.system(.largeTitle, design: .rounded, weight: .black))
-                    .foregroundStyle(ButterTheme.gold)
-
-                Text("Run it off. One pat at a time.")
-                    .font(.system(.body, design: .rounded))
-                    .foregroundStyle(ButterTheme.textSecondary)
-
-                VStack(spacing: 16) {
-                    TextField("Your name", text: $displayName)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.body, design: .rounded))
-                        .accessibilityLabel("Your name")
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text("Weight")
-                                .font(.system(.body, design: .rounded))
-                                .foregroundStyle(ButterTheme.textPrimary)
-                            Spacer()
-                            TextField("kg", value: $weightKg, format: .number)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 80)
-                                .keyboardType(.decimalPad)
-                                .accessibilityLabel("Weight in kilograms")
-                                .onChange(of: weightKg) { _, newValue in
-                                    if newValue <= 0 {
-                                        weightError = "Weight must be greater than zero"
-                                    } else {
-                                        weightError = nil
-                                    }
-                                }
-                            Text("kg")
-                                .foregroundStyle(ButterTheme.textSecondary)
-                        }
-
-                        if let error = weightError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundStyle(ButterTheme.deficit)
-                        }
-                    }
-
-                    Picker("Units", selection: $useMiles) {
-                        Text("Miles").tag(true)
-                        Text("Kilometers").tag(false)
-                    }
-                    .pickerStyle(.segmented)
-                }
-                .padding(.horizontal, 32)
-
-                Spacer()
-
-                Button(action: createProfile) {
-                    Text("Let's Churn")
-                        .font(.system(.title3, design: .rounded, weight: .bold))
-                        .foregroundStyle(ButterTheme.background)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 16))
-                }
-                .padding(.horizontal, 32)
-                .disabled(!isFormValid)
-                .opacity(isFormValid ? 1.0 : 0.5)
-
-                Spacer().frame(height: 40)
-            }
-            .background(ButterTheme.background.ignoresSafeArea())
-        }
-        .preferredColorScheme(.dark)
-    }
-
-    private func createProfile() {
-        guard weightKg > 0 else { return }
-        let profile = UserProfile(
-            displayName: displayName.trimmingCharacters(in: .whitespaces),
-            weightKg: weightKg,
-            preferredUnit: useMiles ? "miles" : "kilometers",
-            voiceFeedbackEnabled: true,
-            splitDistance: useMiles ? "mile" : "kilometer"
-        )
-        modelContext.insert(profile)
     }
 }

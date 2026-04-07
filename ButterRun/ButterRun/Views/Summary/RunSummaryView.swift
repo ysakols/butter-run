@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct RunSummaryView: View {
     let run: Run
@@ -9,12 +10,14 @@ struct RunSummaryView: View {
     @State private var shareImage: UIImage?
     @State private var meltProgress: Double = 0
     @State private var shareMode: ShareCardMode = .story
+    @State private var newAchievements: [AchievementType] = []
+    @State private var showAchievementOverlay = false
     @EnvironmentObject private var stravaAuth: StravaAuthService
     @State private var stravaUploading = false
     @State private var stravaUploaded = false
     @State private var stravaError: String?
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         NavigationStack {
@@ -34,7 +37,7 @@ struct RunSummaryView: View {
                                 }
                             }
 
-                        Text(String(format: "%.1f tsp", run.totalButterBurnedTsp))
+                        Text(ButterFormatters.pats(run.totalButterBurnedTsp))
                             .font(.system(size: 48, weight: .black, design: .rounded))
                             .foregroundStyle(ButterTheme.gold)
 
@@ -48,9 +51,9 @@ struct RunSummaryView: View {
                     RunMapThumbnail(routeData: run.routePolyline)
                         .padding(.horizontal)
 
-                    // Butter Zero score
+                    // Net pats (Butter Zero challenge)
                     if run.isButterZeroChallenge {
-                        butterZeroSection
+                        netPatsSection
                     }
 
                     // Churn result
@@ -60,6 +63,34 @@ struct RunSummaryView: View {
 
                     // Stats grid
                     statsGrid
+
+                    // Achievements unlocked
+                    if !newAchievements.isEmpty {
+                        VStack(spacing: 8) {
+                            Text("Achievements Unlocked")
+                                .font(.system(.headline, design: .rounded, weight: .bold))
+                                .foregroundStyle(ButterTheme.textPrimary)
+
+                            ForEach(newAchievements, id: \.self) { achievement in
+                                HStack(spacing: 12) {
+                                    Text(achievement.emoji)
+                                        .font(.system(size: 28))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(achievement.displayName)
+                                            .font(.system(.body, design: .rounded, weight: .bold))
+                                            .foregroundStyle(ButterTheme.textPrimary)
+                                        Text(achievement.description)
+                                            .font(.system(.caption, design: .rounded))
+                                            .foregroundStyle(ButterTheme.textSecondary)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(12)
+                                .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
 
                     // Splits
                     if !run.splits.isEmpty {
@@ -84,12 +115,12 @@ struct RunSummaryView: View {
                     Button {
                         generateAndShare()
                     } label: {
-                        Label("Share My Churn", systemImage: "square.and.arrow.up")
+                        Label("Share My Run", systemImage: "square.and.arrow.up")
                             .font(.system(.body, design: .rounded, weight: .semibold))
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
-                            .foregroundStyle(ButterTheme.background)
+                            .foregroundStyle(ButterTheme.onPrimaryAction)
                     }
                     .padding(.horizontal)
                     .accessibilityLabel("Share run results")
@@ -118,25 +149,41 @@ struct RunSummaryView: View {
                     ShareSheetView(image: image, isPresented: $showShareSheet)
                 }
             }
+            .onAppear {
+                let service = AchievementService()
+                let descriptor = FetchDescriptor<Run>()
+                let allRunsList = (try? modelContext.fetch(descriptor)) ?? []
+                let awards = service.checkAchievements(for: run, allRuns: allRunsList, context: modelContext)
+                if !awards.isEmpty {
+                    newAchievements = awards
+                    // Show overlay after a short delay to let summary load
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        showAchievementOverlay = true
+                    }
+                }
+            }
+            .overlay {
+                if showAchievementOverlay {
+                    AchievementUnlockOverlay(achievements: newAchievements) {
+                        showAchievementOverlay = false
+                    }
+                    .transition(.opacity)
+                }
+            }
         }
-        .preferredColorScheme(.dark)
     }
 
-    private var butterZeroSection: some View {
-        VStack(spacing: 8) {
-            let score = run.butterZeroScore
-            Text("\(score)")
+    private var netPatsSection: some View {
+        VStack(spacing: 12) {
+            Text(ButterFormatters.netPats(run.netButterTsp))
                 .font(.system(size: 36, weight: .black, design: .rounded))
-                .foregroundStyle(score >= 80 ? ButterTheme.success : ButterTheme.goldDim)
+                .foregroundStyle(ButterTheme.gold)
 
-            Text("Butter Zero Score")
+            ButterZeroScale(netPats: run.netButterTsp)
+                .padding(.horizontal, 8)
+
+            Text("Net Pats")
                 .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(ButterTheme.textSecondary)
-
-            let net = run.netButterTsp
-            let sign = net >= 0 ? "+" : ""
-            Text("Net: \(sign)\(String(format: "%.1f", net)) tsp")
-                .font(.system(.caption, design: .rounded))
                 .foregroundStyle(ButterTheme.textSecondary)
         }
         .padding(20)
@@ -144,7 +191,7 @@ struct RunSummaryView: View {
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Butter Zero Score: \(run.butterZeroScore)")
+        .accessibilityLabel("Net pats: \(ButterFormatters.netPats(run.netButterTsp))")
     }
 
     private func churnResultSection(_ churn: ChurnResult) -> some View {
@@ -374,7 +421,7 @@ struct SplitRowView: View {
 
             Spacer()
 
-            Text(String(format: "%.1f tsp", split.butterBurnedTsp))
+            Text(ButterFormatters.pats(split.butterBurnedTsp))
                 .font(.system(.body, design: .rounded, weight: .medium))
                 .foregroundStyle(ButterTheme.gold)
         }

@@ -28,7 +28,7 @@ class VoiceFeedbackService: VoiceFeedback {
 
         // First announcement at 0.5 tsp for early wow moment
         if !announcedHalfTsp && butterTsp >= 0.5 {
-            speak("Half a teaspoon of butter melted. Keep going!")
+            speak("Half a pat of butter burned. Keep going!")
             announcedHalfTsp = true
         }
 
@@ -42,14 +42,14 @@ class VoiceFeedbackService: VoiceFeedback {
                 let tbsp = currentTsp / 3
                 speak("That's \(tbsp) tablespoon\(tbsp == 1 ? "" : "s") of butter!")
             } else {
-                speak("\(currentTsp) teaspoon\(currentTsp == 1 ? "" : "s") of butter melted.")
+                speak("\(currentTsp) pat\(currentTsp == 1 ? "" : "s") of butter burned.")
             }
             lastAnnouncedTsp = currentTsp
         }
 
         if currentUnit > lastAnnouncedMile && currentUnit > 0 {
             let tspStr = String(format: "%.1f", butterTsp)
-            speak("\(unitName) \(currentUnit) complete. Pace: \(pace). \(tspStr) teaspoons burned.")
+            speak("\(unitName) \(currentUnit) complete. Pace: \(pace). \(tspStr) pats burned.")
             lastAnnouncedMile = currentUnit
         }
 
@@ -65,11 +65,15 @@ class VoiceFeedbackService: VoiceFeedback {
         guard isEnabled else { return }
 
         let tspStr = String(format: "%.1f", totalButterTsp)
-        var message = "Run complete! You melted \(tspStr) teaspoons of butter."
+        var message = "Run complete! You burned \(tspStr) pats of butter."
 
         if isButterZero, let net = netButter {
-            let score = ButterCalculator.butterZeroScore(netTsp: net)
-            message += " Butter Zero score: \(score) out of 100."
+            let netStr = String(format: "%.1f", abs(net))
+            if abs(net) < 0.5 {
+                message += " Butter Zero achieved! Net: \(netStr) pats."
+            } else {
+                message += " Net: \(netStr) pats \(net > 0 ? "surplus" : "deficit")."
+            }
         }
 
         speak(message)

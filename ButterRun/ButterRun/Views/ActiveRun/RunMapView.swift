@@ -12,13 +12,13 @@ struct RunMapView: View {
         Map(position: $position) {
             if routeCoordinates.count >= 2 {
                 MapPolyline(coordinates: routeCoordinates)
-                    .stroke(Color(hex: "F3BA60"), lineWidth: 4)
+                    .stroke(ButterTheme.gold, lineWidth: 4)
             }
 
             if let last = routeCoordinates.last, isLive {
                 Annotation("", coordinate: last) {
                     Circle()
-                        .fill(Color(hex: "F3BA60"))
+                        .fill(ButterTheme.gold)
                         .frame(width: 12, height: 12)
                         .overlay(Circle().stroke(.white, lineWidth: 2))
                 }
@@ -27,7 +27,7 @@ struct RunMapView: View {
         .mapStyle(.standard(elevation: .flat, emphasis: .muted, pointsOfInterest: .excludingAll))
         .mapControlVisibility(.hidden)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
     }
 }
 

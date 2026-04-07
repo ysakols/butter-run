@@ -10,27 +10,46 @@ final class OnboardingUITests: XCTestCase {
     }
 
     func test_onboarding_emptyName_buttonDisabled() {
+        // Navigate to page 4 (profile) by tapping Next 3 times
+        for _ in 0..<3 {
+            let nextButton = app.buttons["Next"]
+            XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+            nextButton.tap()
+        }
+
         // Clear name field if pre-filled
         let nameField = app.textFields["Your name"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 5))
         nameField.tap()
         nameField.clearAndType("")
 
-        let button = app.buttons["Start run"]
+        let button = app.buttons.matching(NSPredicate(format: "label CONTAINS \"Let's Churn\"")).firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 3))
         XCTAssertFalse(button.isEnabled)
     }
 
     func test_onboarding_validInput_createsProfile() {
+        // Navigate to page 4 (profile) by tapping Next 3 times
+        for _ in 0..<3 {
+            let nextButton = app.buttons["Next"]
+            XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+            nextButton.tap()
+        }
+
         let nameField = app.textFields["Your name"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 5))
         nameField.tap()
         nameField.typeText("Sarah")
 
-        let weightField = app.textFields["Weight in kilograms"]
+        // Weight field label is dynamic based on locale (lbs or kg)
+        let weightFieldLbs = app.textFields["Weight in lbs"]
+        let weightFieldKg = app.textFields["Weight in kg"]
+        let weightField = weightFieldLbs.exists ? weightFieldLbs : weightFieldKg
         weightField.tap()
         weightField.clearAndType("65")
 
-        let button = app.buttons["Start run"]
+        let button = app.buttons.matching(NSPredicate(format: "label CONTAINS \"Let's Churn\"")).firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 3))
         XCTAssertTrue(button.isEnabled)
         button.tap()
 
@@ -39,21 +58,33 @@ final class OnboardingUITests: XCTestCase {
         XCTAssertTrue(greeting.waitForExistence(timeout: 5))
     }
 
-    func test_onboarding_zeroWeight_showsError() {
+    func test_onboarding_zeroWeight_buttonDisabled() {
+        // Navigate to page 4 (profile) by tapping Next 3 times
+        for _ in 0..<3 {
+            let nextButton = app.buttons["Next"]
+            XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+            nextButton.tap()
+        }
+
         let nameField = app.textFields["Your name"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 5))
         nameField.tap()
         nameField.typeText("Test")
 
-        let weightField = app.textFields["Weight in kilograms"]
+        // Weight field label is dynamic based on locale (lbs or kg)
+        let weightFieldLbs = app.textFields["Weight in lbs"]
+        let weightFieldKg = app.textFields["Weight in kg"]
+        let weightField = weightFieldLbs.exists ? weightFieldLbs : weightFieldKg
         weightField.tap()
         weightField.clearAndType("0")
 
         // Trigger validation by tapping elsewhere
         nameField.tap()
 
-        let error = app.staticTexts["Weight must be greater than zero"]
-        XCTAssertTrue(error.waitForExistence(timeout: 3))
+        // Button should be disabled when weight is zero
+        let button = app.buttons.matching(NSPredicate(format: "label CONTAINS \"Let's Churn\"")).firstMatch
+        XCTAssertTrue(button.waitForExistence(timeout: 3))
+        XCTAssertFalse(button.isEnabled)
     }
 }
 

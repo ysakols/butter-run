@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Butter Run — Complete Flows & All Screens</title>
+<style>
+:root{--bg:#FFFDF7;--sf:#FFF;--bd:#F0E6D0;--go:#D4940A;--gd:#B87D08;--gl:#FFF3D6;--tp:#1C1C1E;--ts:#6B6B70;--ok:#2D8E40;--no:#CC3333;--wh:#FFF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'SF Pro Rounded',system-ui,sans-serif;background:#F0F0F0;color:var(--tp);-webkit-font-smoothing:antialiased;padding:24px}
+h1{font-size:24px;font-weight:800;margin-bottom:4px}
+h2{font-size:18px;font-weight:700;margin:32px 0 6px;border-bottom:2px solid var(--go);padding-bottom:4px;display:inline-block}
+h3{font-size:14px;font-weight:700;margin:16px 0 6px;color:var(--go)}
+.sub{color:var(--ts);font-size:13px;margin-bottom:24px}
+.wrap{max-width:1200px;margin:0 auto}
+
+/* Flow diagram */
+.flow{background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:20px;margin:12px 0;font-size:12px;line-height:1.6;overflow-x:auto}
+.flow pre{font-family:'SF Mono',monospace;font-size:11px;white-space:pre;color:var(--tp)}
+.fnode{display:inline-block;background:var(--gl);border:1px solid var(--go);border-radius:6px;padding:2px 8px;font-weight:600;font-size:11px}
+.faction{display:inline-block;background:#E8F4FE;border:1px solid #A0C4E8;border-radius:6px;padding:2px 8px;font-size:11px}
+.fdialog{display:inline-block;background:#FFE8E8;border:1px solid #E8A0A0;border-radius:6px;padding:2px 8px;font-size:11px}
+
+/* Screen cards */
+.screens{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0}
+.scard{background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;width:280px;overflow:hidden}
+.scard-hdr{background:var(--gl);padding:10px 14px;font-size:13px;font-weight:700;border-bottom:1px solid var(--bd)}
+.scard-body{padding:12px 14px;font-size:11px;color:var(--ts);line-height:1.5}
+.scard-body strong{color:var(--tp)}
+
+/* Phone mini */
+.pm{width:220px;height:400px;background:var(--bg);border-radius:24px;border:2px solid #E0E0E0;overflow:hidden;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,.06);display:flex;flex-direction:column}
+.pm-s{height:32px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px 3px;font-size:9px;font-weight:600;flex-shrink:0}
+.pm-b{flex:1;overflow-y:auto;padding:0 10px;font-size:10px}
+.pm-t{display:flex;justify-content:space-around;padding:4px 0 12px;border-top:1px solid var(--bd);background:var(--sf);flex-shrink:0;font-size:7px;font-weight:600;color:var(--ts)}
+
+/* Button map table */
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11px}
+th{text-align:left;background:var(--gl);padding:6px 10px;font-weight:700;border:1px solid var(--bd)}
+td{padding:6px 10px;border:1px solid var(--bd);vertical-align:top}
+td:first-child{font-weight:600;white-space:nowrap;width:160px}
+
+/* Alert mockup */
+.alert-mock{background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:16px;max-width:260px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.15);margin:8px 0}
+.alert-mock h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.alert-mock p{font-size:11px;color:var(--ts);margin-bottom:12px;line-height:1.4}
+.alert-btn{padding:8px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--bd);margin:2px 0;width:100%;text-align:center}
+.alert-btn.dest{background:#FFE8E8;color:var(--no);border-color:var(--no)}
+.alert-btn.cancel{background:var(--sf);color:var(--ts)}
+
+/* sheet mockup */
+.sheet{background:var(--sf);border-radius:14px 14px 0 0;border:1.5px solid var(--bd);padding:16px;width:220px;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:#D0D0D0;margin:0 auto 10px}
+.sheet h4{font-size:13px;font-weight:700;margin-bottom:8px}
+
+.nav{display:flex;gap:5px;margin:16px 0;flex-wrap:wrap}
+.nb{padding:6px 12px;border-radius:16px;border:1.5px solid var(--bd);background:var(--sf);color:var(--ts);font-size:11px;font-weight:600;cursor:pointer}
+.nb:hover,.nb.on{background:var(--go);color:var(--wh);border-color:var(--go)}
+.sec{display:none}.sec.v{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Butter Run — Complete Screen Audit & Flows</h1>
+<p class="sub">Every screen, every button, every dialog, every flow. Nothing missing.</p>
+
+<div class="nav">
+  <button class="nb on" onclick="sh('flows')">Flow Diagrams</button>
+  <button class="nb" onclick="sh('buttons')">Button Map</button>
+  <button class="nb" onclick="sh('modals')">Modals & Dialogs</button>
+  <button class="nb" onclick="sh('missing')">Missing Screens</button>
+  <button class="nb" onclick="sh('integrations')">Integrations</button>
+</div>
+
+<!-- ===== FLOW DIAGRAMS ===== -->
+<div id="s-flows" class="sec v">
+
+<h2>1. App Launch Flow</h2>
+<div class="flow"><pre>
+App Launch
+  │
+  ├─ Database Error? ──── YES ──→ [Error Screen] "Something went wrong"
+  │                                   └─ (Dead end, user must reinstall)
+  │
+  └─ NO ──→ Check UserProfile exists?
+              │
+              ├─ NO ──→ [Onboarding Walkthrough]
+              │            Page 1: Welcome
+              │            Page 2: Butter Zero
+              │            Page 3: Churn Tracker
+              │            Page 4: Profile Setup
+              │              └─ "Let's Churn" ──→ Create Profile ──→ [Main Tab View]
+              │
+              └─ YES ──→ Check for Crash Draft?
+                           │
+                           ├─ Draft Found ──→ [Alert: "Unfinished Run"]
+                           │                    ├─ "Discard" ──→ Delete Draft ──→ [Main Tab View]
+                           │                    └─ (dismiss) ──→ [Main Tab View]
+                           │
+                           └─ No Draft ──→ [Main Tab View]
+</pre></div>
+
+<h2>2. Main Navigation</h2>
+<div class="flow"><pre>
+[Main Tab View]
+  │
+  ├─ Tab 1: Run ──────→ [Home Screen]
+  ├─ Tab 2: History ──→ [Run History]
+  ├─ Tab 3: Guide ────→ [Churn Guide]   ← NEW tab (was not in original app)
+  └─ Tab 4: Settings ─→ [Settings]
+</pre></div>
+
+<h2>3. Start Run Flow</h2>
+<div class="flow"><pre>
+[Home Screen]
+  │
+  ├─ Toggle "Butter Zero" ON/OFF
+  ├─ Toggle "Churn Tracker" ON/OFF
+  │
+  └─ Tap "Start Churning"
+       │
+       ├─ Churn OFF ──→ [Active Run] (direct start)
+       │
+       └─ Churn ON ──→ [Churn Setup Sheet]
+                         │  - Select cream type (Heavy/Whipping)
+                         │  - Enter amount (cups)
+                         │  - Toggle room temperature (shows warning alert)
+                         │
+                         ├─ "Start Churning" ──→ [Active Run] with churn config
+                         └─ "Cancel" ──→ back to [Home]
+</pre></div>
+
+<h2>4. Active Run Flow</h2>
+<div class="flow"><pre>
+[Active Run]
+  │
+  ├─ GPS Banners (automatic)
+  │    ├─ Weak signal: orange banner
+  │    └─ Lost signal: red banner
+  │
+  ├─ Auto-Pause Banner (automatic when stopped moving)
+  │
+  ├─ Map/Metrics Toggle ──→ switch between map view and metrics grid
+  │
+  ├─ 🧈 EAT button (only if Butter Zero ON)
+  │    └─ [Eat Butter Sheet]
+  │         ├─ "1 tsp" (34 cal) ──→ add + dismiss + show undo toast
+  │         ├─ "1 pat" (36 cal) ──→ add + dismiss + show undo toast
+  │         ├─ "1 tbsp" (102 cal) ──→ add + dismiss + show undo toast
+  │         ├─ "½ stick" (408 cal) ──→ add + dismiss + show undo toast
+  │         ├─ Custom tsp + "Add" ──→ add + dismiss + show undo toast
+  │         └─ "Cancel" ──→ dismiss
+  │
+  ├─ Undo Toast (appears 8 sec after eating)
+  │    └─ "Undo" ──→ removes last butter entry
+  │
+  ├─ ⏸ PAUSE/RESUME button ──→ toggles run state
+  │
+  └─ ⏹ STOP button (hold 3 sec)
+       └─ [Confirmation: "End run?"]
+            ├─ "Finish Run" ──→ save run ──→ [Run Summary]
+            └─ "Cancel" ──→ back to [Active Run]
+</pre></div>
+
+<h2>5. Post-Run Flow</h2>
+<div class="flow"><pre>
+[Run Summary]
+  │
+  ├─ View: Butter animation, stats, splits, Butter Zero score, churn result
+  │
+  ├─ "Share My Run" ──→ select format (Story 9:16 / Square 1:1)
+  │                       └─ [iOS Share Sheet] ──→ share to apps
+  │
+  └─ "Done" ──→ return to [Home Screen]
+</pre></div>
+
+<h2>6. History Flow</h2>
+<div class="flow"><pre>
+[Run History]
+  │
+  ├─ Empty state (no runs) ──→ "No runs yet. Tap Run to start!"
+  │
+  ├─ Tap any run row ──→ [Run Detail View]
+  │                        │
+  │                        ├─ View: Butter hero, map, stats, splits, butter entries
+  │                        │
+  │                        └─ "Edit" (toolbar) ──→ [Run Edit View]
+  │                                                 │  - Edit distance
+  │                                                 │  - Edit notes
+  │                                                 │
+  │                                                 ├─ "Save Changes" ──→ update + dismiss
+  │                                                 └─ "Cancel" ──→ dismiss
+  │
+  ├─ Swipe-to-delete any run ──→ [Confirmation: "Delete this run?"]
+  │                                ├─ "Delete" ──→ remove run
+  │                                └─ "Cancel" ──→ dismiss
+  │
+  └─ "+ Manual" button ──→ [Manual Run Entry]
+                            │  - Date picker
+                            │  - Distance input
+                            │  - Duration (minutes)
+                            │  - Unit picker (mi/km)
+                            │  - Shows estimated pats preview
+                            │
+                            ├─ "Save Run" ──→ create manual run ──→ dismiss
+                            └─ "Cancel" ──→ dismiss
+</pre></div>
+
+<h2>7. Settings Flow</h2>
+<div class="flow"><pre>
+[Settings]
+  │
+  ├─ Profile Section
+  │    ├─ Name ──→ edit inline (auto-saves)
+  │    └─ Weight ──→ edit inline (auto-saves)
+  │         └─ If weight changed significantly + runs exist:
+  │              [Alert: "Recalculate Past Runs?"]
+  │                ├─ "Recalculate" ──→ update all past runs with new weight
+  │                └─ "Skip" ──→ keep old calculations
+  │
+  ├─ Units Section
+  │    └─ Distance toggle: Miles / Kilometers
+  │
+  ├─ Run Settings
+  │    ├─ Voice Feedback toggle
+  │    └─ Auto-Pause toggle
+  │
+  ├─ Integrations Section  ← REDESIGNED (was just HealthKit toggle)
+  │    ├─ Apple Health ──→ [toggle + permission flow]
+  │    ├─ Strava ──→ [connect/disconnect + OAuth flow]
+  │    └─ Garmin ──→ [connect/disconnect + OAuth flow]
+  │
+  ├─ Butter Math (reference info)
+  │
+  ├─ About
+  │    ├─ Version ──→ display only
+  │    └─ Privacy Policy ──→ opens URL in Safari
+  │
+  ├─ Health & Wellness Resources
+  │    └─ NEDA link ──→ opens URL
+  │
+  └─ "Delete All My Data"
+       └─ [Confirmation: "Delete All Data?"]
+            │
+            ├─ "Delete Everything"
+            │    └─ Deletes: all runs, achievements, drafts, profile
+            │         └─ App restarts ──→ [Onboarding] (back to page 1)
+            │
+            └─ "Cancel" ──→ dismiss
+</pre></div>
+
+</div>
+
+<!-- ===== BUTTON MAP ===== -->
+<div id="s-buttons" class="sec">
+<h2>Complete Button Map — Every Tappable Element</h2>
+
+<h3>Home Screen</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Butter Zero toggle</td><td>Enable/disable mode</td><td>Shows/hides Butter Zero scale card</td></tr>
+  <tr><td>Butter Zero (i) info</td><td>Show tooltip</td><td>Popover explaining Butter Zero</td></tr>
+  <tr><td>Churn Tracker toggle</td><td>Enable/disable mode</td><td>No visual change on Home</td></tr>
+  <tr><td>Churn Tracker (i) info</td><td>Show tooltip</td><td>Popover explaining Churn Tracker</td></tr>
+  <tr><td>"Start Churning" button</td><td>Begin run</td><td>If Churn ON → Churn Setup Sheet<br>If Churn OFF → Active Run (full screen)</td></tr>
+</table>
+
+<h3>Active Run</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Map/Metrics toggle</td><td>Switch view</td><td>Swaps between RunMapView and MetricGridView</td></tr>
+  <tr><td>🧈 Eat button</td><td>Open eat sheet</td><td>Eat Butter Sheet (half-sheet modal)</td></tr>
+  <tr><td>⏸ Pause button</td><td>Toggle pause/resume</td><td>In-place state change</td></tr>
+  <tr><td>⏹ Stop button</td><td>Hold 3 sec → confirm</td><td>Confirmation dialog → Run Summary</td></tr>
+  <tr><td>Butter Zero (i) info</td><td>Show tooltip</td><td>Popover explaining scale</td></tr>
+  <tr><td>Undo toast "Undo"</td><td>Remove last entry</td><td>Removes butter entry, hides toast</td></tr>
+  <tr><td>Quick "Eat" on strip</td><td>Add 1 tsp instantly</td><td>Adds 1 tsp, shows undo toast</td></tr>
+</table>
+
+<h3>Eat Butter Sheet</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>"1 tsp" button</td><td>Add 1 tsp (34 cal)</td><td>Dismiss sheet, show undo toast</td></tr>
+  <tr><td>"1 pat" button</td><td>Add 1.06 tsp (36 cal)</td><td>Dismiss sheet, show undo toast</td></tr>
+  <tr><td>"1 tbsp" button</td><td>Add 3 tsp (102 cal)</td><td>Dismiss sheet, show undo toast</td></tr>
+  <tr><td>"½ stick" button</td><td>Add 12 tsp (408 cal)</td><td>Dismiss sheet, show undo toast</td></tr>
+  <tr><td>Custom + "Add"</td><td>Add custom amount</td><td>Dismiss sheet, show undo toast</td></tr>
+  <tr><td>Cancel (toolbar)</td><td>Close</td><td>Dismiss sheet</td></tr>
+</table>
+
+<h3>Churn Setup Sheet</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Cream type picker</td><td>Select cream</td><td>Heavy Cream / Whipping Cream</td></tr>
+  <tr><td>Amount field</td><td>Enter cups</td><td>Numeric input</td></tr>
+  <tr><td>Room temp toggle</td><td>Toggle warning</td><td>If ON → shows warning alert</td></tr>
+  <tr><td>"Start Churning"</td><td>Begin with config</td><td>Dismiss → Active Run (0.3s delay)</td></tr>
+  <tr><td>Cancel (toolbar)</td><td>Close</td><td>Dismiss sheet</td></tr>
+</table>
+
+<h3>Run Summary</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Share format picker</td><td>Select Story/Square</td><td>Changes share card aspect ratio</td></tr>
+  <tr><td>"Share My Run"</td><td>Generate share card</td><td>iOS Share Sheet</td></tr>
+  <tr><td>"Done" (toolbar)</td><td>Close summary</td><td>Return to Home Screen</td></tr>
+</table>
+
+<h3>Run History</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Any run row</td><td>Tap to view</td><td>NavigationLink → Run Detail View</td></tr>
+  <tr><td>Swipe-left on row</td><td>Delete with confirm</td><td>Confirmation dialog</td></tr>
+  <tr><td>"+ Manual" button</td><td>Log manual run</td><td>Manual Run Entry Sheet</td></tr>
+</table>
+
+<h3>Run Detail View</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>"Edit" (toolbar)</td><td>Edit run details</td><td>Run Edit View Sheet</td></tr>
+  <tr><td>Route map</td><td>View only</td><td>Non-interactive map display</td></tr>
+  <tr><td>Back arrow</td><td>Go back</td><td>Run History</td></tr>
+</table>
+
+<h3>Run Edit View</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Distance field</td><td>Edit distance</td><td>Numeric input</td></tr>
+  <tr><td>Notes field</td><td>Edit notes</td><td>Text editor</td></tr>
+  <tr><td>"Save Changes"</td><td>Save edits</td><td>Dismiss sheet</td></tr>
+  <tr><td>Cancel (toolbar)</td><td>Discard edits</td><td>Dismiss sheet</td></tr>
+</table>
+
+<h3>Manual Run Entry</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Date picker</td><td>Select date</td><td>iOS date picker</td></tr>
+  <tr><td>Distance field</td><td>Enter distance</td><td>Numeric input</td></tr>
+  <tr><td>Duration field</td><td>Enter minutes</td><td>Numeric input</td></tr>
+  <tr><td>Units picker</td><td>Miles/Km</td><td>Segmented control</td></tr>
+  <tr><td>"Save Run"</td><td>Create run</td><td>Dismiss sheet, run appears in History</td></tr>
+  <tr><td>Cancel (toolbar)</td><td>Close</td><td>Dismiss sheet</td></tr>
+</table>
+
+<h3>Settings</h3>
+<table>
+  <tr><th>Element</th><th>Action</th><th>Destination</th></tr>
+  <tr><td>Name field</td><td>Edit inline</td><td>Auto-saves on change</td></tr>
+  <tr><td>Weight field</td><td>Edit inline</td><td>Auto-saves, may trigger recalc alert</td></tr>
+  <tr><td>Distance picker</td><td>Miles/Km</td><td>Segmented control</td></tr>
+  <tr><td>Voice Feedback toggle</td><td>On/Off</td><td>Auto-saves</td></tr>
+  <tr><td>Auto-Pause toggle</td><td>On/Off</td><td>Auto-saves</td></tr>
+  <tr><td>Apple Health</td><td>Connect/Disconnect</td><td>iOS permission prompt</td></tr>
+  <tr><td>Strava</td><td>Connect/Disconnect</td><td>OAuth web flow (future)</td></tr>
+  <tr><td>Garmin</td><td>Connect/Disconnect</td><td>OAuth web flow (future)</td></tr>
+  <tr><td>Butter Math (i)</td><td>Show tooltip</td><td>Popover with conversion info</td></tr>
+  <tr><td>Privacy Policy</td><td>Open URL</td><td>Safari</td></tr>
+  <tr><td>NEDA link</td><td>Open URL</td><td>Safari</td></tr>
+  <tr><td>"Delete All My Data"</td><td>Show confirmation</td><td>Confirmation dialog → Onboarding</td></tr>
+</table>
+</div>
+
+<!-- ===== MODALS & DIALOGS ===== -->
+<div id="s-modals" class="sec">
+<h2>All Modals, Sheets & Confirmation Dialogs</h2>
+<p class="sub">Every overlay, alert, and sheet in the app with exact behavior.</p>
+
+<div class="screens">
+  <!-- Delete All Data -->
+  <div class="scard">
+    <div class="scard-hdr">⚠️ Delete All Data — Confirmation</div>
+    <div class="scard-body">
+      <div class="alert-mock">
+        <h4>Delete All Data?</h4>
+        <p>This will permanently delete all your runs, achievements, and profile. This cannot be undone.</p>
+        <div class="alert-btn dest">Delete Everything</div>
+        <div class="alert-btn cancel">Cancel</div>
+      </div>
+      <br>
+      <strong>After "Delete Everything":</strong><br>
+      All Runs, Achievements, RunDrafts, and UserProfile are deleted. App restarts and shows Onboarding page 1 (profile no longer exists).
+    </div>
+  </div>
+
+  <!-- Delete Run -->
+  <div class="scard">
+    <div class="scard-hdr">🗑️ Delete Run — Confirmation</div>
+    <div class="scard-body">
+      <div class="alert-mock">
+        <h4>Delete this run?</h4>
+        <p>This run and all its data will be permanently removed.</p>
+        <div class="alert-btn dest">Delete</div>
+        <div class="alert-btn cancel">Cancel</div>
+      </div>
+      <br>
+      <strong>After "Delete":</strong><br>
+      Run removed from SwiftData. User stays on History screen. Run disappears from list.
+    </div>
+  </div>
+
+  <!-- End Run -->
+  <div class="scard">
+    <div class="scard-hdr">🏁 End Run — Confirmation</div>
+    <div class="scard-body">
+      <div class="alert-mock">
+        <h4>End run?</h4>
+        <p>Your run will be saved.</p>
+        <div class="alert-btn dest">Finish Run</div>
+        <div class="alert-btn cancel">Cancel</div>
+      </div>
+      <br>
+      <strong>After "Finish Run":</strong><br>
+      Run saved to SwiftData. Draft deleted. Full-screen Run Summary appears.
+    </div>
+  </div>
+
+  <!-- Crash Recovery -->
+  <div class="scard">
+    <div class="scard-hdr">💾 Crash Recovery — Alert</div>
+    <div class="scard-body">
+      <div class="alert-mock">
+        <h4>Unfinished Run</h4>
+        <p>Found an unfinished run from [date]. Duration: [time].</p>
+        <div class="alert-btn cancel">Discard</div>
+      </div>
+      <br>
+      <strong>When shown:</strong><br>
+      App crashed or was killed during a run. Draft was saved. On next launch, user can discard it.
+    </div>
+  </div>
+
+  <!-- Recalculate -->
+  <div class="scard">
+    <div class="scard-hdr">⚖️ Recalculate — Alert</div>
+    <div class="scard-body">
+      <div class="alert-mock">
+        <h4>Recalculate Past Runs?</h4>
+        <p>Your weight changed. Want to update calorie estimates for all past runs?</p>
+        <div class="alert-btn" style="background:var(--gl);border-color:var(--go);color:var(--go)">Recalculate</div>
+        <div class="alert-btn cancel">Skip</div>
+      </div>
+      <br>
+      <strong>After "Recalculate":</strong><br>
+      All past runs' butter/calorie values are recalculated with new weight. User stays on Settings.
+    </div>
+  </div>
+
+  <!-- Room Temp Warning -->
+  <div class="scard">
+    <div class="scard-hdr">🌡️ Room Temp Warning — Alert</div>
+    <div class="scard-body">
+      <div class="alert-mock">
+        <h4>Room Temperature</h4>
+        <p>Room temperature cream won't churn properly. For best results, use cold cream. Progress will be capped at Whipped.</p>
+        <div class="alert-btn cancel">OK</div>
+      </div>
+      <br>
+      <strong>When shown:</strong><br>
+      User toggles "room temperature" in Churn Setup. Warning only — doesn't block.
+    </div>
+  </div>
+</div>
+
+<h3>Sheets (Half-Screen Modals)</h3>
+<div class="screens">
+  <div class="scard">
+    <div class="scard-hdr">🧈 Eat Butter Sheet</div>
+    <div class="scard-body">
+      <strong>Trigger:</strong> Tap Eat button during active run<br>
+      <strong>Presentation:</strong> .medium detent (half screen)<br>
+      <strong>Contents:</strong> 4 preset buttons (tsp, pat, tbsp, ½ stick) + custom input<br>
+      <strong>On select:</strong> Adds butter entry, dismisses, shows undo toast (8 sec)<br>
+      <strong>Cancel:</strong> Toolbar X button dismisses
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-hdr">🫧 Churn Setup Sheet</div>
+    <div class="scard-body">
+      <strong>Trigger:</strong> "Start Churning" when Churn toggle is ON<br>
+      <strong>Presentation:</strong> .medium detent<br>
+      <strong>Contents:</strong> Cream type picker, amount, room temp toggle<br>
+      <strong>On start:</strong> Creates config, dismisses, opens Active Run after 0.3s<br>
+      <strong>Cancel:</strong> Toolbar X button dismisses
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-hdr">✍️ Manual Run Entry</div>
+    <div class="scard-body">
+      <strong>Trigger:</strong> "+ Manual" button in History<br>
+      <strong>Presentation:</strong> Standard sheet<br>
+      <strong>Contents:</strong> Date, distance, duration, unit picker<br>
+      <strong>Shows:</strong> Estimated pats preview as you type<br>
+      <strong>On save:</strong> Creates run with isManualEntry flag, dismisses<br>
+      <strong>Disabled:</strong> Save disabled if distance=0 or duration=0
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-hdr">✏️ Run Edit View</div>
+    <div class="scard-body">
+      <strong>Trigger:</strong> "Edit" button on Run Detail<br>
+      <strong>Presentation:</strong> Standard sheet<br>
+      <strong>Contents:</strong> Distance (editable), notes (editable). Date/duration read-only.<br>
+      <strong>On save:</strong> Updates run, recalculates pace, dismisses<br>
+      <strong>Cancel:</strong> Toolbar X button discards changes
+    </div>
+  </div>
+</div>
+
+<h3>Full-Screen Covers</h3>
+<div class="screens">
+  <div class="scard">
+    <div class="scard-hdr">🏃 Active Run (Full Screen)</div>
+    <div class="scard-body">
+      <strong>Trigger:</strong> Start run from Home<br>
+      <strong>Presentation:</strong> .fullScreenCover (no swipe dismiss)<br>
+      <strong>Exit:</strong> Only via Stop → Confirm → Finish<br>
+      <strong>On dismiss:</strong> Clears churn config
+    </div>
+  </div>
+  <div class="scard">
+    <div class="scard-hdr">📊 Run Summary (Full Screen)</div>
+    <div class="scard-body">
+      <strong>Trigger:</strong> After finishing a run<br>
+      <strong>Presentation:</strong> .fullScreenCover<br>
+      <strong>Exit:</strong> "Done" toolbar button<br>
+      <strong>Returns to:</strong> Home Screen
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== MISSING SCREENS ===== -->
+<div id="s-missing" class="sec">
+<h2>Screens Now Added to Redesign</h2>
+<p class="sub">These screens exist in the app but were missing from previous mockup versions.</p>
+
+<div class="screens">
+  <div class="scard">
+    <div class="scard-hdr">📋 Run Detail View</div>
+    <div class="scard-body">
+      <strong>Accessed from:</strong> Tap any run in History list<br><br>
+      <strong>Sections:</strong><br>
+      • Butter hero (total pats, description)<br>
+      • "Manual Entry" badge (if applicable)<br>
+      • Route map (if GPS data exists)<br>
+      • Butter Zero score + net pats (if BZ run)<br>
+      • Churn result: stage + completion % (if churn run)<br>
+      • Stats grid: distance, duration, pace, cals, elevation, cadence<br>
+      • Notes (if any)<br>
+      • Per-split breakdown table<br>
+      • Butter entries log (what was eaten when)<br><br>
+      <strong>Actions:</strong> Edit button → Run Edit Sheet
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-hdr">🧈 Eat Butter Sheet</div>
+    <div class="scard-body">
+      <strong>Layout:</strong><br>
+      • Header: "How much butter?" with butter pat icon<br>
+      • 4 preset buttons in 2x2 grid:<br>
+      &nbsp;&nbsp;1 tsp (34 cal) | 1 pat (36 cal)<br>
+      &nbsp;&nbsp;1 tbsp (102 cal) | ½ stick (408 cal)<br>
+      • Custom amount: text field + "Add" button<br>
+      • Cancel in toolbar<br><br>
+      <strong>After selection:</strong> Dismiss + undo toast for 8 sec
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-hdr">🫧 Churn Setup Sheet</div>
+    <div class="scard-body">
+      <strong>Layout:</strong><br>
+      • "Set Up Your Churn" header<br>
+      • Cream type picker: Heavy (36%+) / Whipping (30%)<br>
+      • Amount: cups input (0.1-20.0)<br>
+      • Room temp toggle (triggers warning alert)<br>
+      • "Start Churning" CTA button<br>
+      • Cancel in toolbar
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-hdr">✍️ Manual Run Entry</div>
+    <div class="scard-body">
+      <strong>Layout:</strong><br>
+      • Date picker (compact, defaults to now)<br>
+      • Distance input with unit label (mi/km)<br>
+      • Duration input (minutes)<br>
+      • Unit picker: Miles / Kilometers<br>
+      • Estimated pats preview (calculated live)<br>
+      • "Save Run" button (disabled until valid)<br>
+      • Cancel in toolbar
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-hdr">✏️ Run Edit View</div>
+    <div class="scard-body">
+      <strong>Layout:</strong><br>
+      • Distance: editable text field<br>
+      • Duration: read-only display<br>
+      • Date: read-only display<br>
+      • Notes: text editor (multi-line)<br>
+      • "Save Changes" button<br>
+      • Cancel in toolbar
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-hdr">📭 Empty History State</div>
+    <div class="scard-body">
+      <strong>When shown:</strong> No runs recorded yet<br><br>
+      <strong>Layout:</strong><br>
+      • Butter pat illustration (centered)<br>
+      • "No runs yet" heading<br>
+      • "Tap the Run tab to start!" subtext<br>
+      • No stats card shown
+    </div>
+  </div>
+
+  <div class="scard">
+    <div class="scard-hdr">📤 Share Card Preview</div>
+    <div class="scard-body">
+      <strong>Formats:</strong><br>
+      • Story (9:16) — vertical social stories<br>
+      • Square (1:1) — Instagram/general<br><br>
+      <strong>Card contents:</strong><br>
+      • App logo/butter pat<br>
+      • Total pats burned<br>
+      • Distance, duration, pace<br>
+      • Butter Zero score (if applicable)<br>
+      • Route map thumbnail<br>
+      • "Butter Run" branding
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ===== INTEGRATIONS ===== -->
+<div id="s-integrations" class="sec">
+<h2>Integrations Section (Replaces HealthKit Toggle)</h2>
+<p class="sub">Settings → Integrations. Three services with different connection methods.</p>
+
+<div class="screens">
+  <div class="scard">
+    <div class="scard-hdr">🔗 Integrations Card Design</div>
+    <div class="scard-body">
+      <strong>Apple Health</strong><br>
+      • Toggle on/off<br>
+      • On first enable: iOS permission prompt<br>
+      • Syncs: calories burned, distance, workouts<br>
+      • Status: "Connected" / "Not Connected"<br><br>
+
+      <strong>Strava</strong><br>
+      • "Connect" button → OAuth web flow<br>
+      • Once connected: shows "Connected as [username]"<br>
+      • "Disconnect" option<br>
+      • Syncs: auto-uploads runs as activities<br>
+      • Status: "Connected" / "Not Connected"<br>
+      • <em>Note: v1.0 → "Coming Soon" label</em><br><br>
+
+      <strong>Garmin Connect</strong><br>
+      • Same flow as Strava<br>
+      • <em>Note: v1.0 → "Coming Soon" label</em><br><br>
+
+      <strong>Settings Layout:</strong>
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-top:8px;font-size:11px">
+        <div style="font-weight:700;margin-bottom:6px">Integrations</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)">
+          <div><strong>Apple Health</strong><div style="font-size:9px;color:var(--ts)">Sync workouts & calories</div></div>
+          <div style="width:36px;height:20px;border-radius:10px;background:var(--go);position:relative"><div style="width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:2px;right:2px"></div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)">
+          <div><strong>Strava</strong><div style="font-size:9px;color:var(--ts)">Coming Soon</div></div>
+          <span style="font-size:10px;color:var(--ts)">›</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+          <div><strong>Garmin</strong><div style="font-size:9px;color:var(--ts)">Coming Soon</div></div>
+          <span style="font-size:10px;color:var(--ts)">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Connection Status States</h3>
+<table>
+  <tr><th>Service</th><th>Not Connected</th><th>Connected</th><th>Error</th></tr>
+  <tr><td>Apple Health</td><td>Toggle OFF</td><td>Toggle ON, green dot</td><td>"Permission denied" — link to iOS Settings</td></tr>
+  <tr><td>Strava</td><td>"Connect" button</td><td>"Connected as [name]" + "Disconnect"</td><td>"Connection failed — try again"</td></tr>
+  <tr><td>Garmin</td><td>"Connect" button</td><td>"Connected as [name]" + "Disconnect"</td><td>"Connection failed — try again"</td></tr>
+</table>
+</div>
+
+</div>
+
+<script>
+function sh(id){document.querySelectorAll('.sec').forEach(e=>e.classList.remove('v'));document.getElementById('s-'+id).classList.add('v');document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));event.target.classList.add('on')}
+</script>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Butter Run — Additional Screens</title>
+<style>
+:root{--bg:#FFFDF7;--sf:#FFF;--bd:#F0E6D0;--go:#D4940A;--gd:#B87D08;--gl:#FFF3D6;--tp:#1C1C1E;--ts:#6B6B70;--ok:#2D8E40;--no:#CC3333;--wh:#FFF}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'SF Pro Rounded',system-ui,sans-serif;background:#F0F0F0;color:var(--tp);-webkit-font-smoothing:antialiased}
+.hdr{background:var(--bg);border-bottom:1px solid var(--bd);padding:24px 0 18px;text-align:center;position:sticky;top:0;z-index:100}
+.hdr h1{font-size:22px;font-weight:800}.hdr p{color:var(--ts);font-size:12px;margin-top:3px}
+.nav{display:flex;justify-content:center;gap:5px;margin-top:12px;flex-wrap:wrap;padding:0 10px}
+.nb{padding:6px 12px;border-radius:16px;border:1.5px solid var(--bd);background:var(--sf);color:var(--ts);font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
+.nb:hover,.nb.on{background:var(--go);color:var(--wh);border-color:var(--go)}
+.wrap{max-width:1400px;margin:0 auto;padding:20px}
+.st{font-size:18px;font-weight:700;margin:0 0 4px}.sd{color:var(--ts);font-size:12px;margin-bottom:16px}
+.sr{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.ms{display:none}.ms.v{display:block}
+
+/* phone */
+.ph{width:300px;height:650px;background:var(--bg);border-radius:32px;border:3px solid #E0E0E0;overflow:hidden;flex-shrink:0;box-shadow:0 6px 24px rgba(0,0,0,.07);display:flex;flex-direction:column}
+.phs{width:300px;height:380px;background:var(--bg);border-radius:0 0 24px 24px;border:3px solid #E0E0E0;border-top:none;overflow:hidden;flex-shrink:0;box-shadow:0 6px 24px rgba(0,0,0,.07);display:flex;flex-direction:column}
+.ps{height:44px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 4px;font-size:11px;font-weight:600;flex-shrink:0}
+.pb{flex:1;overflow-y:auto;padding:0 14px;display:flex;flex-direction:column}
+.pt{display:flex;justify-content:space-around;padding:5px 0 18px;border-top:1px solid var(--bd);background:var(--sf);flex-shrink:0}
+.pi{text-align:center;flex:1;font-size:9px;font-weight:600;color:var(--ts)}.pi.on{color:var(--go)}
+.pi-i{font-size:16px;display:block;margin-bottom:1px}
+.pc{text-align:center;font-size:10px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.4px;margin-top:8px}
+
+/* card */
+.c{background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ct{font-size:12px;font-weight:700}.cb{font-size:9px;font-weight:600;background:var(--gl);color:var(--go);padding:2px 7px;border-radius:5px}
+
+/* stat */
+.srow{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--bd);margin-top:8px;padding-top:8px}
+.sc{text-align:center}.sc+.sc{border-left:1px solid var(--bd)}
+.sv{font-size:15px;font-weight:800;line-height:1.2}.sl{font-size:8px;font-weight:600;color:var(--ts);text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+
+/* hero */
+.hn{font-size:34px;font-weight:900;line-height:1;letter-spacing:-1px}.hl{font-size:12px;font-weight:600;color:var(--ts);margin-top:1px}.hs{font-size:10px;color:var(--ts);margin-top:1px}
+
+/* cta */
+.btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:13px;border-radius:12px;border:none;background:var(--go);color:var(--wh);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(212,148,10,.2)}
+.btn.sec{background:var(--sf);border:1.5px solid var(--bd);color:var(--tp);box-shadow:none;font-size:14px}
+
+/* form */
+.fg{margin-bottom:12px}.fl{font-size:11px;font-weight:600;color:var(--ts);display:block;margin-bottom:4px}
+.fi{background:var(--sf);border:1.5px solid var(--bd);border-radius:9px;padding:11px 12px;font-size:14px;color:var(--tp);width:100%}
+.fi.ph-text{color:var(--ts)}
+.seg{display:flex;background:#F0F0F0;border-radius:7px;padding:2px}
+.si{flex:1;text-align:center;padding:6px 3px;font-size:12px;font-weight:600;color:var(--ts);border-radius:5px}
+.si.on{background:var(--sf);color:var(--tp);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* toggle */
+.tr{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)}.tr:last-child{border-bottom:none}
+.tt{font-size:13px;font-weight:600}
+.tw{width:40px;height:22px;border-radius:11px;background:#E0E0E0;position:relative;flex-shrink:0}.tw.on{background:var(--go)}
+.tw::after{content:'';width:18px;height:18px;border-radius:50%;background:white;position:absolute;top:2px;left:2px;box-shadow:0 1px 2px rgba(0,0,0,.15)}.tw.on::after{left:20px}
+
+/* BZ */
+.bz{background:var(--sf);border:1.5px solid var(--bd);border-radius:10px;padding:8px 12px}
+.btr{height:5px;background:#F0F0F0;border-radius:3px;position:relative}
+.bdo{position:absolute;top:50%;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;border:2px solid var(--sf)}
+.bdo.p{background:var(--ok)}.bdo.n{background:var(--no)}.bdo.z{background:var(--go)}
+.bla{display:flex;justify-content:space-between;margin-top:3px;font-size:8px;color:var(--ts);font-weight:600}
+
+/* metric */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.mc{background:var(--sf);border:1.5px solid var(--bd);border-radius:9px;padding:9px;text-align:center}
+.mv{font-size:18px;font-weight:800}.ml{font-size:9px;font-weight:600;color:var(--ts);margin-top:1px}
+
+/* sheet handle */
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:#D0D0D0;margin:0 auto 8px}
+
+/* alert */
+.alert{background:var(--sf);border-radius:14px;padding:16px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.12);margin:8px auto;max-width:260px}
+.alert h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.alert p{font-size:11px;color:var(--ts);margin-bottom:10px;line-height:1.3}
+.alert-btn{padding:8px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--bd);margin:2px 0;width:100%;text-align:center}
+.alert-btn.go{background:var(--gl);border-color:var(--go);color:var(--go)}
+.alert-btn.dest{background:#FFE8E8;border-color:var(--no);color:var(--no)}
+.alert-btn.cancel{background:var(--sf);color:var(--ts)}
+
+/* info btn */
+.ib{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--ts);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ts);flex-shrink:0}
+
+/* split table */
+.sp-hdr{display:grid;grid-template-columns:32px 1fr 1fr 1fr;gap:2px;font-size:8px;font-weight:600;color:var(--ts);margin-bottom:3px}
+.sp-row{display:grid;grid-template-columns:32px 1fr 1fr 1fr;gap:2px;font-size:10px;padding:3px 0;border-top:1px solid var(--bd)}
+.sp-row span:first-child{font-weight:700}
+.sp-row span:not(:first-child){text-align:right}
+.sp-hdr span:not(:first-child){text-align:right}
+
+/* butter entry log */
+.be-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd);font-size:11px}
+.be-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>Butter Run — Additional Screens</h1>
+  <p>Run Detail, Eat Butter Sheet, Churn Setup, Manual Entry, Run Edit, Empty States, Permissions</p>
+  <div class="nav">
+    <button class="nb on" onclick="sh('rd')">Run Detail</button>
+    <button class="nb" onclick="sh('eb')">Eat Butter</button>
+    <button class="nb" onclick="sh('cs')">Churn Setup</button>
+    <button class="nb" onclick="sh('me')">Manual Entry</button>
+    <button class="nb" onclick="sh('re')">Run Edit</button>
+    <button class="nb" onclick="sh('es')">Empty States</button>
+    <button class="nb" onclick="sh('lp')">Permissions</button>
+    <button class="nb" onclick="sh('sc')">Share Card</button>
+    <button class="nb" onclick="sh('mr')">Map View</button>
+  </div>
+</div>
+<div class="wrap">
+
+<!-- ===== RUN DETAIL ===== -->
+<div id="s-rd" class="ms v">
+<h2 class="st">Run Detail View</h2><p class="sd">Accessed by tapping any run in History. Shows full run data. Edit button in toolbar.</p>
+<div class="sr">
+  <div>
+    <div class="ph">
+      <div class="ps"><span>9:41</span><span>‹ History</span></div>
+      <div class="pb" style="padding-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 12px">
+          <div style="font-size:16px;font-weight:700">Today, 8:14 AM</div>
+          <div style="font-size:12px;font-weight:600;color:var(--go);cursor:pointer">Edit</div>
+        </div>
+
+        <!-- Butter hero -->
+        <div style="text-align:center;margin-bottom:12px">
+          <svg width="56" height="40" viewBox="0 0 100 72" style="margin:0 auto 4px;display:block"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF9E0"/><stop offset="40%" stop-color="#F3BA60"/><stop offset="100%" stop-color="#D4940A"/></linearGradient></defs><rect x="8" y="10" width="84" height="48" rx="6" fill="url(#g1)" stroke="rgba(0,0,0,.08)" stroke-width="1"/></svg>
+          <div class="hn">7.8</div>
+          <div class="hl">pats burned</div>
+          <div class="hs">≈ 8.3 tsp (282 cals) · "2.6 tablespoons!"</div>
+          <div style="margin-top:4px"><span class="cb">🎯 Butter Zero</span></div>
+        </div>
+
+        <!-- Map placeholder -->
+        <div class="c" style="height:120px;background:linear-gradient(135deg,#E8F0E0,#F0F0E8);display:flex;align-items:center;justify-content:center;color:var(--ts);font-size:11px;font-weight:600">
+          📍 Route Map
+        </div>
+
+        <!-- Butter Zero result -->
+        <div class="bz" style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <span style="font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px">Butter Zero <span class="ib">i</span></span>
+            <span style="font-size:11px;font-weight:700;color:var(--ok)">+0.3 pats</span>
+          </div>
+          <div class="btr"><div style="position:absolute;height:100%;width:3%;background:var(--ok);border-radius:3px;left:50%"></div><div class="bdo p" style="left:53%"></div></div>
+          <div class="bla"><span>− pats</span><span>net zero</span><span>+ pats</span></div>
+          <div style="text-align:center;margin-top:4px;font-size:10px;color:var(--ts)">Burned 7.8 · Ate 8.1 pats</div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="mg">
+          <div class="mc"><div class="mv">3.1 mi</div><div class="ml">Distance</div></div>
+          <div class="mc"><div class="mv">28:42</div><div class="ml">Duration</div></div>
+          <div class="mc"><div class="mv">9'15"</div><div class="ml">Avg Pace</div></div>
+          <div class="mc"><div class="mv">282</div><div class="ml">Calories</div></div>
+          <div class="mc"><div class="mv">142 ft</div><div class="ml">Elev Gain</div></div>
+          <div class="mc"><div class="mv">168</div><div class="ml">Cadence</div></div>
+        </div>
+
+        <!-- Splits -->
+        <div class="c" style="padding:10px">
+          <div class="ct" style="margin-bottom:4px">Splits</div>
+          <div class="sp-hdr"><span>Mile</span><span>Pace</span><span>Pats</span><span>Elev</span></div>
+          <div class="sp-row"><span>1</span><span>9'32"</span><span>2.4</span><span>+48 ft</span></div>
+          <div class="sp-row"><span>2</span><span>9'10"</span><span>2.6</span><span>+62 ft</span></div>
+          <div class="sp-row"><span>3</span><span>8'52"</span><span>2.8</span><span>+32 ft</span></div>
+        </div>
+
+        <!-- Butter entries -->
+        <div class="c" style="padding:10px">
+          <div class="ct" style="margin-bottom:4px">Butter Eaten</div>
+          <div class="be-row"><span>🧈 1 pat · 36 cal</span><span style="color:var(--ts)">8:22 AM</span></div>
+          <div class="be-row"><span>🧈 1 tbsp · 102 cal</span><span style="color:var(--ts)">8:31 AM</span></div>
+          <div class="be-row"><span>🧈 1 pat · 36 cal</span><span style="color:var(--ts)">8:38 AM</span></div>
+        </div>
+
+        <div style="font-size:8px;color:var(--ts);text-align:center;margin-top:4px;line-height:1.3">Calorie estimates are approximate, based on pace and body weight.</div>
+      </div>
+    </div>
+    <div class="pc">Run Detail</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== EAT BUTTER SHEET ===== -->
+<div id="s-eb" class="ms">
+<h2 class="st">Eat Butter Sheet</h2><p class="sd">Half-screen modal. 4 presets in 2x2 grid + custom. Tap to add and dismiss.</p>
+<div class="sr">
+  <div>
+    <div class="phs" style="border-top:3px solid #E0E0E0;border-radius:24px 24px 24px 24px;">
+      <div class="pb" style="padding-top:8px">
+        <div class="sheet-handle"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-size:16px;font-weight:700">How much butter?</span>
+          <span style="font-size:13px;color:var(--ts);cursor:pointer">Cancel</span>
+        </div>
+
+        <!-- 2x2 preset grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div class="c" style="text-align:center;cursor:pointer;padding:14px 8px;margin:0">
+            <div style="font-size:20px">🧈</div>
+            <div style="font-size:14px;font-weight:700;margin-top:4px">1 tsp</div>
+            <div style="font-size:10px;color:var(--ts)">34 cal</div>
+          </div>
+          <div class="c" style="text-align:center;cursor:pointer;padding:14px 8px;margin:0">
+            <div style="font-size:20px">🧈</div>
+            <div style="font-size:14px;font-weight:700;margin-top:4px">1 pat</div>
+            <div style="font-size:10px;color:var(--ts)">36 cal</div>
+          </div>
+          <div class="c" style="text-align:center;cursor:pointer;padding:14px 8px;margin:0">
+            <div style="font-size:20px">🧈</div>
+            <div style="font-size:14px;font-weight:700;margin-top:4px">1 tbsp</div>
+            <div style="font-size:10px;color:var(--ts)">102 cal</div>
+          </div>
+          <div class="c" style="text-align:center;cursor:pointer;padding:14px 8px;margin:0">
+            <div style="font-size:20px">🧈</div>
+            <div style="font-size:14px;font-weight:700;margin-top:4px">½ stick</div>
+            <div style="font-size:10px;color:var(--ts)">408 cal</div>
+          </div>
+        </div>
+
+        <!-- Custom -->
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="fi" style="flex:1">Custom tsp</div>
+          <button class="btn" style="width:auto;padding:11px 20px;font-size:13px">Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="pc">Eat Butter Sheet</div>
+  </div>
+
+  <!-- Undo Toast -->
+  <div>
+    <div style="width:260px;background:var(--tp);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,.2)">
+      <span style="font-size:12px;color:white">Added 1 pat (36 cal)</span>
+      <span style="font-size:12px;font-weight:700;color:var(--go);cursor:pointer">Undo</span>
+    </div>
+    <div class="pc">Undo Toast (8 sec)</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== CHURN SETUP ===== -->
+<div id="s-cs" class="ms">
+<h2 class="st">Churn Setup Sheet</h2><p class="sd">Half-screen modal. Cream type, amount, temperature warning.</p>
+<div class="sr">
+  <div>
+    <div class="phs" style="border-top:3px solid #E0E0E0;border-radius:24px;">
+      <div class="pb" style="padding-top:8px">
+        <div class="sheet-handle"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span style="font-size:16px;font-weight:700">Set Up Your Churn</span>
+          <span style="font-size:13px;color:var(--ts);cursor:pointer">Cancel</span>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Cream Type</label>
+          <div class="seg"><div class="si on">Heavy (36%+)</div><div class="si">Whipping (30%)</div></div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Amount (cups)</label>
+          <div class="fi">1.0</div>
+        </div>
+
+        <div class="tr" style="padding:8px 0">
+          <span class="tt" style="font-size:12px">Cream is room temperature</span>
+          <div class="tw"></div>
+        </div>
+        <div style="font-size:9px;color:var(--no);margin-top:2px;margin-bottom:12px">⚠️ Room temperature cream may not churn past the Whipped stage.</div>
+
+        <button class="btn">Start Churning 🧈</button>
+      </div>
+    </div>
+    <div class="pc">Churn Setup Sheet</div>
+  </div>
+
+  <!-- Room Temp Alert -->
+  <div>
+    <div class="alert">
+      <h4>🌡️ Room Temperature</h4>
+      <p>Room temperature cream won't churn properly. For best results, use cold cream. Progress will be capped at the Whipped stage.</p>
+      <div class="alert-btn cancel">OK</div>
+    </div>
+    <div class="pc">Room Temp Warning Alert</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== MANUAL ENTRY ===== -->
+<div id="s-me" class="ms">
+<h2 class="st">Manual Run Entry</h2><p class="sd">Sheet from History. Log a run without GPS. All fields editable — date opens iOS date picker. Shows estimated pats preview.</p>
+<div class="sr">
+  <div>
+    <div class="ph" style="height:520px">
+      <div class="ps"><span>9:41</span><span>···</span></div>
+      <div class="pb" style="padding-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 14px">
+          <span style="font-size:16px;font-weight:700">Log Manual Run</span>
+          <span style="font-size:13px;color:var(--ts);cursor:pointer">Cancel</span>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Date</label>
+          <div class="fi" style="display:flex;justify-content:space-between;align-items:center">
+            <span>Apr 5, 2026</span><span style="color:var(--go)">▼</span>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Distance</label>
+          <div style="display:grid;grid-template-columns:1fr 80px;gap:6px">
+            <div class="fi">3.1</div>
+            <div style="font-size:14px;font-weight:600;color:var(--ts);display:flex;align-items:center;justify-content:center">mi</div>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Duration (minutes)</label>
+          <div class="fi">28</div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Units</label>
+          <div class="seg"><div class="si on">Miles</div><div class="si">Km</div></div>
+        </div>
+
+        <!-- Estimated preview -->
+        <div class="c" style="background:var(--gl);border-color:var(--go);text-align:center;padding:10px">
+          <div style="font-size:10px;font-weight:600;color:var(--ts)">Estimated</div>
+          <div style="font-size:22px;font-weight:900;color:var(--go)">6.8 <span style="font-size:12px;font-weight:600">pats</span></div>
+          <div style="font-size:10px;color:var(--ts)">≈ 7.2 tsp (231 cals)</div>
+        </div>
+
+        <div style="flex:1;min-height:8px"></div>
+        <button class="btn">Save Run</button>
+      </div>
+    </div>
+    <div class="pc">Manual Run Entry</div>
+  </div>
+
+  <!-- Date picker expanded state -->
+  <div>
+    <div class="phs" style="border-top:3px solid #E0E0E0;border-radius:24px;height:320px;">
+      <div class="pb" style="padding-top:8px">
+        <div class="sheet-handle"></div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Select Date</div>
+        <!-- iOS-style calendar mockup -->
+        <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:10px;padding:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:10px;color:var(--go);font-weight:600">‹</span>
+            <span style="font-size:12px;font-weight:700">April 2026</span>
+            <span style="font-size:10px;color:var(--go);font-weight:600">›</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:9px">
+            <span style="color:var(--ts);font-weight:600">S</span><span style="color:var(--ts);font-weight:600">M</span><span style="color:var(--ts);font-weight:600">T</span><span style="color:var(--ts);font-weight:600">W</span><span style="color:var(--ts);font-weight:600">T</span><span style="color:var(--ts);font-weight:600">F</span><span style="color:var(--ts);font-weight:600">S</span>
+            <span style="color:var(--ts)"></span><span style="color:var(--ts)"></span><span style="color:var(--ts)"></span><span style="padding:4px 0">1</span><span style="padding:4px 0">2</span><span style="padding:4px 0">3</span><span style="padding:4px 0">4</span>
+            <span style="padding:4px 0;background:var(--go);color:white;border-radius:50%;font-weight:700">5</span><span style="padding:4px 0">6</span><span style="padding:4px 0">7</span><span style="padding:4px 0">8</span><span style="padding:4px 0">9</span><span style="padding:4px 0">10</span><span style="padding:4px 0">11</span>
+            <span style="padding:4px 0">12</span><span style="padding:4px 0">13</span><span style="padding:4px 0">14</span><span style="padding:4px 0">15</span><span style="padding:4px 0">16</span><span style="padding:4px 0">17</span><span style="padding:4px 0">18</span>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--ts)">Tap a date to select. Future dates disabled.</div>
+      </div>
+    </div>
+    <div class="pc">Date Picker (expanded)</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== RUN EDIT ===== -->
+<div id="s-re" class="ms">
+<h2 class="st">Run Edit View</h2><p class="sd">Sheet from Run Detail. Edit distance, duration, date, and notes — all editable.</p>
+<div class="sr">
+  <div>
+    <div class="ph" style="height:480px">
+      <div class="ps"><span>9:41</span><span>···</span></div>
+      <div class="pb" style="padding-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 14px">
+          <span style="font-size:16px;font-weight:700">Edit Run</span>
+          <span style="font-size:13px;color:var(--ts);cursor:pointer">Cancel</span>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Distance</label>
+          <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;align-items:center">
+            <div class="fi" style="border-color:var(--go)">3.1</div>
+            <span style="font-size:12px;color:var(--ts);font-weight:600">mi</span>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Duration (minutes)</label>
+          <div style="display:grid;grid-template-columns:1fr 50px;gap:6px;align-items:center">
+            <div class="fi" style="border-color:var(--go)">28.7</div>
+            <span style="font-size:12px;color:var(--ts);font-weight:600">min</span>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Date</label>
+          <div class="fi" style="border-color:var(--go);display:flex;justify-content:space-between;align-items:center">
+            <span>Apr 5, 2026</span><span style="color:var(--go)">▼</span>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Notes</label>
+          <div class="fi" style="min-height:80px;border-color:var(--go);vertical-align:top">Great morning run on the trail. Butter Zero was close!</div>
+        </div>
+
+        <div style="flex:1;min-height:8px"></div>
+        <button class="btn">Save Changes</button>
+      </div>
+    </div>
+    <div class="pc">Run Edit</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== EMPTY STATES ===== -->
+<div id="s-es" class="ms">
+<h2 class="st">Empty States</h2><p class="sd">What users see before their first run, or when History is empty.</p>
+<div class="sr">
+  <!-- Empty History -->
+  <div>
+    <div class="ph">
+      <div class="ps"><span>9:41</span><span>···</span></div>
+      <div class="pb">
+        <div style="font-size:22px;font-weight:800;margin:10px 0 12px">History</div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px">
+          <svg width="64" height="46" viewBox="0 0 100 72" style="opacity:.4"><rect x="8" y="10" width="84" height="48" rx="6" fill="url(#g1)" stroke="rgba(0,0,0,.08)" stroke-width="1"/></svg>
+          <div style="font-size:18px;font-weight:700;margin-top:12px;color:var(--tp)">No runs yet</div>
+          <div style="font-size:13px;color:var(--ts);margin-top:4px">Tap the Run tab to start your first run and burn some pats!</div>
+        </div>
+      </div>
+      <div class="pt"><div class="pi"><span class="pi-i">🏃</span>Run</div><div class="pi on"><span class="pi-i">📋</span>History</div><div class="pi"><span class="pi-i">📖</span>Guide</div><div class="pi"><span class="pi-i">⚙️</span>Settings</div></div>
+    </div>
+    <div class="pc">Empty History</div>
+  </div>
+
+  <!-- Empty Home (first launch) -->
+  <div>
+    <div class="ph">
+      <div class="ps"><span>9:41</span><span>···</span></div>
+      <div class="pb">
+        <div style="font-size:22px;font-weight:800;margin:10px 0 2px">Hey, Sarah</div>
+        <div style="font-size:11px;color:var(--ts);font-style:italic;margin-bottom:12px">"It takes 21 lbs of milk to make 1 lb of butter."</div>
+        <div class="c">
+          <div class="ch"><span class="ct">This Week</span></div>
+          <div class="hn" style="color:var(--ts)">0.0</div>
+          <div class="hl">pats burned</div>
+          <div class="hs">Get out there and burn some butter!</div>
+          <div class="srow"><div class="sc"><div class="sv" style="color:var(--ts)">0</div><div class="sl">Runs</div></div><div class="sc"><div class="sv" style="color:var(--ts)">0 mi</div><div class="sl">Distance</div></div><div class="sc"><div class="sv" style="color:var(--ts)">0:00</div><div class="sl">Time</div></div></div>
+        </div>
+        <div class="c">
+          <div class="tr"><div><span class="tt">Butter Zero</span></div><div class="tw"></div></div>
+          <div class="tr"><div><span class="tt">Churn Tracker</span></div><div class="tw"></div></div>
+        </div>
+        <div style="flex:1;min-height:6px"></div>
+        <button class="btn" style="margin-bottom:10px">🏃 Start Churning</button>
+      </div>
+      <div class="pt"><div class="pi on"><span class="pi-i">🏃</span>Run</div><div class="pi"><span class="pi-i">📋</span>History</div><div class="pi"><span class="pi-i">📖</span>Guide</div><div class="pi"><span class="pi-i">⚙️</span>Settings</div></div>
+    </div>
+    <div class="pc">First Launch Home</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== LOCATION PERMISSION ===== -->
+<div id="s-lp" class="ms">
+<h2 class="st">Location Permission Flow</h2><p class="sd">Shown when user first taps "Start Churning" without granting location access.</p>
+<div class="sr">
+  <!-- Pre-ask -->
+  <div>
+    <div class="ph" style="height:500px">
+      <div class="ps"><span>9:41</span><span>···</span></div>
+      <div class="pb">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 16px">
+          <div style="font-size:48px;margin-bottom:12px">📍</div>
+          <div style="font-size:20px;font-weight:800;margin-bottom:6px">Location Access</div>
+          <div style="font-size:13px;color:var(--ts);line-height:1.5;margin-bottom:20px">Butter Run needs your location to track distance, pace, and route during your run. We never share your location data; it is only saved locally on your phone (unless you share it via an integration).</div>
+          <button class="btn" style="margin-bottom:8px">Allow Location</button>
+          <div style="font-size:12px;color:var(--ts)">Required to track runs</div>
+        </div>
+      </div>
+    </div>
+    <div class="pc">Pre-Permission Ask</div>
+  </div>
+
+  <!-- iOS System Prompt -->
+  <div>
+    <div class="alert" style="max-width:280px">
+      <h4>Allow "Butter Run" to use your location?</h4>
+      <p style="font-size:10px">Your location is used to track distance and route during runs.</p>
+      <div class="alert-btn go">Allow While Using App</div>
+      <div class="alert-btn cancel">Allow Once</div>
+      <div class="alert-btn cancel">Don't Allow</div>
+    </div>
+    <div class="pc">iOS System Prompt</div>
+  </div>
+
+  <!-- Denied state -->
+  <div>
+    <div class="ph" style="height:400px">
+      <div class="ps"><span>9:41</span><span>···</span></div>
+      <div class="pb">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 16px">
+          <div style="font-size:48px;margin-bottom:12px">📍</div>
+          <div style="font-size:18px;font-weight:800;margin-bottom:6px;color:var(--no)">Location Denied</div>
+          <div style="font-size:13px;color:var(--ts);line-height:1.5;margin-bottom:16px">Butter Run can't track your runs without location access. You can enable it in Settings.</div>
+          <button class="btn sec" style="margin-bottom:8px">Open Settings</button>
+          <div style="font-size:11px;color:var(--ts)">Settings → Butter Run → Location → While Using</div>
+        </div>
+      </div>
+    </div>
+    <div class="pc">Permission Denied</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== SHARE CARD ===== -->
+<div id="s-sc" class="ms">
+<h2 class="st">Share Card Preview</h2><p class="sd">Two formats: Story (9:16) for Instagram/TikTok, Square (1:1) for feed posts.</p>
+<div class="sr">
+  <!-- Story format -->
+  <div>
+    <div style="width:200px;height:356px;background:var(--bg);border-radius:16px;border:2px solid var(--bd);overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08);display:flex;flex-direction:column;padding:20px 16px">
+      <div style="text-align:center">
+        <svg width="36" height="26" viewBox="0 0 100 72"><rect x="8" y="10" width="84" height="48" rx="6" fill="url(#g1)" stroke="rgba(0,0,0,.08)" stroke-width="1"/></svg>
+        <div style="font-size:10px;font-weight:700;color:var(--go);margin-top:4px">BUTTER RUN</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center">
+        <div style="font-size:36px;font-weight:900;line-height:1">7.8</div>
+        <div style="font-size:12px;font-weight:600;color:var(--ts)">pats burned</div>
+        <div style="font-size:9px;color:var(--ts);margin-top:1px">282 cals</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin:12px 0;font-size:10px">
+          <div><div style="font-weight:800">3.1 mi</div><div style="color:var(--ts);font-size:8px">Distance</div></div>
+          <div><div style="font-weight:800">28:42</div><div style="color:var(--ts);font-size:8px">Duration</div></div>
+          <div><div style="font-weight:800">9'15"</div><div style="color:var(--ts);font-size:8px">Pace</div></div>
+        </div>
+        <!-- BZ -->
+        <div style="background:var(--gl);border-radius:8px;padding:6px;margin:0 8px">
+          <div style="font-size:9px;font-weight:700">Butter Zero: +0.3 pats</div>
+        </div>
+      </div>
+      <!-- Map placeholder -->
+      <div style="height:60px;background:linear-gradient(135deg,#E8F0E0,#F0F0E8);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ts)">Route Map</div>
+    </div>
+    <div class="pc">Story (9:16)</div>
+  </div>
+
+  <!-- Square format -->
+  <div>
+    <div style="width:260px;height:260px;background:var(--bg);border-radius:16px;border:2px solid var(--bd);overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08);display:grid;grid-template-columns:1fr 1fr;padding:16px;gap:8px">
+      <div style="display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <svg width="28" height="20" viewBox="0 0 100 72"><rect x="8" y="10" width="84" height="48" rx="6" fill="url(#g1)" stroke="rgba(0,0,0,.08)" stroke-width="1"/></svg>
+          <div style="font-size:8px;font-weight:700;color:var(--go);margin-top:2px">BUTTER RUN</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:900;line-height:1">7.8</div>
+          <div style="font-size:10px;font-weight:600;color:var(--ts)">pats burned</div>
+          <div style="font-size:8px;color:var(--ts)">282 cals</div>
+        </div>
+        <div style="font-size:9px">
+          <div style="margin-bottom:2px"><span style="font-weight:800">3.1 mi</span> <span style="color:var(--ts)">dist</span></div>
+          <div style="margin-bottom:2px"><span style="font-weight:800">28:42</span> <span style="color:var(--ts)">time</span></div>
+          <div><span style="font-weight:800">9'15"</span> <span style="color:var(--ts)">pace</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="flex:1;background:linear-gradient(135deg,#E8F0E0,#F0F0E8);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--ts)">Route</div>
+        <div style="background:var(--gl);border-radius:6px;padding:6px;text-align:center;font-size:8px;font-weight:700">Butter Zero<br>+0.3 pats</div>
+      </div>
+    </div>
+    <div class="pc">Square (1:1)</div>
+  </div>
+</div>
+</div>
+
+<!-- ===== MAP VIEW ===== -->
+<div id="s-mr" class="ms">
+<h2 class="st">Active Run — Map View</h2><p class="sd">When user toggles from metrics to map. Map takes ~50% of screen, controls have bottom padding. The iPhone Dynamic Island/notch is handled by SwiftUI's safe area — our 44px status bar area accounts for it.</p>
+<div class="sr">
+  <div>
+    <div class="ph">
+      <div class="ps"><span>9:41</span><span style="font-size:9px;color:var(--ok)">● GPS</span></div>
+      <div class="pb" style="padding-bottom:16px">
+        <div style="text-align:center;padding:8px 0 6px">
+          <div style="font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1">4.2</div>
+          <div style="font-size:11px;font-weight:600;color:var(--ts)">🧈 pats burned · 151 cals</div>
+        </div>
+
+        <!-- Map area — reduced height -->
+        <div style="height:220px;background:linear-gradient(160deg,#E4EDD8 0%,#D8E4D0 30%,#E8F0E0 60%,#F0F0E8 100%);border-radius:12px;border:1.5px solid var(--bd);position:relative;margin-bottom:8px;overflow:hidden">
+          <svg style="position:absolute;top:0;left:0;width:100%;height:100%" viewBox="0 0 272 220">
+            <path d="M 40 190 C 60 160, 80 140, 100 120 S 140 80, 160 70 S 200 40, 220 35 S 250 30, 260 35" fill="none" stroke="var(--go)" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="260" cy="35" r="6" fill="var(--go)" stroke="white" stroke-width="2"/>
+            <circle cx="40" cy="190" r="4" fill="var(--ts)" stroke="white" stroke-width="1.5"/>
+          </svg>
+          <div style="position:absolute;top:8px;right:8px;background:var(--sf);border:1.5px solid var(--bd);border-radius:8px;padding:5px 8px;font-size:10px;font-weight:600;color:var(--tp);cursor:pointer">📊 Metrics</div>
+        </div>
+
+        <!-- Compact BZ bar -->
+        <div class="bz" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700">Butter Zero</span>
+            <span style="font-size:11px;font-weight:700;color:var(--ok)">+0.3 pats</span>
+          </div>
+          <div class="btr"><div style="position:absolute;height:100%;width:3%;background:var(--ok);border-radius:3px;left:50%"></div><div class="bdo p" style="left:53%"></div></div>
+        </div>
+
+        <!-- Controls with proper bottom padding -->
+        <div style="display:flex;justify-content:center;gap:12px;align-items:center">
+          <div style="width:48px;height:48px;border-radius:50%;background:var(--gl);border:2px solid var(--go);display:flex;align-items:center;justify-content:center;font-size:18px">🧈</div>
+          <div style="width:60px;height:60px;border-radius:50%;background:var(--go);display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:0 3px 10px rgba(212,148,10,.3)">⏸</div>
+          <div style="width:48px;height:48px;border-radius:50%;background:var(--no);display:flex;align-items:center;justify-content:center;font-size:16px;color:white">⏹</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:12px;margin-top:3px;font-size:8px;color:var(--ts);text-align:center"><span style="width:48px">Eat</span><span style="width:60px">Pause</span><span style="width:48px">Stop</span></div>
+      </div>
+    </div>
+    <div class="pc">Active Run — Map View</div>
+  </div>
+</div>
+</div>
+
+</div>
+<script>
+function sh(id){document.querySelectorAll('.ms').forEach(e=>e.classList.remove('v'));document.getElementById('s-'+id).classList.add('v');document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));event.target.classList.add('on')}
+</script>
+</body>
+</html>

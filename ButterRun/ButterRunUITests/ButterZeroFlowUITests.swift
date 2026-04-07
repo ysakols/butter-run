@@ -19,8 +19,8 @@ final class ButterZeroFlowUITests: XCTestCase {
         let churnButton = app.buttons["Start run"]
         churnButton.tap()
 
-        // BZ strip should be visible on active run
-        let eatButton = app.buttons["Eat butter, quick add one teaspoon"]
+        // Eat butter button should be visible in controls
+        let eatButton = app.buttons["Eat butter"]
         XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
     }
 
@@ -38,10 +38,10 @@ final class ButterZeroFlowUITests: XCTestCase {
         XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
         eatButton.tap()
 
-        // Select 1 tsp from the sheet
-        let tspButton = app.buttons.matching(NSPredicate(format: "label CONTAINS '1 tsp'")).firstMatch
-        XCTAssertTrue(tspButton.waitForExistence(timeout: 5))
-        tspButton.tap()
+        // Select 1 pat from the sheet
+        let patButton = app.buttons.matching(NSPredicate(format: "label CONTAINS '1 pat'")).firstMatch
+        XCTAssertTrue(patButton.waitForExistence(timeout: 5))
+        patButton.tap()
 
         // Verify undo toast appears
         let undoButton = app.buttons["Undo"]
@@ -56,10 +56,15 @@ final class ButterZeroFlowUITests: XCTestCase {
 
         app.buttons["Start run"].tap()
 
-        // Quick eat via strip
-        let quickEat = app.buttons["Eat butter, quick add one teaspoon"]
-        XCTAssertTrue(quickEat.waitForExistence(timeout: 5))
-        quickEat.tap()
+        // Eat butter via sheet
+        let eatButton = app.buttons["Eat butter"]
+        XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
+        eatButton.tap()
+
+        // Select 1 pat from the sheet
+        let patButton = app.buttons.matching(NSPredicate(format: "label CONTAINS '1 pat'")).firstMatch
+        XCTAssertTrue(patButton.waitForExistence(timeout: 5))
+        patButton.tap()
 
         // Tap undo
         let undoButton = app.buttons["Undo"]

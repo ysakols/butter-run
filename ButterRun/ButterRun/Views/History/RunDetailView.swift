@@ -11,12 +11,9 @@ struct RunDetailView: View {
             VStack(spacing: 20) {
                 // Butter hero
                 VStack(spacing: 4) {
-                    Image("butter-pat")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 36, height: 36)
+                    ButterPatView(size: 36, style: .solid)
                         .accessibilityHidden(true)
-                    Text(String(format: "%.1f tsp", run.totalButterBurnedTsp))
+                    Text(ButterFormatters.pats(run.totalButterBurnedTsp))
                         .font(.system(size: 40, weight: .black, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                     Text(ButterCalculator.butterDescription(tsp: run.totalButterBurnedTsp))
@@ -44,26 +41,21 @@ struct RunDetailView: View {
                     }
                 }
 
-                // Butter Zero
+                // Net pats (Butter Zero challenge)
                 if run.isButterZeroChallenge {
-                    HStack {
-                        VStack(spacing: 2) {
-                            Text("Butter Zero Score")
-                                .font(.system(.caption, design: .rounded))
+                    VStack(spacing: 8) {
+                        Text(ButterFormatters.netPats(run.netButterTsp))
+                            .font(.system(.title, design: .rounded, weight: .black))
+                            .foregroundStyle(ButterTheme.gold)
+
+                        ButterZeroScale(netPats: run.netButterTsp)
+                            .padding(.horizontal, 8)
+
+                        HStack(spacing: 4) {
+                            Text("Net Pats")
+                                .font(.system(.caption, design: .rounded, weight: .semibold))
                                 .foregroundStyle(ButterTheme.textSecondary)
-                            Text("\(run.butterZeroScore)")
-                                .font(.system(.title, design: .rounded, weight: .black))
-                                .foregroundStyle(run.butterZeroScore >= 80 ? ButterTheme.success : ButterTheme.goldDim)
-                        }
-                        Spacer()
-                        VStack(spacing: 2) {
-                            Text("Net Butter")
-                                .font(.system(.caption, design: .rounded))
-                                .foregroundStyle(ButterTheme.textSecondary)
-                            let sign = run.netButterTsp >= 0 ? "+" : ""
-                            Text("\(sign)\(String(format: "%.1f", run.netButterTsp)) tsp")
-                                .font(.system(.title3, design: .rounded, weight: .bold))
-                                .foregroundStyle(ButterTheme.textPrimary)
+                            InfoButton(title: "Butter Zero", bodyText: "Eat butter during your run and try to match what you burn. Track as + or − pats from net zero.")
                         }
                     }
                     .padding(16)
@@ -100,7 +92,10 @@ struct RunDetailView: View {
                     detailStat(ButterFormatters.pace(secondsPerKm: run.averagePaceSecondsPerKm, usesMiles: usesMiles), "Avg Pace")
                     detailStat(String(format: "%.0f cal", run.totalCaloriesBurned), "Calories")
                     if run.elevationGainMeters > 0 {
-                        detailStat(String(format: "%.0f m", run.elevationGainMeters), "Elev. Gain")
+                        let elevText = usesMiles
+                            ? String(format: "%.0f ft", run.elevationGainMeters * 3.28084)
+                            : String(format: "%.0f m", run.elevationGainMeters)
+                        detailStat(elevText, "Elev. Gain")
                     }
                     if let cadence = run.averageCadence, cadence > 0 {
                         detailStat(String(format: "%.0f spm", cadence), "Cadence")
@@ -152,7 +147,7 @@ struct RunDetailView: View {
                                     .font(.system(.body, design: .rounded))
                                     .foregroundStyle(ButterTheme.textPrimary)
                                 Spacer()
-                                Text(String(format: "%.1f tsp", entry.teaspoonEquivalent))
+                                Text(ButterFormatters.pats(entry.teaspoonEquivalent))
                                     .font(.system(.body, design: .rounded, weight: .medium))
                                     .foregroundStyle(ButterTheme.gold)
                             }

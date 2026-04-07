@@ -2,10 +2,10 @@ import Foundation
 import SwiftData
 
 class AchievementService {
-    // Achievement thresholds derived from ButterCalculator constants (34 cal/tsp)
+    // Achievement thresholds derived from ButterCalculator constants (34 cal/pat)
     private enum Thresholds {
-        static let patTsp = 1.06                      // 1 pat = 36 cal / 34 cal
-        static let teaspoonTsp = 1.0                   // 1 tsp
+        static let patTsp = 1.0                        // 1 pat = 1 tsp = 34 cal
+        static let teaspoonTsp = 1.0                   // 1 tsp (same as 1 pat)
         static let tablespoonTsp = 3.0                 // 1 tbsp = 3 tsp
         static let stickTsp = 24.0                     // 1 stick = 810 cal / 34 cal ≈ 23.8, rounded to 24
         static let poundTsp = 3240.0 / 34.0            // 1 lb = 3240 cal / 34 cal ≈ 95.3 tsp
@@ -28,14 +28,14 @@ class AchievementService {
         var newAwards: [AchievementType] = []
 
         func award(_ type: AchievementType) {
-            guard !unlockedTypes.contains(type) else { return }
+            guard !unlockedTypes.contains(type), !newAwards.contains(type) else { return }
             let achievement = Achievement(type: type)
             context.insert(achievement)
             newAwards.append(type)
         }
 
         // Single-run butter burn achievements
-        if run.totalButterBurnedTsp >= Thresholds.patTsp {
+        if run.totalButterBurnedTsp > 0 {
             award(.patOnTheBack)
         }
         if run.totalButterBurnedTsp >= Thresholds.teaspoonTsp {

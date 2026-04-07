@@ -21,6 +21,9 @@ class UserProfile {
     var autoPauseEnabled: Bool = true
     var healthKitEnabled: Bool = false
 
+    // V3 fields
+    var weightUnit: String = "kg"  // "kg" or "lbs"
+
     // V3 fields — Strava integration
     var stravaConnected: Bool = false
     var autoShareToStrava: Bool = false

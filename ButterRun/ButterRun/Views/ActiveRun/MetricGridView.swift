@@ -38,10 +38,10 @@ struct MetricGridView: View {
 
             metricTile(
                 value: viewModel.formattedButterRate,
-                label: "tsp/min",
+                label: "pats/min",
                 icon: "flame"
             )
-            .accessibilityLabel("Butter rate: \(viewModel.formattedButterRate) teaspoons per minute")
+            .accessibilityLabel("Butter rate: \(viewModel.formattedButterRate) pats per minute")
         }
     }
 
@@ -66,7 +66,7 @@ struct MetricGridView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
         .accessibilityElement(children: .combine)
     }
 }

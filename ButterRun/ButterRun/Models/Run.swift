@@ -68,11 +68,6 @@ class Run {
         self.targetDurationSeconds = nil
     }
 
-    var butterZeroScore: Int {
-        let score = 100.0 - abs(netButterTsp) * 10.0
-        return max(0, min(100, Int(score)))
-    }
-
     var distanceMiles: Double {
         distanceMeters / 1609.344
     }

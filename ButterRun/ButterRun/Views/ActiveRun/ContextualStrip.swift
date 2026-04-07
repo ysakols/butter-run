@@ -8,7 +8,7 @@ struct ContextualStrip: View {
     let eatenTsp: Double
     let churnProgress: Double
     let churnStage: ChurnStage
-    let onQuickEat: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var netTsp: Double { eatenTsp - burnedTsp }
     private var isNearZero: Bool { abs(netTsp) < 0.3 }
@@ -18,9 +18,10 @@ struct ContextualStrip: View {
             // Butter Zero row
             if isButterZero {
                 HStack {
-                    Text("BZ:")
+                    Text("Butter Zero")
                         .font(.system(.caption, design: .rounded, weight: .semibold))
                         .foregroundStyle(ButterTheme.textSecondary)
+                    InfoButton(title: "Butter Zero", bodyText: "Eat butter during your run and try to match what you burn. Track as + or − pats from net zero.")
 
                     Image(systemName: netTsp >= 0 ? "arrow.up" : "arrow.down")
                         .font(.caption2)
@@ -31,17 +32,6 @@ struct ContextualStrip: View {
                         .foregroundStyle(netColor)
 
                     Spacer()
-
-                    Button(action: onQuickEat) {
-                        Text("Eat")
-                            .font(.system(.caption, design: .rounded, weight: .bold))
-                            .foregroundStyle(ButterTheme.background)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(ButterTheme.gold, in: Capsule())
-                    }
-                    .frame(minWidth: 44, minHeight: 44)
-                    .accessibilityLabel("Eat butter, quick add one teaspoon")
                 }
             }
 
@@ -56,12 +46,12 @@ struct ContextualStrip: View {
                         let width = geo.size.width
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(.white.opacity(0.1))
+                                .fill(ButterTheme.surfaceBorder)
                                 .frame(height: 8)
                             Capsule()
                                 .fill(ButterTheme.gold)
                                 .frame(width: width * min(1, churnProgress), height: 8)
-                                .animation(.easeOut(duration: 0.3), value: churnProgress)
+                                .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: churnProgress)
                         }
                     }
                     .frame(height: 8)
@@ -74,8 +64,8 @@ struct ContextualStrip: View {
             }
         }
         .padding(12)
-        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(composedAccessibilityLabel)
         .accessibilityAddTraits(.updatesFrequently)
@@ -83,7 +73,7 @@ struct ContextualStrip: View {
 
     private var netLabel: String {
         let sign = netTsp >= 0 ? "+" : ""
-        return "\(sign)\(String(format: "%.1f", netTsp)) tsp"
+        return "\(sign)\(String(format: "%.1f", netTsp)) pats"
     }
 
     private var netColor: Color {

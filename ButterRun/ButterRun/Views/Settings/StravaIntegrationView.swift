@@ -28,7 +28,7 @@ struct StravaIntegrationView: View {
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(stravaAuth.isAuthenticated ? ButterTheme.success.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(stravaAuth.isAuthenticated ? ButterTheme.success.opacity(0.3) : ButterTheme.surfaceBorder, lineWidth: 1)
         )
         .confirmationDialog(
             "Disconnect Strava?",
@@ -218,7 +218,7 @@ struct StravaIntegrationView: View {
 
     private var divider: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.08))
+            .fill(ButterTheme.surfaceBorder)
             .frame(height: 1)
     }
 

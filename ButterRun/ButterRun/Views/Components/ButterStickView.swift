@@ -20,7 +20,8 @@ struct ButterStickView: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: "FFF176"),
+                                Color(hex: "FFF9E0"),
+                                Color(hex: "F3BA60"),
                                 ButterTheme.gold,
                             ],
                             startPoint: .top,
@@ -36,8 +37,8 @@ struct ButterStickView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    ButterTheme.gold.opacity(0.6),
-                                    ButterTheme.goldDim.opacity(0.4),
+                                    ButterTheme.gold.opacity(0.75),
+                                    ButterTheme.goldDim.opacity(0.55),
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom

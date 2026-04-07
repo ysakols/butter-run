@@ -43,43 +43,13 @@ final class ButterCalculatorTests: XCTestCase {
         XCTAssertEqual(tsp, 10.59, accuracy: 0.1)
     }
 
-    // MARK: - Butter Zero Score
-
-    func test_butterZeroScore_perfectZero() {
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 0.0), 100)
-    }
-
-    func test_butterZeroScore_offByOne() {
-        // Curve: 100 - abs(net) * 10 → 100 - 1*10 = 90
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 1.0), 90)
-    }
-
-    func test_butterZeroScore_offByFive() {
-        // 100 - 5*10 = 50
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 5.0), 50)
-    }
-
-    func test_butterZeroScore_negative() {
-        // 100 - 2*10 = 80
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: -2.0), 80)
-    }
-
-    func test_butterZeroScore_neverNegative() {
-        XCTAssertEqual(ButterCalculator.butterZeroScore(netTsp: 10.0), 0)
-    }
-
-    func test_butterZeroScore_symmetric() {
-        let pos = ButterCalculator.butterZeroScore(netTsp: 2.0)
-        let neg = ButterCalculator.butterZeroScore(netTsp: -2.0)
-        XCTAssertEqual(pos, neg)
-    }
 
     // MARK: - Butter Description
 
     func test_butterDescription_subTeaspoon() {
         let desc = ButterCalculator.butterDescription(tsp: 0.5)
         XCTAssertTrue(desc.contains("0.5"))
-        XCTAssertTrue(desc.contains("tsp"))
+        XCTAssertTrue(desc.contains("pats"))
     }
 
     func test_butterDescription_tablespoons() {

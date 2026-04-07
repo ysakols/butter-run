@@ -11,7 +11,7 @@ enum ButterServing: String, CaseIterable, Codable {
     var teaspoonEquivalent: Double {
         switch self {
         case .teaspoon: return 1.0
-        case .pat: return 1.06      // 36 cal / 34 cal
+        case .pat: return 1.0
         case .tablespoon: return 3.0
         case .halfStick: return 12.0
         case .custom: return 0
@@ -20,7 +20,7 @@ enum ButterServing: String, CaseIterable, Codable {
 
     var displayName: String {
         switch self {
-        case .teaspoon: return "1 tsp"
+        case .teaspoon: return "1 pat"
         case .pat: return "1 pat"
         case .tablespoon: return "1 tbsp"
         case .halfStick: return "½ stick"

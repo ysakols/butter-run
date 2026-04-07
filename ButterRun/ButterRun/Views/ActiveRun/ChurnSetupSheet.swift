@@ -12,10 +12,7 @@ struct ChurnSetupSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                Image("butter-pat")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 48, height: 48)
+                ButterPatView(size: 48, style: .solid)
                     .accessibilityHidden(true)
 
                 Text("Churn Setup")
@@ -86,7 +83,7 @@ struct ChurnSetupSheet: View {
                 } label: {
                     Text("Start Churning")
                         .font(.system(.body, design: .rounded, weight: .bold))
-                        .foregroundStyle(ButterTheme.background)
+                        .foregroundStyle(ButterTheme.onPrimaryAction)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))

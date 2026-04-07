@@ -81,7 +81,7 @@ struct ManualRunEntryView: View {
 
                 if estimatedButter > 0 {
                     VStack(spacing: 4) {
-                        Text(String(format: "%.1f tsp", estimatedButter))
+                        Text(String(format: "%.1f pats", estimatedButter))
                             .font(.system(.title, design: .rounded, weight: .bold))
                             .foregroundStyle(ButterTheme.gold)
                         Text("Estimated butter burned")
@@ -100,7 +100,7 @@ struct ManualRunEntryView: View {
                 } label: {
                     Text("Save Run")
                         .font(.system(.body, design: .rounded, weight: .bold))
-                        .foregroundStyle(ButterTheme.background)
+                        .foregroundStyle(ButterTheme.onPrimaryAction)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
@@ -119,7 +119,6 @@ struct ManualRunEntryView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             useMiles = profile?.usesMiles ?? true
         }
@@ -127,17 +126,27 @@ struct ManualRunEntryView: View {
 
     private func saveManualRun() {
         guard distanceValue > 0, durationMinutes > 0 else { return }
+        let clampedDistance = min(distanceValue, 1000.0)
+        let clampedDuration = min(durationMinutes, 2880.0)
+        let distMeters = useMiles ? clampedDistance * 1609.344 : clampedDistance * 1000.0
+        let durSeconds = clampedDuration * 60.0
+
         let run = Run(startDate: date, isButterZeroChallenge: false)
-        run.endDate = date.addingTimeInterval(durationSeconds)
-        run.distanceMeters = distanceMeters
-        run.durationSeconds = durationSeconds
+        run.endDate = date.addingTimeInterval(durSeconds)
+        run.distanceMeters = distMeters
+        run.durationSeconds = durSeconds
         run.isManualEntry = true
 
-        if distanceMeters > 0 {
-            run.averagePaceSecondsPerKm = durationSeconds / (distanceMeters / 1000.0)
+        if distMeters > 0 {
+            run.averagePaceSecondsPerKm = durSeconds / (distMeters / 1000.0)
         }
 
-        let butter = estimatedButter
+        let weightKg = profile?.weightKg ?? 70.0
+        let speedMps = distMeters > 0 ? distMeters / durSeconds : 0
+        let speedMph = ButterCalculator.metersPerSecondToMph(speedMps)
+        let butter = ButterCalculator.butterBurned(
+            weightKg: weightKg, speedMph: speedMph, durationMinutes: clampedDuration
+        )
         run.totalButterBurnedTsp = butter
         run.totalCaloriesBurned = butter * ButterCalculator.caloriesPerTeaspoon
 

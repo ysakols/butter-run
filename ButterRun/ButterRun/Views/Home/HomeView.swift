@@ -12,7 +12,8 @@ struct HomeView: View {
     @State private var isChurnEnabled = false
     @State private var showChurnSetup = false
     @State private var churnConfig: ChurnConfiguration?
-    @State private var locationPermissionRequested = false
+    @State private var showLocationPermission = false
+    @State private var locationManager = CLLocationManager()
     @State private var butterTrivia = ButterFacts.random
 
     private var profile: UserProfile? { profiles.first }
@@ -34,7 +35,7 @@ struct HomeView: View {
 
                     // Weekly summary card
                     WeeklyButterCard(
-                        weeklyTsp: viewModel.weeklyButterTsp,
+                        weeklyPats: viewModel.weeklyButterPats,
                         totalRuns: viewModel.totalRuns,
                         lastRunSummary: viewModel.lastRunSummary
                     )
@@ -46,9 +47,12 @@ struct HomeView: View {
                     VStack(spacing: 12) {
                         Toggle(isOn: $isButterZero) {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Butter Zero")
-                                    .font(.system(.body, design: .rounded, weight: .semibold))
-                                    .foregroundStyle(ButterTheme.textPrimary)
+                                HStack(spacing: 4) {
+                                    Text("Butter Zero")
+                                        .font(.system(.body, design: .rounded, weight: .semibold))
+                                        .foregroundStyle(ButterTheme.textPrimary)
+                                    InfoButton(title: "Butter Zero", bodyText: "Eat butter during your run and try to match what you burn. Track as + or − pats from net zero.")
+                                }
                                 Text("Eat butter mid-run. Try to net zero.")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(ButterTheme.textSecondary)
@@ -59,9 +63,12 @@ struct HomeView: View {
 
                         Toggle(isOn: $isChurnEnabled) {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Churn Tracker")
-                                    .font(.system(.body, design: .rounded, weight: .semibold))
-                                    .foregroundStyle(ButterTheme.textPrimary)
+                                HStack(spacing: 4) {
+                                    Text("Churn Tracker")
+                                        .font(.system(.body, design: .rounded, weight: .semibold))
+                                        .foregroundStyle(ButterTheme.textPrimary)
+                                    InfoButton(title: "Churn Tracker", bodyText: "Carry cream in a bag. Bouncing churns it into butter in ~6-10 km.")
+                                }
                                 Text("Track butter-churning progress with cream in your pack.")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(ButterTheme.textSecondary)
@@ -74,11 +81,7 @@ struct HomeView: View {
 
                     // CHURN button
                     ChurnButton {
-                        if isChurnEnabled {
-                            showChurnSetup = true
-                        } else {
-                            showActiveRun = true
-                        }
+                        checkLocationAndStart()
                     }
                     .padding(.bottom, 8)
                     .accessibilityLabel(isChurnEnabled ? "Set up churn tracker" : "Start run")
@@ -116,20 +119,44 @@ struct HomeView: View {
                 }
                 .presentationDetents([.medium])
             }
+            .sheet(isPresented: $showLocationPermission) {
+                LocationPermissionView(
+                    onAllow: {
+                        locationManager.requestWhenInUseAuthorization()
+                        showLocationPermission = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            if isChurnEnabled {
+                                showChurnSetup = true
+                            } else {
+                                showActiveRun = true
+                            }
+                        }
+                    },
+                    onDeny: {
+                        showLocationPermission = false
+                    }
+                )
+            }
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             viewModel.load(runs: runs, usesMiles: profile?.usesMiles ?? true)
-            if !locationPermissionRequested {
-                locationPermissionRequested = true
-                CLLocationManager().requestWhenInUseAuthorization()
-            }
+        }
+    }
+
+    private func checkLocationAndStart() {
+        let status = locationManager.authorizationStatus
+        if status == .notDetermined {
+            showLocationPermission = true
+        } else if isChurnEnabled {
+            showChurnSetup = true
+        } else {
+            showActiveRun = true
         }
     }
 }
 
 struct WeeklyButterCard: View {
-    let weeklyTsp: Double
+    let weeklyPats: Double
     let totalRuns: Int
     let lastRunSummary: String?
 
@@ -140,24 +167,32 @@ struct WeeklyButterCard: View {
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
                     .foregroundStyle(ButterTheme.textSecondary)
                 Spacer()
-                Image("butter-pat")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 32, height: 32)
+                ButterPatView(size: 32, style: .solid)
                     .accessibilityHidden(true)
             }
 
             HStack(alignment: .firstTextBaseline) {
-                Text(String(format: "%.1f", weeklyTsp))
+                Text(String(format: "%.1f", weeklyPats))
                     .font(.system(size: 48, weight: .black, design: .rounded))
                     .foregroundStyle(ButterTheme.gold)
-                Text("tsp")
-                    .font(.system(.title3, design: .rounded, weight: .medium))
-                    .foregroundStyle(ButterTheme.textSecondary)
+                HStack(spacing: 4) {
+                    Text("pats")
+                        .font(.system(.title3, design: .rounded, weight: .medium))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                    InfoButton(title: "What's a pat?", bodyText: "≈ 1 tsp of butter (~34 cals). A fun way to track energy burned.")
+                }
                 Spacer()
             }
 
-            if let summary = lastRunSummary {
+            if weeklyPats < 0.01 && totalRuns == 0 {
+                HStack {
+                    Text("Get out there and burn some butter!")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                        .italic()
+                    Spacer()
+                }
+            } else if let summary = lastRunSummary {
                 HStack {
                     Text("Last run: \(summary)")
                         .font(.system(.caption, design: .rounded))
@@ -168,7 +203,7 @@ struct WeeklyButterCard: View {
         }
         .padding(20)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
         .accessibilityElement(children: .combine)
     }
 }

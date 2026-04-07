@@ -12,7 +12,7 @@ class RunSummaryViewModel {
     }
 
     var butterBurned: String {
-        String(format: "%.1f tsp", run.totalButterBurnedTsp)
+        ButterFormatters.pats(run.totalButterBurnedTsp)
     }
 
     var butterDescription: String {
@@ -33,14 +33,7 @@ class RunSummaryViewModel {
 
     var netButter: String? {
         guard run.isButterZeroChallenge else { return nil }
-        let net = run.netButterTsp
-        let sign = net >= 0 ? "+" : ""
-        return "\(sign)\(String(format: "%.1f", net)) tsp"
-    }
-
-    var butterZeroScore: Int? {
-        guard run.isButterZeroChallenge else { return nil }
-        return run.butterZeroScore
+        return ButterFormatters.netPats(run.netButterTsp)
     }
 
     @MainActor
