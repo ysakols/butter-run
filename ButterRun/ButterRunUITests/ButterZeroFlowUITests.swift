@@ -25,7 +25,9 @@ final class ButterZeroFlowUITests: XCTestCase {
         XCTAssertTrue(bzToggle.waitForExistence(timeout: 5))
         bzToggle.tap()
 
-        app.buttons["Start run"].tap()
+        let startButton = app.buttons["Start run"]
+        XCTAssertTrue(startButton.waitForExistence(timeout: 5))
+        startButton.tap()
 
         // Handle custom location permission sheet if it appears
         let allowLocation = app.buttons["Allow Location"]

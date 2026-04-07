@@ -39,10 +39,10 @@ final class SettingsUITests: XCTestCase {
     func test_deleteAllData_showsConfirmation() {
         navigateToSettings()
 
-        // Scroll to and tap the delete button
+        // Scroll to ensure delete button is visible on smaller screens (iPhone SE)
+        app.swipeUp()
         let deleteButton = app.buttons["Delete All My Data"]
         XCTAssertTrue(deleteButton.waitForExistence(timeout: 5))
-        app.swipeUp() // Ensure visible on smaller screens (iPhone SE)
         deleteButton.tap()
 
         // Verify confirmation dialog appears
@@ -57,6 +57,9 @@ final class SettingsUITests: XCTestCase {
 
     func test_butterMathSection_displaysInfo() {
         navigateToSettings()
+
+        // Scroll to butter math section (below fold on smaller screens)
+        app.swipeUp()
 
         // Verify butter math section content
         let patRow = app.staticTexts["1 pat butter"]

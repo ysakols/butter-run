@@ -61,6 +61,15 @@ struct ButterRunApp: App {
         let isUITesting = false
         #endif
 
+        // Reset UserDefaults during UI testing so @AppStorage values
+        // (e.g. tosAcceptedVersion) don't leak between test runs or
+        // block tests on fresh simulators with the ToS acceptance screen.
+        if isUITesting {
+            UserDefaults.standard.removePersistentDomain(
+                forName: Bundle.main.bundleIdentifier!
+            )
+        }
+
         do {
             let schema = Schema([
                 Run.self,
