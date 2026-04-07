@@ -235,16 +235,18 @@ struct SettingsView: View {
             .onChange(of: voiceFeedback) { _, _ in saveProfile() }
             .onChange(of: autoPause) { _, _ in saveProfile() }
             .onChange(of: healthKit) { _, enabled in
-                saveProfile()
                 if enabled {
                     Task {
                         let service = HealthKitService()
                         let authorized = await service.requestAuthorization()
-                        if !authorized {
-                            healthKit = false
+                        if authorized {
                             saveProfile()
+                        } else {
+                            healthKit = false
                         }
                     }
+                } else {
+                    saveProfile()
                 }
             }
 

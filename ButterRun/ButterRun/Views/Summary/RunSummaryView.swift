@@ -19,6 +19,7 @@ struct RunSummaryView: View {
     @State private var stravaUploaded = false
     @State private var stravaError: String?
     @State private var healthKitSynced = false
+    @State private var healthKitSyncing = false
     @State private var healthKitError: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.modelContext) private var modelContext
@@ -411,15 +412,24 @@ struct RunSummaryView: View {
     }
 
     private func syncToHealthKit() {
+        guard !healthKitSyncing else { return }
+        healthKitSyncing = true
         Task {
             let service = HealthKitService()
             let success = await service.saveWorkout(run: run, pauseResumeEvents: pauseResumeEvents)
-            if success {
-                run.healthKitSynced = true
-                try? modelContext.save()
-                healthKitSynced = true
-            } else {
-                healthKitError = "Could not save to Apple Health. Check permissions in Settings."
+            await MainActor.run {
+                if success {
+                    run.healthKitSynced = true
+                    do {
+                        try modelContext.save()
+                        healthKitSynced = true
+                    } catch {
+                        healthKitError = "Workout saved to Health but failed to update local state."
+                    }
+                } else {
+                    healthKitError = "Could not save to Apple Health. Check permissions in Settings."
+                    healthKitSyncing = false
+                }
             }
         }
     }
