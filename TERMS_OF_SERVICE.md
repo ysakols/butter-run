@@ -170,7 +170,7 @@ Before initiating any formal dispute resolution proceeding, you agree to first c
 
 ### 11.2 Mandatory Binding Arbitration
 
-**ANY DISPUTE, CLAIM, OR CONTROVERSY ARISING OUT OF OR RELATING TO THESE TERMS OR YOUR USE OF THE APP, INCLUDING THE DETERMINATION OF THE SCOPE OR APPLICABILITY OF THIS AGREEMENT TO ARBITRATE (the "delegation clause"), SHALL BE DETERMINED BY BINDING ARBITRATION** administered by JAMS under its Streamlined Arbitration Rules and Procedures, or by any other mutually agreed-upon arbitration provider. The arbitration shall take place remotely via video conference unless both parties agree to an in-person hearing, in which case it shall take place in the county where the Developer resides.
+**ANY DISPUTE, CLAIM, OR CONTROVERSY ARISING OUT OF OR RELATING TO THESE TERMS OR YOUR USE OF THE APP, INCLUDING THE DETERMINATION OF THE SCOPE OR APPLICABILITY OF THIS AGREEMENT TO ARBITRATE (the "delegation clause"), SHALL BE DETERMINED BY BINDING ARBITRATION** administered by JAMS under its Streamlined Arbitration Rules and Procedures, or by any other mutually agreed-upon arbitration provider. The arbitration shall take place remotely via video conference unless both parties agree to an in-person hearing, in which case it shall take place in the State of California.
 
 ### 11.3 CLASS ACTION WAIVER
 
@@ -202,17 +202,17 @@ All aspects of the arbitration proceeding, including the award, shall be strictl
 
 ## 13. Privacy and Data
 
-Your use of the App is also governed by our [Privacy Policy](https://github.com/ysakols/butter-run/blob/main/PRIVACY_POLICY.md), which is incorporated into these Terms by reference.
+Your use of the App is also governed by our [Privacy Policy](PRIVACY_POLICY.md), which is incorporated into these Terms by reference.
 
 ### 13.1 On-Device Data
 
-All data collected by the App (run history, routes, metrics, preferences) is stored locally on your device. The App does not transmit any data to any server or third party.
+All data collected by the App (run history, routes, metrics, preferences) is stored locally on your device. The App does not transmit your data to any Developer-controlled servers. However, standard system-level communication required by Apple frameworks (such as MapKit for map tiles and HealthKit for health data sync) may involve data exchange with Apple's servers. Additionally, if you enable optional third-party integrations (such as Strava), your run data will be transmitted to those services at your explicit request and subject to their own terms and privacy policies.
 
 ### 13.2 Apple HealthKit
 
 If you authorize HealthKit integration, the App will read weight data from Apple Health and write workout summaries to Apple Health. HealthKit data is handled in strict compliance with Apple's HealthKit guidelines:
 
-- HealthKit data is **never** stored in iCloud
+- HealthKit data is **never** stored by the App in any cloud storage or external servers
 - HealthKit data is **never** shared with third parties
 - HealthKit data is **never** used for advertising or marketing
 - HealthKit data is used **only** for the health and fitness purposes described in the Privacy Policy

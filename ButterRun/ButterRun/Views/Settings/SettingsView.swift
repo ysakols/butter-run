@@ -159,7 +159,11 @@ struct SettingsView: View {
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
 
-                    Link("Privacy Policy", destination: URL(string: "https://butterrun.app/privacy") ?? URL(string: "about:blank")!)
+                    Link("Privacy Policy", destination: URL(string: "https://github.com/ysakols/butter-run/blob/main/PRIVACY_POLICY.md") ?? URL(string: "about:blank")!)
+                        .font(.system(.body, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
+
+                    Link("Terms of Service", destination: URL(string: "https://github.com/ysakols/butter-run/blob/main/TERMS_OF_SERVICE.md") ?? URL(string: "about:blank")!)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                 }
