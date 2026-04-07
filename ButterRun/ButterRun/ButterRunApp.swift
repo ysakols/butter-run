@@ -160,8 +160,10 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     #if DEBUG
     private let skipOnboarding = ProcessInfo.processInfo.arguments.contains("--skip-onboarding")
+    private let skipTos = ProcessInfo.processInfo.arguments.contains("--skip-tos")
     #else
     private let skipOnboarding = false
+    private let skipTos = false
     #endif
     @AppStorage("tosAcceptedVersion") private var tosAcceptedVersion: String = ""
 
@@ -170,7 +172,7 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if tosAcceptedVersion != Self.currentTosVersion {
+            if !skipTos && tosAcceptedVersion != Self.currentTosVersion {
                 LegalAcceptanceView {
                     tosAcceptedVersion = Self.currentTosVersion
                 }
@@ -183,6 +185,11 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            // UI testing: auto-accept ToS when skipping
+            if skipTos && tosAcceptedVersion != Self.currentTosVersion {
+                tosAcceptedVersion = Self.currentTosVersion
+            }
+
             // UI testing: create a default profile when skipping onboarding
             if skipOnboarding && profiles.isEmpty {
                 let profile = UserProfile(

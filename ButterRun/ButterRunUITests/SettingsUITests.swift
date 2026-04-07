@@ -5,7 +5,7 @@ final class SettingsUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
-        app.launchArguments = ["--skip-onboarding", "--reset-state"]
+        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos"]
         app.launch()
     }
 
