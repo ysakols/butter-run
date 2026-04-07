@@ -23,8 +23,14 @@ enum CrashReportService {
         return docs.appendingPathComponent(crashFileName)
     }
 
-    // Pre-computed values cached at install() time for async-signal-safe access
-    private static var cachedFilePath: [CChar] = []
+    // Pre-allocated C-level data for async-signal-safe access in signal handler.
+    // These avoid ARC and heap allocation when accessed from a signal context.
+    private static var filePathBuffer: UnsafeMutablePointer<CChar>?
+    private static var headerBuffer: UnsafeMutablePointer<CChar>?
+    private static var headerLength: Int = 0
+    private static var backtraceBuffer = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 128)
+
+    // Rich values for the exception handler path (safe to use ARC there)
     private static var cachedVersion: String = "unknown"
     private static var cachedBuild: String = "unknown"
     private static var cachedSystemVersion: String = "unknown"
@@ -34,21 +40,41 @@ enum CrashReportService {
 
     /// Call once during App.init to register exception and signal handlers.
     static func install() {
-        // Pre-cache values that are unsafe to compute in a signal handler
+        // Pre-cache values for the rich exception report path
         cachedVersion = Bundle.main.appVersion
         cachedBuild = Bundle.main.buildNumber
         cachedSystemVersion = deviceSystemVersion()
         cachedModel = deviceModel()
 
-        if let path = crashFileURL.path.cString(using: .utf8) {
-            cachedFilePath = path
+        // Pre-allocate C strings for the signal handler (no ARC, no heap alloc at crash time)
+        if let cPath = crashFileURL.path.cString(using: .utf8) {
+            let buf = UnsafeMutablePointer<CChar>.allocate(capacity: cPath.count)
+            buf.initialize(from: cPath, count: cPath.count)
+            filePathBuffer = buf
+        }
+
+        // Pre-build the report header as a C string
+        let header = """
+        === Butter Run Crash Report ===
+
+        App Version: \(cachedVersion) (\(cachedBuild))
+        iOS Version: \(cachedSystemVersion)
+        Device:      \(cachedModel)
+
+        --- Crash Info ---
+        Type: Signal
+        """
+        if let cHeader = header.cString(using: .utf8) {
+            let buf = UnsafeMutablePointer<CChar>.allocate(capacity: cHeader.count)
+            buf.initialize(from: cHeader, count: cHeader.count)
+            headerBuffer = buf
+            headerLength = cHeader.count - 1 // exclude null terminator
         }
 
         NSSetUncaughtExceptionHandler { exception in
             CrashReportService.handleException(exception)
         }
 
-        // POSIX signals that commonly indicate a crash
         let signals: [Int32] = [SIGABRT, SIGSEGV, SIGBUS, SIGFPE, SIGILL]
         for sig in signals {
             signal(sig) { signalValue in
@@ -61,7 +87,6 @@ enum CrashReportService {
 
     /// Returns the crash report contents if a file exists from a previous session.
     static func pendingReport() -> String? {
-        // Read directly — returns nil if the file doesn't exist
         return try? String(contentsOf: crashFileURL, encoding: .utf8)
     }
 
@@ -80,64 +105,55 @@ enum CrashReportService {
             backtrace: exception.callStackSymbols
         )
         try? report.write(to: crashFileURL, atomically: false, encoding: .utf8)
-        // Clear handler so re-raise terminates normally
         NSSetUncaughtExceptionHandler(nil)
     }
 
-    // MARK: - Signal handler (async-signal-safe — minimal allocations)
+    // MARK: - Signal handler (async-signal-safe — no ARC, no Swift allocation)
 
     private static func handleSignal(_ sig: Int32) {
-        // Use POSIX write() directly — the heap may be corrupted.
-        guard !cachedFilePath.isEmpty else {
+        guard let path = filePathBuffer else {
             signal(sig, SIG_DFL)
             raise(sig)
             return
         }
 
-        let fd = cachedFilePath.withUnsafeBufferPointer { ptr in
-            open(ptr.baseAddress!, O_WRONLY | O_CREAT | O_TRUNC, 0o644)
-        }
+        let fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0o644)
         guard fd >= 0 else {
             signal(sig, SIG_DFL)
             raise(sig)
             return
         }
 
-        // Write each piece separately to avoid string interpolation (which allocates)
-        writeString(fd, "=== Butter Run Crash Report ===\n\n")
-        writeString(fd, "App Version: ")
-        writeString(fd, cachedVersion)
-        writeString(fd, " (")
-        writeString(fd, cachedBuild)
-        writeString(fd, ")\n")
-        writeString(fd, "iOS Version: ")
-        writeString(fd, cachedSystemVersion)
-        writeString(fd, "\nDevice:      ")
-        writeString(fd, cachedModel)
-        writeString(fd, "\n\n--- Crash Info ---\n")
-        writeString(fd, "Type: Signal ")
-        writeString(fd, signalDisplayName(sig))
-        writeString(fd, "\n\n--- Backtrace ---\n")
+        // Write pre-built header (C string, no ARC)
+        if let hdr = headerBuffer {
+            _ = write(fd, hdr, headerLength)
+        }
 
-        // backtrace_symbols_fd writes directly to fd — async-signal-safe
-        var callstack = [UnsafeMutableRawPointer?](repeating: nil, count: 128)
-        let frames = backtrace(&callstack, Int32(callstack.count))
-        backtrace_symbols_fd(&callstack, frames, fd)
+        // Write signal name using only C string literals
+        let sigName: UnsafePointer<CChar>
+        switch sig {
+        case SIGABRT: sigName = "SIGABRT\n"
+        case SIGSEGV: sigName = "SIGSEGV\n"
+        case SIGBUS:  sigName = "SIGBUS\n"
+        case SIGFPE:  sigName = "SIGFPE\n"
+        case SIGILL:  sigName = "SIGILL\n"
+        default:      sigName = "UNKNOWN\n"
+        }
+        _ = write(fd, sigName, strlen(sigName))
 
-        writeString(fd, "\n=== End of Report ===\n")
+        let btHeader: UnsafePointer<CChar> = "\n--- Backtrace ---\n"
+        _ = write(fd, btHeader, strlen(btHeader))
+
+        // backtrace + backtrace_symbols_fd are async-signal-safe on Darwin
+        let frames = backtrace(backtraceBuffer, 128)
+        backtrace_symbols_fd(backtraceBuffer, frames, fd)
+
+        let footer: UnsafePointer<CChar> = "\n=== End of Report ===\n"
+        _ = write(fd, footer, strlen(footer))
+
         close(fd)
-
-        // Reset and re-raise
         signal(sig, SIG_DFL)
         raise(sig)
-    }
-
-    /// Write a string to a file descriptor using POSIX write() — async-signal-safe.
-    private static func writeString(_ fd: Int32, _ str: String) {
-        var str = str
-        str.withUTF8 { buffer in
-            _ = write(fd, buffer.baseAddress, buffer.count)
-        }
     }
 
     // MARK: - Rich report (exception path only — safe to allocate)

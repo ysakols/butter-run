@@ -333,7 +333,7 @@ struct SettingsView: View {
     }
 
     private func previewVoice() {
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .duckOthers)
         try? AVAudioSession.sharedInstance().setActive(true)
         let utterance = AVSpeechUtterance(string: "Half a pat of butter burned. Keep going!")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate

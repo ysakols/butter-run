@@ -4,6 +4,7 @@ import OSLog
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.butterrun", category: "RunDraftService")
 
+@MainActor
 class RunDraftService {
     private let container: ModelContainer
     /// Persistent context for draft saves. Must only be accessed from the main thread.

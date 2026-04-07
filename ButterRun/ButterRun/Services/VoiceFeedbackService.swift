@@ -3,6 +3,7 @@ import AVFoundation
 class VoiceFeedbackService: VoiceFeedback {
     private let synthesizer = AVSpeechSynthesizer()
     var isEnabled: Bool = true
+    private var audioSessionConfigured = false
 
     private var lastAnnouncedTsp: Int = 0
     private var lastAnnouncedMile: Int = 0
@@ -101,11 +102,16 @@ class VoiceFeedbackService: VoiceFeedback {
     /// Production implementation is a no-op; test subclasses capture the text.
     func announceForTesting(_ text: String) {}
 
+    private func configureAudioSessionIfNeeded() {
+        guard !audioSessionConfigured else { return }
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .duckOthers)
+        try? AVAudioSession.sharedInstance().setActive(true)
+        audioSessionConfigured = true
+    }
+
     private func speak(_ text: String) {
         announceForTesting(text)
-        // Required for background playback during active runs
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
-        try? AVAudioSession.sharedInstance().setActive(true)
+        configureAudioSessionIfNeeded()
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
