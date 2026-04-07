@@ -55,7 +55,20 @@ struct ButterRunApp: App {
     let containerError: Error?
 
     init() {
+        #if DEBUG
         let isUITesting = ProcessInfo.processInfo.arguments.contains("--reset-state")
+        #else
+        let isUITesting = false
+        #endif
+
+        // Reset UserDefaults during UI testing so @AppStorage values
+        // (e.g. tosAcceptedVersion) don't leak between test runs or
+        // block tests on fresh simulators with the ToS acceptance screen.
+        if isUITesting {
+            UserDefaults.standard.removePersistentDomain(
+                forName: Bundle.main.bundleIdentifier!
+            )
+        }
 
         do {
             let schema = Schema([
@@ -132,7 +145,11 @@ struct DatabaseErrorView: View {
 struct ContentView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
+    #if DEBUG
     private let skipOnboarding = ProcessInfo.processInfo.arguments.contains("--skip-onboarding")
+    #else
+    private let skipOnboarding = false
+    #endif
     @AppStorage("tosAcceptedVersion") private var tosAcceptedVersion: String = ""
 
     /// Increment this when the ToS changes materially to re-trigger acceptance.

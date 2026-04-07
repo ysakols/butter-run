@@ -39,7 +39,7 @@ struct ToastView: View {
         .background(Color(hex: "1C1C1E"))
         .clipShape(Capsule())
         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .onAppear {
             UIAccessibility.post(notification: .announcement, argument: text)
         }
