@@ -8,13 +8,13 @@
 
 ## 1. Acceptance of Terms
 
-These Terms of Service ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and the developer of Butter Run ("Developer," "we," "us," or "our"). By downloading, installing, accessing, or using Butter Run ("the App"), you agree to these Terms in their entirety.
+These Terms of Service ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and the developer of Butter Run ("Developer," "we," "us," or "our"). By downloading, installing, accessing, or using Butter Run ("the App"), you agree to these Terms in their entirety. **You must be at least 13 years of age to use the App.** If you are under 18, you represent that your parent or legal guardian has reviewed and agreed to these Terms on your behalf.
 
 Your agreement is formed when you first tap "I Agree" during the App's initial setup or, if no such prompt is presented, when you first use the App after installation.
 
 ## 2. Changes to Terms
 
-We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance). Your continued use of the App after such notification constitutes acceptance of the revised Terms. If you do not agree to the revised Terms, you must immediately stop using the App and delete it from your device.
+We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance) with at least thirty (30) days' notice before taking effect. Non-material changes (such as formatting or clarification) take effect upon posting. Your continued use of the App after the effective date of any changes constitutes acceptance of the revised Terms. If you do not agree to the revised Terms, you must immediately stop using the App and delete it from your device.
 
 ## 3. Description of the App
 
@@ -26,6 +26,7 @@ Butter Run is a fitness and running application that provides the following feat
 - **Churn Tracker** — a gamified butter-churning simulation based on arm movement during runs
 - **Voice feedback** during runs (pace, distance, time announcements)
 - **Apple HealthKit integration** for reading weight data and writing workout summaries
+- **Optional Strava integration** for sharing run activities to your Strava account
 - **Run history** stored locally on the device
 
 **The App is a recreational fitness tool. It is not a medical device, health monitoring system, or clinical instrument. All metrics provided by the App — including but not limited to distance, pace, calorie burn, cadence, and step count — are estimates and approximations that may contain errors, inaccuracies, or significant deviations from actual values.**
@@ -114,9 +115,9 @@ You agree that you will NOT use the App:
 11. Any deficiency, error, or malfunction in the App, its data, or its features
 12. Loss of data, including run history, due to App malfunction, device failure, or any other cause
 
-### 7.2 Gross Negligence and Willful Misconduct
+### 7.2 Scope of Release
 
-**To the maximum extent permitted by applicable law, this release extends to claims based on the negligence, gross negligence, or willful misconduct of the Released Parties.** Where applicable law prohibits the release of claims for gross negligence or willful misconduct, the release shall apply to the maximum extent permitted.
+**To the maximum extent permitted by applicable law, this release extends to claims based on the negligence of the Released Parties.** This release does not apply to claims based on the Developer's gross negligence, willful misconduct, or fraud, to the extent such claims cannot be released under applicable law.
 
 ### 7.3 Waiver of Unknown Claims
 
@@ -126,7 +127,13 @@ You agree that you will NOT use the App:
 
 You understand that you may discover facts different from or in addition to those you now know or believe to be true with respect to the subject matter of this release, and you agree that this release shall remain in full force and effect notwithstanding the discovery of any such additional or different facts.
 
-## 8. Limitation of Liability
+## 8. Disclaimer of Warranties
+
+**THE APP IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.** THE DEVELOPER DOES NOT WARRANT THAT THE APP WILL BE UNINTERRUPTED, ERROR-FREE, SECURE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS, OR THAT ANY DEFECTS WILL BE CORRECTED. NO ADVICE OR INFORMATION, WHETHER ORAL OR WRITTEN, OBTAINED BY YOU FROM THE DEVELOPER OR THROUGH THE APP SHALL CREATE ANY WARRANTY NOT EXPRESSLY STATED IN THESE TERMS.
+
+YOU ACKNOWLEDGE THAT THE DEVELOPER HAS NO OBLIGATION TO MAINTAIN, SUPPORT, UPGRADE, OR UPDATE THE APP. TO THE FULLEST EXTENT PERMITTED BY LAW, THE DEVELOPER DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, IN CONNECTION WITH THE APP AND YOUR USE THEREOF.
+
+## 9. Limitation of Liability
 
 **TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:**
 
@@ -142,73 +149,70 @@ IF, NOTWITHSTANDING THE FOREGOING, THE DEVELOPER IS FOUND LIABLE FOR ANY CLAIM A
 
 You acknowledge that the limitations of liability set forth in this Section reflect a fair and reasonable allocation of risk and are an essential basis of the bargain between you and the Developer. The App would not be provided without these limitations.
 
-## 9. Indemnification
+## 10. Indemnification
 
 You agree to indemnify, defend, and hold harmless the Developer and all Released Parties from and against any and all claims, liabilities, damages, losses, costs, expenses, and fees (including reasonable attorneys' fees) arising from or relating to:
 
-1. Your use of or access to the App
-2. Your violation of these Terms
-3. Your violation of any third-party rights, including intellectual property rights
-4. Any physical activity undertaken by you in connection with the App
-5. Any injury, illness, or damage arising from your use of the App
-6. Any claim by a third party related to your use of the App
-7. Your negligence or willful misconduct
+1. Your violation of these Terms
+2. Your violation of any third-party rights, including intellectual property rights
+3. Your negligence or willful misconduct
+4. Any content or data you transmit through or to the App
 
 This indemnification obligation shall survive the termination of these Terms and your cessation of use of the App.
 
-## 10. No Guaranteed Results
+## 11. No Guaranteed Results
 
 **The App makes no guarantees, representations, or warranties regarding fitness outcomes, weight loss, weight gain, calorie expenditure, distance accuracy, pace accuracy, or any other result.** Individual results vary based on numerous factors outside the Developer's control, including but not limited to genetics, diet, pre-existing health conditions, exercise history, medication, sleep, stress, and environmental conditions.
 
 Any examples, metrics, or data displayed in the App or associated marketing materials are for illustrative purposes only and do not constitute a guarantee of similar results.
 
-## 11. Dispute Resolution and Mandatory Arbitration
+## 12. Dispute Resolution and Mandatory Arbitration
 
-### 11.1 Informal Resolution
+### 12.1 Informal Resolution
 
 Before initiating any formal dispute resolution proceeding, you agree to first contact the Developer and attempt to resolve the dispute informally for at least thirty (30) days. If informal resolution is unsuccessful, disputes shall be resolved as set forth below.
 
-### 11.2 Mandatory Binding Arbitration
+### 12.2 Mandatory Binding Arbitration
 
 **ANY DISPUTE, CLAIM, OR CONTROVERSY ARISING OUT OF OR RELATING TO THESE TERMS OR YOUR USE OF THE APP, INCLUDING THE DETERMINATION OF THE SCOPE OR APPLICABILITY OF THIS AGREEMENT TO ARBITRATE (the "delegation clause"), SHALL BE DETERMINED BY BINDING ARBITRATION** administered by JAMS under its Streamlined Arbitration Rules and Procedures, or by any other mutually agreed-upon arbitration provider. The arbitration shall take place remotely via video conference unless both parties agree to an in-person hearing, in which case it shall take place in the State of California.
 
-### 11.3 CLASS ACTION WAIVER
+### 12.3 CLASS ACTION WAIVER
 
 **YOU AND THE DEVELOPER AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS, CONSOLIDATED, OR REPRESENTATIVE ACTION OR PROCEEDING.** The arbitrator may not consolidate more than one person's claims and may not preside over any form of class, consolidated, or representative proceeding.
 
-### 11.4 Mass Arbitration
+### 12.4 Mass Arbitration
 
 If 25 or more similar arbitration demands are filed against the Developer within a 60-day period, the parties agree to a bellwether process: 10 cases shall be randomly selected and arbitrated first. The results of those cases shall inform (but not bind) the resolution of remaining cases. Remaining claimants agree to stay their claims pending completion of the bellwether proceedings.
 
-### 11.5 Small Claims Exception
+### 12.5 Small Claims Exception
 
 Notwithstanding the foregoing, either party may bring an individual action in small claims court for disputes within the court's jurisdictional limits.
 
-### 11.6 Arbitration Fees
+### 12.6 Arbitration Fees
 
 For claims of $10,000 or less, the Developer shall pay all arbitration filing and administration fees. For claims exceeding $10,000, the parties shall share fees equally, unless the arbitrator determines that sharing fees would be cost-prohibitive to you, in which case the Developer shall pay a greater share as determined by the arbitrator.
 
-### 11.7 Opt-Out
+### 12.7 Opt-Out
 
-You may opt out of this arbitration agreement by sending written notice to the Developer within thirty (30) days of first accepting these Terms. The notice must include your name, address, and a clear statement that you wish to opt out of the arbitration clause. Send opt-out notices via the contact information in Section 22. If you opt out, you and the Developer agree to submit to the exclusive jurisdiction and venue of the state and federal courts located in the county where the Developer resides.
+You may opt out of this arbitration agreement by sending written notice to the Developer within thirty (30) days of first accepting these Terms. The notice must include your name, address, and a clear statement that you wish to opt out of the arbitration clause. Send opt-out notices via the contact information in Section 24. If you opt out, you and the Developer agree to submit to the exclusive jurisdiction and venue of the state and federal courts located in California.
 
-### 11.8 Confidentiality
+### 12.8 Confidentiality
 
 All aspects of the arbitration proceeding, including the award, shall be strictly confidential unless otherwise required by law.
 
-## 12. Statute of Limitations
+## 13. Statute of Limitations
 
 **TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ANY CLAIM OR CAUSE OF ACTION ARISING OUT OF OR RELATING TO THESE TERMS OR YOUR USE OF THE APP MUST BE FILED WITHIN ONE (1) YEAR AFTER THE CLAIM OR CAUSE OF ACTION AROSE, OR IT SHALL BE FOREVER BARRED.** This limitations period applies regardless of when you discovered or should have discovered the facts giving rise to the claim.
 
-## 13. Privacy and Data
+## 14. Privacy and Data
 
 Your use of the App is also governed by our [Privacy Policy](PRIVACY_POLICY.md), which is incorporated into these Terms by reference.
 
-### 13.1 On-Device Data
+### 14.1 On-Device Data
 
 All data collected by the App (run history, routes, metrics, preferences) is stored locally on your device. The App does not transmit your data to any Developer-controlled servers. However, standard system-level communication required by Apple frameworks (such as MapKit for map tiles and HealthKit for health data sync) may involve data exchange with Apple's servers. Additionally, if you enable optional third-party integrations (such as Strava), your run data will be transmitted to those services at your explicit request and subject to their own terms and privacy policies.
 
-### 13.2 Apple HealthKit
+### 14.2 Apple HealthKit
 
 If you authorize HealthKit integration, the App will read weight data from Apple Health and write workout summaries to Apple Health. HealthKit data is handled in strict compliance with Apple's HealthKit guidelines:
 
@@ -217,70 +221,74 @@ If you authorize HealthKit integration, the App will read weight data from Apple
 - HealthKit data is **never** used for advertising or marketing
 - HealthKit data is used **only** for the health and fitness purposes described in the Privacy Policy
 
-### 13.3 Data Loss
+### 14.3 Data Loss
 
 **The Developer is not responsible for any loss of data, including run history, route data, or personal records, resulting from App malfunction, device failure, iOS updates, App updates, device transfer, or any other cause.** You are solely responsible for backing up your device.
 
-## 14. Apple-Specific Terms
+## 15. Apple-Specific Terms
 
 These Terms are between you and the Developer only, not with Apple Inc. ("Apple"). However, you acknowledge and agree to the following:
 
-### 14.1 License Scope
+### 15.1 License Scope
 
 The license granted to you for the App is limited to a non-transferable license to use the App on any Apple-branded device that you own or control, as permitted by the Usage Rules set forth in the Apple Media Services Terms and Conditions.
 
-### 14.2 Maintenance and Support
+### 15.2 Maintenance and Support
 
 The Developer, not Apple, is solely responsible for providing any maintenance and support services for the App. Apple has no obligation whatsoever to furnish any maintenance and support services with respect to the App.
 
-### 14.3 Warranty
+### 15.3 Warranty
 
 In the event of any failure of the App to conform to any applicable warranty, you may notify Apple, and Apple will refund the purchase price (if any) for the App. To the maximum extent permitted by applicable law, Apple has no other warranty obligation whatsoever with respect to the App.
 
-### 14.4 Product Claims
+### 15.4 Product Claims
 
 The Developer, not Apple, is responsible for addressing any claims relating to the App or your possession and/or use of the App, including but not limited to: (a) product liability claims; (b) any claim that the App fails to conform to any applicable legal or regulatory requirement; and (c) claims arising under consumer protection, privacy, or similar legislation.
 
-### 14.5 Intellectual Property
+### 15.5 Intellectual Property
 
 In the event of any third-party claim that the App or your possession and use of the App infringes that third party's intellectual property rights, the Developer, not Apple, will be solely responsible for the investigation, defense, settlement, and discharge of any such intellectual property infringement claim.
 
-### 14.6 Third-Party Beneficiary
+### 15.6 Third-Party Beneficiary
 
 You acknowledge and agree that Apple and its subsidiaries are third-party beneficiaries of these Terms, and that upon your acceptance of these Terms, Apple will have the right (and will be deemed to have accepted the right) to enforce these Terms against you as a third-party beneficiary thereof.
 
-## 15. Third-Party Frameworks
+## 16. Third-Party Frameworks
 
 The App uses Apple's native frameworks including CoreLocation, CoreMotion, HealthKit, MapKit, and AVFoundation. The Developer makes no representations or warranties regarding the accuracy, reliability, or availability of these frameworks. Any inaccuracies in GPS data, motion data, health data, map data, or audio output are beyond the Developer's control.
 
-## 16. Intellectual Property
+## 17. Intellectual Property
 
 The App and all associated content, features, and functionality (including but not limited to text, graphics, logos, icons, images, audio, and software) are owned by the Developer and are protected by copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, sell, or lease any part of the App without the Developer's prior written consent.
 
-## 17. Termination
+## 18. Force Majeure
 
-We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Limitation of Liability), 9 (Indemnification), 11 (Dispute Resolution), 12 (Statute of Limitations), and 16 (Intellectual Property).
+The Developer shall not be liable for any failure or delay in performing obligations under these Terms caused by events beyond the Developer's reasonable control, including but not limited to natural disasters, acts of government, pandemic, internet or telecommunications failures, GPS satellite outages, Apple framework or App Store disruptions, power failures, or any other force majeure event.
 
-## 18. Severability
+## 19. Termination
+
+We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 12 (Dispute Resolution), 13 (Statute of Limitations), and 17 (Intellectual Property).
+
+## 20. Severability
 
 If any provision of these Terms is held to be invalid, illegal, or unenforceable by a court of competent jurisdiction, such provision shall be modified to the minimum extent necessary to make it valid and enforceable, or if modification is not possible, severed from these Terms. The invalidity of any provision shall not affect the validity or enforceability of any other provision.
 
-## 19. Entire Agreement
+## 21. Entire Agreement
 
 These Terms, together with the Privacy Policy, constitute the entire agreement between you and the Developer regarding your use of the App and supersede all prior and contemporaneous agreements, proposals, or representations, written or oral, concerning the App.
 
-## 20. No Waiver
+## 22. No Waiver
 
 The failure of the Developer to exercise or enforce any right or provision of these Terms shall not constitute a waiver of such right or provision. Any waiver of any provision of these Terms will be effective only if in writing and signed by the Developer.
 
-## 21. Governing Law
+## 23. Governing Law
 
-These Terms shall be governed by and construed in accordance with the laws of the State of California, without regard to its conflict of law provisions. To the extent that arbitration does not apply (e.g., if you have opted out per Section 11.7), you consent to the exclusive jurisdiction of the state and federal courts located in California.
+These Terms shall be governed by and construed in accordance with the laws of the State of California, without regard to its conflict of law provisions. To the extent that arbitration does not apply (e.g., if you have opted out per Section 12.7), you consent to the exclusive jurisdiction of the state and federal courts located in California.
 
-## 22. Contact
+## 24. Contact
 
-If you have questions about these Terms of Service, wish to exercise your arbitration opt-out right under Section 11.7, or need to contact the Developer for any reason, please open an issue on the [Butter Run GitHub repository](https://github.com/ysakols/butter-run) or email spltr3app@gmail.com.
+If you have questions about these Terms of Service, wish to exercise your arbitration opt-out right under Section 12.7, or need to contact the Developer for any reason, please open an issue on the [Butter Run GitHub repository](https://github.com/ysakols/butter-run) or email spltr3app@gmail.com.
 
-## 23. Acknowledgment
+## 25. Acknowledgment
 
-**BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS OF SERVICE, INCLUDING THE MEDICAL DISCLAIMER (SECTION 4), ASSUMPTION OF RISK (SECTION 5), PROHIBITED USES (SECTION 6), RELEASE AND WAIVER (SECTION 7), LIMITATION OF LIABILITY (SECTION 8), INDEMNIFICATION (SECTION 9), NO GUARANTEED RESULTS (SECTION 10), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (SECTION 11), STATUTE OF LIMITATIONS (SECTION 12), AND APPLE-SPECIFIC TERMS (SECTION 14), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.**
+**BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS OF SERVICE, INCLUDING THE MEDICAL DISCLAIMER (SECTION 4), ASSUMPTION OF RISK (SECTION 5), PROHIBITED USES (SECTION 6), RELEASE AND WAIVER (SECTION 7), DISCLAIMER OF WARRANTIES (SECTION 8), LIMITATION OF LIABILITY (SECTION 9), INDEMNIFICATION (SECTION 10), NO GUARANTEED RESULTS (SECTION 11), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (SECTION 12), STATUTE OF LIMITATIONS (SECTION 13), AND APPLE-SPECIFIC TERMS (SECTION 15), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.**

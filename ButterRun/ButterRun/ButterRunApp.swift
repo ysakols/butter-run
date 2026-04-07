@@ -153,16 +153,16 @@ struct ContentView: View {
     @AppStorage("tosAcceptedVersion") private var tosAcceptedVersion: String = ""
 
     /// Increment this when the ToS changes materially to re-trigger acceptance.
-    private static let currentTosVersion = "2026-04-07"
+    private static let currentTosVersion = "2026-04-07-v2"
 
     var body: some View {
         Group {
-            if profiles.isEmpty && !skipOnboarding {
-                OnboardingWalkthroughView()
-            } else if tosAcceptedVersion != Self.currentTosVersion {
-                TermsAcceptanceView {
+            if tosAcceptedVersion != Self.currentTosVersion {
+                LegalAcceptanceView {
                     tosAcceptedVersion = Self.currentTosVersion
                 }
+            } else if profiles.isEmpty && !skipOnboarding {
+                OnboardingWalkthroughView()
             } else {
                 CrashRecoveryWrapper {
                     MainTabView()
@@ -313,86 +313,138 @@ struct MainTabView: View {
     }
 }
 
-// MARK: - Terms of Service Acceptance
+// MARK: - Legal Acceptance Flow
 
-struct TermsAcceptanceView: View {
+/// Two-step acceptance: user must scroll through and accept both ToS and Privacy Policy
+/// before any data is collected or onboarding begins.
+struct LegalAcceptanceView: View {
     let onAccept: () -> Void
-
-    private let tosURL = URL(string: "https://github.com/ysakols/butter-run/blob/main/TERMS_OF_SERVICE.md")!
-    private let privacyURL = URL(string: "https://github.com/ysakols/butter-run/blob/main/PRIVACY_POLICY.md")!
+    @State private var tosAccepted = false
+    @State private var privacyAccepted = false
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer().frame(height: 20)
-
-            Image("butter-pat")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 60, height: 60)
-                .accessibilityHidden(true)
-
-            Text("Terms of Service")
-                .font(.system(.title2, design: .rounded, weight: .bold))
-                .foregroundStyle(ButterTheme.textPrimary)
-
-            Text("Please review and accept our Terms of Service and Privacy Policy to continue using Butter Run.")
-                .font(.system(.subheadline, design: .rounded))
-                .foregroundStyle(ButterTheme.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            VStack(spacing: 12) {
-                Link(destination: tosURL) {
-                    HStack {
-                        Image(systemName: "doc.text")
-                        Text("Read Terms of Service")
-                        Spacer()
-                        Image(systemName: "arrow.up.right")
-                    }
-                    .font(.system(.body, design: .rounded))
-                    .foregroundStyle(ButterTheme.gold)
-                    .padding()
-                    .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                }
-
-                Link(destination: privacyURL) {
-                    HStack {
-                        Image(systemName: "hand.raised")
-                        Text("Read Privacy Policy")
-                        Spacer()
-                        Image(systemName: "arrow.up.right")
-                    }
-                    .font(.system(.body, design: .rounded))
-                    .foregroundStyle(ButterTheme.gold)
-                    .padding()
-                    .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                }
+        if !tosAccepted {
+            ScrollableDocumentView(
+                title: "Terms of Service",
+                icon: "doc.text",
+                text: LegalText.termsOfService,
+                buttonLabel: "I Accept the Terms of Service",
+                stepLabel: "Step 1 of 2"
+            ) {
+                tosAccepted = true
             }
-            .padding(.horizontal, 32)
+            .id("tos") // Force fresh view identity so @State resets between steps
+        } else if !privacyAccepted {
+            ScrollableDocumentView(
+                title: "Privacy Policy",
+                icon: "hand.raised",
+                text: LegalText.privacyPolicy,
+                buttonLabel: "I Accept the Privacy Policy",
+                stepLabel: "Step 2 of 2"
+            ) {
+                privacyAccepted = true
+                // Log consent locally
+                UserDefaults.standard.set(Date().ISO8601Format(), forKey: "tosConsentTimestamp")
+                UserDefaults.standard.set(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown", forKey: "tosConsentAppVersion")
+                onAccept()
+            }
+            .id("privacy") // Distinct identity ensures hasScrolledToBottom resets
+        }
+    }
+}
 
-            Spacer()
+/// A scrollable full-text document view. The accept button only becomes enabled
+/// once the user has scrolled near the bottom of the document.
+struct ScrollableDocumentView: View {
+    let title: String
+    let icon: String
+    let text: String
+    let buttonLabel: String
+    let stepLabel: String
+    let onAccept: () -> Void
 
+    @State private var hasScrolledToBottom = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
             VStack(spacing: 8) {
-                Text("By tapping \"I Agree\" you confirm that you have read, understood, and agree to be bound by the Terms of Service and Privacy Policy.")
+                HStack {
+                    Image(systemName: icon)
+                        .font(.title3)
+                        .foregroundStyle(ButterTheme.gold)
+                    Text(title)
+                        .font(.system(.title3, design: .rounded, weight: .bold))
+                        .foregroundStyle(ButterTheme.textPrimary)
+                }
+                Text(stepLabel)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+            }
+            .padding(.top, 20)
+            .padding(.bottom, 12)
+
+            // Scrollable document text
+            GeometryReader { outerGeo in
+                ScrollView {
+                    Text(text)
+                        .font(.system(.footnote, design: .rounded))
+                        .foregroundStyle(ButterTheme.textPrimary)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
+
+                    // Invisible marker at the bottom to detect scroll position
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(key: ScrollBottomPreferenceKey.self, value: geo.frame(in: .named("scroll")).maxY)
+                    }
+                    .frame(height: 1)
+                }
+                .coordinateSpace(name: "scroll")
+                .onPreferenceChange(ScrollBottomPreferenceKey.self) { maxY in
+                    if maxY < outerGeo.size.height + 100 {
+                        hasScrolledToBottom = true
+                    }
+                }
+            }
+            .background(ButterTheme.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 16)
+
+            // Accept button
+            VStack(spacing: 6) {
+                if !hasScrolledToBottom {
+                    Text("Please scroll to the bottom to continue")
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                }
 
                 Button(action: onAccept) {
-                    Text("I Agree")
-                        .font(.system(.title3, design: .rounded, weight: .bold))
+                    Text(buttonLabel)
+                        .font(.system(.body, design: .rounded, weight: .bold))
                         .foregroundStyle(ButterTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 16))
+                        .background(
+                            hasScrolledToBottom ? ButterTheme.gold : ButterTheme.gold.opacity(0.3),
+                            in: RoundedRectangle(cornerRadius: 16)
+                        )
                 }
-                .padding(.horizontal, 32)
+                .disabled(!hasScrolledToBottom)
+                .padding(.horizontal, 16)
             }
-
-            Spacer().frame(height: 40)
+            .padding(.top, 12)
+            .padding(.bottom, 40)
         }
         .background(ButterTheme.background.ignoresSafeArea())
         .preferredColorScheme(.light)
     }
 }
+
+private struct ScrollBottomPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = .infinity
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = min(value, nextValue())
+    }
+}
+
