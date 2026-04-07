@@ -30,12 +30,18 @@ enum ButterServing: String, CaseIterable, Codable {
 
     var emoji: String {
         switch self {
-        case .teaspoon: return "🥄"
+        case .teaspoon: return "🧈"
         case .pat: return "🧈"
         case .tablespoon: return "🥄"
         case .halfStick: return "🧱"
         case .custom: return "✏️"
         }
+    }
+
+    /// Cases shown in user-facing pickers. Excludes `.teaspoon` which is a legacy
+    /// alias for `.pat` kept for backwards compatibility with persisted data.
+    static var userVisibleCases: [ButterServing] {
+        [.pat, .tablespoon, .halfStick, .custom]
     }
 }
 

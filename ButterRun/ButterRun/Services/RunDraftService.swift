@@ -1,5 +1,8 @@
 import Foundation
 import SwiftData
+import OSLog
+
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.butterrun", category: "RunDraftService")
 
 class RunDraftService {
     private let container: ModelContainer
@@ -25,7 +28,7 @@ class RunDraftService {
         if persistentContext == nil {
             persistentContext = ModelContext(container)
         }
-        let context = persistentContext!
+        guard let context = persistentContext else { return }
 
         // Delete any existing draft first (only one at a time)
         let descriptor = FetchDescriptor<RunDraft>()
@@ -48,35 +51,50 @@ class RunDraftService {
         )
 
         context.insert(draft)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            logger.error("Failed to save run draft: \(error, privacy: .public)")
+        }
     }
 
     /// Load an existing draft (on main context for UI).
     func loadDraft(context: ModelContext) -> RunDraft? {
-        let descriptor = FetchDescriptor<RunDraft>()
-        return try? context.fetch(descriptor).first
+        do {
+            let descriptor = FetchDescriptor<RunDraft>()
+            return try context.fetch(descriptor).first
+        } catch {
+            logger.error("Failed to load run draft: \(error, privacy: .public)")
+            return nil
+        }
     }
 
     /// Delete all drafts.
     func deleteDraft(context: ModelContext) {
-        let descriptor = FetchDescriptor<RunDraft>()
-        if let drafts = try? context.fetch(descriptor) {
+        do {
+            let descriptor = FetchDescriptor<RunDraft>()
+            let drafts = try context.fetch(descriptor)
             for draft in drafts {
                 context.delete(draft)
             }
-            try? context.save()
+            try context.save()
+        } catch {
+            logger.error("Failed to delete run draft: \(error, privacy: .public)")
         }
     }
 
     /// Auto-purge drafts older than 48 hours.
     func purgeStale(context: ModelContext) {
         let cutoff = Date().addingTimeInterval(-48 * 60 * 60)
-        let descriptor = FetchDescriptor<RunDraft>()
-        if let drafts = try? context.fetch(descriptor) {
+        do {
+            let descriptor = FetchDescriptor<RunDraft>()
+            let drafts = try context.fetch(descriptor)
             for draft in drafts where draft.lastCheckpoint < cutoff {
                 context.delete(draft)
             }
-            try? context.save()
+            try context.save()
+        } catch {
+            logger.error("Failed to purge stale drafts: \(error, privacy: .public)")
         }
     }
 }

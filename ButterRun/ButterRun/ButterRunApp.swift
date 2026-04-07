@@ -78,9 +78,9 @@ struct ButterRunApp: App {
         // (e.g. tosAcceptedVersion) don't leak between test runs or
         // block tests on fresh simulators with the ToS acceptance screen.
         if isUITesting {
-            UserDefaults.standard.removePersistentDomain(
-                forName: Bundle.main.bundleIdentifier!
-            )
+            if let bundleId = Bundle.main.bundleIdentifier {
+                UserDefaults.standard.removePersistentDomain(forName: bundleId)
+            }
         }
 
         do {

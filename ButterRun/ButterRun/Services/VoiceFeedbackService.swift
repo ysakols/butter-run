@@ -103,6 +103,9 @@ class VoiceFeedbackService: VoiceFeedback {
 
     private func speak(_ text: String) {
         announceForTesting(text)
+        // Required for background playback during active runs
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+        try? AVAudioSession.sharedInstance().setActive(true)
         let utterance = AVSpeechUtterance(string: text)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")

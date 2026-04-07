@@ -206,7 +206,8 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
         // Best-effort deauthorize with Strava (fire and forget)
         if let token {
             Task {
-                var request = URLRequest(url: URL(string: "https://www.strava.com/oauth/deauthorize")!)
+                guard let deauthURL = URL(string: "https://www.strava.com/oauth/deauthorize") else { return }
+                var request = URLRequest(url: deauthURL)
                 request.httpMethod = "POST"
                 request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 _ = try? await URLSession.shared.data(for: request)
