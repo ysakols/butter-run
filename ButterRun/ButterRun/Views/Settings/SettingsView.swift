@@ -2,6 +2,8 @@ import SwiftUI
 import SwiftData
 import AVFoundation
 
+private let fallbackURL = URL(string: "https://example.com")!
+
 struct SettingsView: View {
     @Query private var profiles: [UserProfile]
     @Query private var runs: [Run]
@@ -112,10 +114,8 @@ struct SettingsView: View {
                                 .foregroundStyle(ButterTheme.textSecondary)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(ButterTheme.textSecondary)
                     }
+                    .opacity(0.5)
                 }
                 .listRowBackground(ButterTheme.surface)
 
@@ -159,7 +159,7 @@ struct SettingsView: View {
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(ButterTheme.textSecondary)
 
-                    Link("National Eating Disorders Association", destination: URL(string: "https://www.nationaleatingdisorders.org") ?? URL(string: "about:blank")!)
+                    Link("National Eating Disorders Association", destination: URL(string: "https://www.nationaleatingdisorders.org") ?? fallbackURL)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                 }
@@ -170,15 +170,15 @@ struct SettingsView: View {
                         Text("Version")
                             .foregroundStyle(ButterTheme.textPrimary)
                         Spacer()
-                        Text("1.0.0")
+                        Text(Bundle.main.appVersion)
                             .foregroundStyle(ButterTheme.textSecondary)
                     }
 
-                    Link("Privacy Policy", destination: URL(string: "https://github.com/ysakols/butter-run/blob/main/PRIVACY_POLICY.md") ?? URL(string: "about:blank")!)
+                    Link("Privacy Policy", destination: URL(string: "https://github.com/ysakols/butter-run/blob/main/PRIVACY_POLICY.md") ?? fallbackURL)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
 
-                    Link("Terms of Service", destination: URL(string: "https://github.com/ysakols/butter-run/blob/main/TERMS_OF_SERVICE.md") ?? URL(string: "about:blank")!)
+                    Link("Terms of Service", destination: URL(string: "https://github.com/ysakols/butter-run/blob/main/TERMS_OF_SERVICE.md") ?? fallbackURL)
                         .font(.system(.body, design: .rounded))
                         .foregroundStyle(ButterTheme.gold)
                 }
@@ -333,6 +333,8 @@ struct SettingsView: View {
     }
 
     private func previewVoice() {
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .duckOthers)
+        try? AVAudioSession.sharedInstance().setActive(true)
         let utterance = AVSpeechUtterance(string: "Half a pat of butter burned. Keep going!")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")

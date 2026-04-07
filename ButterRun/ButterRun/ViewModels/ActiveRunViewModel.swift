@@ -159,8 +159,8 @@ class ActiveRunViewModel {
         audioDeactivationWork?.cancel()
         audioDeactivationWork = nil
 
-        // AVAudioSession keep-alive for background execution
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
+        // AVAudioSession keep-alive for background execution + voice feedback ducking
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .duckOthers)
         try? AVAudioSession.sharedInstance().setActive(true)
 
         state = .running
