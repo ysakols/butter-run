@@ -31,8 +31,10 @@ final class ButterZeroFlowUITests: XCTestCase {
 
         // Handle custom location permission sheet if it appears
         let allowLocation = app.buttons["Allow Location"]
-        if allowLocation.waitForExistence(timeout: 1) {
+        if allowLocation.waitForExistence(timeout: 2) {
             allowLocation.tap()
+            // Trigger interruption monitor for the system location dialog
+            app.tap()
         }
     }
 
