@@ -135,7 +135,9 @@ struct ActiveRunView: View {
                 RunSummaryView(
                     run: run,
                     usesMiles: profile.usesMiles,
-                    onDismiss: { dismiss() }
+                    onDismiss: { dismiss() },
+                    healthKitEnabled: profile.healthKitEnabled,
+                    pauseResumeEvents: viewModel.workoutPauseResumeEvents
                 )
                 .environmentObject(stravaAuth)
             }

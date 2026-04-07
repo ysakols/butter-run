@@ -268,33 +268,20 @@ struct OnboardingWalkthroughView: View {
     }
 
     private func navigationButtons(page: Int) -> some View {
-        VStack(spacing: 8) {
-            Button {
-                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = page + 1 }
-            } label: {
-                Text("Next")
-                    .font(ButterTypography.buttonText)
-                    .foregroundStyle(ButterTheme.onPrimaryAction)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: ButterSpacing.buttonHeight)
-                    .background(ButterTheme.gold)
-                    .clipShape(RoundedRectangle(cornerRadius: ButterSpacing.buttonCornerRadius))
-            }
-            .accessibilityLabel("Next")
-            .accessibilityHint("Go to next onboarding page")
-            .padding(.horizontal, 24)
-
-            Button {
-                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = 3 }
-            } label: {
-                Text("Skip")
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundStyle(ButterTheme.textSecondary)
-            }
-            .accessibilityLabel("Skip")
-            .accessibilityHint("Skip to profile setup")
-            .padding(.top, 4)
+        Button {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = page + 1 }
+        } label: {
+            Text("Next")
+                .font(ButterTypography.buttonText)
+                .foregroundStyle(ButterTheme.onPrimaryAction)
+                .frame(maxWidth: .infinity)
+                .frame(height: ButterSpacing.buttonHeight)
+                .background(ButterTheme.gold)
+                .clipShape(RoundedRectangle(cornerRadius: ButterSpacing.buttonCornerRadius))
         }
+        .accessibilityLabel("Next")
+        .accessibilityHint("Go to next onboarding page")
+        .padding(.horizontal, 24)
         .padding(.top, 8)
     }
 

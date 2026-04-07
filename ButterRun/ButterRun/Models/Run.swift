@@ -39,6 +39,9 @@ class Run {
     // V3 fields — Strava integration
     var stravaActivityId: Int64?
 
+    // V3 fields — HealthKit integration
+    var healthKitSynced: Bool = false
+
     init(
         startDate: Date = .now,
         isButterZeroChallenge: Bool = false

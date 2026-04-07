@@ -102,16 +102,6 @@ final class OnboardingUITests: XCTestCase {
         XCTAssertTrue(bzTitle.waitForExistence(timeout: 3))
     }
 
-    func test_onboarding_skipButton_jumpsToProfile() {
-        // Page 1: tap Skip to jump to profile page (page 4)
-        let skipButton = app.buttons["Skip"]
-        XCTAssertTrue(skipButton.waitForExistence(timeout: 5))
-        skipButton.tap()
-
-        // Profile page should show name field
-        let nameField = app.textFields["Your name"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 3))
-    }
 }
 
 extension XCUIElement {
