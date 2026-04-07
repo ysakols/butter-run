@@ -55,7 +55,11 @@ struct ButterRunApp: App {
     let containerError: Error?
 
     init() {
+        #if DEBUG
         let isUITesting = ProcessInfo.processInfo.arguments.contains("--reset-state")
+        #else
+        let isUITesting = false
+        #endif
 
         do {
             let schema = Schema([
@@ -132,7 +136,11 @@ struct DatabaseErrorView: View {
 struct ContentView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
+    #if DEBUG
     private let skipOnboarding = ProcessInfo.processInfo.arguments.contains("--skip-onboarding")
+    #else
+    private let skipOnboarding = false
+    #endif
     @AppStorage("tosAcceptedVersion") private var tosAcceptedVersion: String = ""
 
     /// Increment this when the ToS changes materially to re-trigger acceptance.

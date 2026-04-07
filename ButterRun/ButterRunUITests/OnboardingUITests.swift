@@ -86,6 +86,32 @@ final class OnboardingUITests: XCTestCase {
         XCTAssertTrue(button.waitForExistence(timeout: 3))
         XCTAssertFalse(button.isEnabled)
     }
+
+    func test_onboarding_nextButton_advancesPages() {
+        // Page 1: Welcome — verify "Butter Run" title
+        let welcomeTitle = app.staticTexts["Butter Run"]
+        XCTAssertTrue(welcomeTitle.waitForExistence(timeout: 5))
+
+        // Tap Next to go to page 2
+        let nextButton = app.buttons["Next"]
+        XCTAssertTrue(nextButton.waitForExistence(timeout: 3))
+        nextButton.tap()
+
+        // Page 2: Butter Zero — verify page content
+        let bzTitle = app.staticTexts["Butter Zero"]
+        XCTAssertTrue(bzTitle.waitForExistence(timeout: 3))
+    }
+
+    func test_onboarding_skipButton_jumpsToProfile() {
+        // Page 1: tap Skip to jump to profile page (page 4)
+        let skipButton = app.buttons["Skip"]
+        XCTAssertTrue(skipButton.waitForExistence(timeout: 5))
+        skipButton.tap()
+
+        // Profile page should show name field
+        let nameField = app.textFields["Your name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 3))
+    }
 }
 
 extension XCUIElement {
