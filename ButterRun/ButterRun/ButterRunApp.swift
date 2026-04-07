@@ -172,8 +172,11 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            // UI testing: auto-accept ToS when skipping
+            // UI testing: auto-accept ToS when skipping, including metadata
+            // that LegalAcceptanceView normally records on real acceptance
             if skipTos && tosAcceptedVersion != Self.currentTosVersion {
+                UserDefaults.standard.set(Date().ISO8601Format(), forKey: "tosConsentTimestamp")
+                UserDefaults.standard.set(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown", forKey: "tosConsentAppVersion")
                 tosAcceptedVersion = Self.currentTosVersion
             }
 
