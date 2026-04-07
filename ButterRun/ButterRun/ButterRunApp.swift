@@ -316,6 +316,7 @@ struct LegalAcceptanceView: View {
             ) {
                 tosAccepted = true
             }
+            .id("tos") // Force fresh view identity so @State resets between steps
         } else if !privacyAccepted {
             ScrollableDocumentView(
                 title: "Privacy Policy",
@@ -330,6 +331,7 @@ struct LegalAcceptanceView: View {
                 UserDefaults.standard.set(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown", forKey: "tosConsentAppVersion")
                 onAccept()
             }
+            .id("privacy") // Distinct identity ensures hasScrolledToBottom resets
         }
     }
 }
