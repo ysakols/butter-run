@@ -133,11 +133,19 @@ struct ContentView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
     private let skipOnboarding = ProcessInfo.processInfo.arguments.contains("--skip-onboarding")
+    @AppStorage("tosAcceptedVersion") private var tosAcceptedVersion: String = ""
+
+    /// Increment this when the ToS changes materially to re-trigger acceptance.
+    private static let currentTosVersion = "2026-04-07"
 
     var body: some View {
         Group {
             if profiles.isEmpty && !skipOnboarding {
                 OnboardingWalkthroughView()
+            } else if tosAcceptedVersion != Self.currentTosVersion {
+                TermsAcceptanceView {
+                    tosAcceptedVersion = Self.currentTosVersion
+                }
             } else {
                 CrashRecoveryWrapper {
                     MainTabView()
@@ -285,5 +293,89 @@ struct MainTabView: View {
                 }
         }
         .tint(ButterTheme.gold)
+    }
+}
+
+// MARK: - Terms of Service Acceptance
+
+struct TermsAcceptanceView: View {
+    let onAccept: () -> Void
+
+    private let tosURL = URL(string: "https://github.com/ysakols/butter-run/blob/main/TERMS_OF_SERVICE.md")!
+    private let privacyURL = URL(string: "https://github.com/ysakols/butter-run/blob/main/PRIVACY_POLICY.md")!
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer().frame(height: 20)
+
+            Image("butter-pat")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 60, height: 60)
+                .accessibilityHidden(true)
+
+            Text("Terms of Service")
+                .font(.system(.title2, design: .rounded, weight: .bold))
+                .foregroundStyle(ButterTheme.textPrimary)
+
+            Text("Please review and accept our Terms of Service and Privacy Policy to continue using Butter Run.")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(ButterTheme.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            VStack(spacing: 12) {
+                Link(destination: tosURL) {
+                    HStack {
+                        Image(systemName: "doc.text")
+                        Text("Read Terms of Service")
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                    }
+                    .font(.system(.body, design: .rounded))
+                    .foregroundStyle(ButterTheme.gold)
+                    .padding()
+                    .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                }
+
+                Link(destination: privacyURL) {
+                    HStack {
+                        Image(systemName: "hand.raised")
+                        Text("Read Privacy Policy")
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                    }
+                    .font(.system(.body, design: .rounded))
+                    .foregroundStyle(ButterTheme.gold)
+                    .padding()
+                    .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
+            .padding(.horizontal, 32)
+
+            Spacer()
+
+            VStack(spacing: 8) {
+                Text("By tapping \"I Agree\" you confirm that you have read, understood, and agree to be bound by the Terms of Service and Privacy Policy.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+
+                Button(action: onAccept) {
+                    Text("I Agree")
+                        .font(.system(.title3, design: .rounded, weight: .bold))
+                        .foregroundStyle(ButterTheme.background)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 16))
+                }
+                .padding(.horizontal, 32)
+            }
+
+            Spacer().frame(height: 40)
+        }
+        .background(ButterTheme.background.ignoresSafeArea())
+        .preferredColorScheme(.light)
     }
 }
