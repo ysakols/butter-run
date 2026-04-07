@@ -304,7 +304,6 @@ struct LegalAcceptanceView: View {
     let onAccept: () -> Void
     @State private var tosAccepted = false
     @State private var privacyAccepted = false
-    @State private var showingToS = true // start on ToS, then privacy
 
     var body: some View {
         if !tosAccepted {
@@ -367,25 +366,26 @@ struct ScrollableDocumentView: View {
             .padding(.bottom, 12)
 
             // Scrollable document text
-            ScrollView {
-                Text(text)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(ButterTheme.textPrimary)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 20)
+            GeometryReader { outerGeo in
+                ScrollView {
+                    Text(text)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(ButterTheme.textPrimary)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
 
-                // Invisible marker at the bottom to detect scroll position
-                GeometryReader { geo in
-                    Color.clear
-                        .preference(key: ScrollBottomPreferenceKey.self, value: geo.frame(in: .named("scroll")).maxY)
+                    // Invisible marker at the bottom to detect scroll position
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(key: ScrollBottomPreferenceKey.self, value: geo.frame(in: .named("scroll")).maxY)
+                    }
+                    .frame(height: 1)
                 }
-                .frame(height: 1)
-            }
-            .coordinateSpace(name: "scroll")
-            .onPreferenceChange(ScrollBottomPreferenceKey.self) { maxY in
-                // Consider "scrolled to bottom" when the bottom marker is within the visible area
-                if maxY < UIScreen.main.bounds.height + 100 {
-                    hasScrolledToBottom = true
+                .coordinateSpace(name: "scroll")
+                .onPreferenceChange(ScrollBottomPreferenceKey.self) { maxY in
+                    if maxY < outerGeo.size.height + 100 {
+                        hasScrolledToBottom = true
+                    }
                 }
             }
             .background(ButterTheme.surface)
@@ -432,7 +432,8 @@ private struct ScrollBottomPreferenceKey: PreferenceKey {
 // MARK: - Embedded Legal Text
 
 /// Legal text embedded directly in the app binary for immutability and offline access.
-/// Update these strings when TERMS_OF_SERVICE.md or PRIVACY_POLICY.md change.
+/// SYNC: When updating, keep in sync with /TERMS_OF_SERVICE.md and /PRIVACY_POLICY.md.
+/// Also bump ContentView.currentTosVersion to re-trigger acceptance for existing users.
 enum LegalText {
 
     static let termsOfService = """
