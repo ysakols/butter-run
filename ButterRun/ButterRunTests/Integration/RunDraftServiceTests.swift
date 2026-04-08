@@ -31,9 +31,7 @@ final class RunDraftServiceTests: XCTestCase {
             butterEntriesData: nil
         )
 
-        // Need a fresh context to see background writes
-        let freshContext = ModelContext(container)
-        let drafts = try freshContext.fetch(FetchDescriptor<RunDraft>())
+        let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 1)
         XCTAssertEqual(drafts.first?.elapsedSeconds, 120)
     }
@@ -89,8 +87,7 @@ final class RunDraftServiceTests: XCTestCase {
             isButterZeroChallenge: false, routeData: nil, butterEntriesData: nil
         )
 
-        let freshContext = ModelContext(container)
-        let drafts = try freshContext.fetch(FetchDescriptor<RunDraft>())
+        let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 1)
         XCTAssertEqual(drafts.first?.elapsedSeconds, 200)
     }
