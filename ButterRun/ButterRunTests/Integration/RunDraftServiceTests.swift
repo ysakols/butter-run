@@ -7,9 +7,10 @@ final class RunDraftServiceTests: XCTestCase {
     var context: ModelContext!
     var service: RunDraftService!
 
-    override func setUp() async throws {
+    override func setUp() {
+        super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        container = try ModelContainer(
+        container = try! ModelContainer(
             for: Run.self, Split.self, ButterEntry.self, UserProfile.self, Achievement.self, RunDraft.self,
             configurations: config
         )
