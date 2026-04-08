@@ -14,9 +14,10 @@ struct ShareImageRenderer {
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
 
-        // Get the CGImage on main (fast pointer copy), then do all heavy
-        // PNG encoding + metadata stripping off the main thread.
-        guard let cgImage = renderer.cgImage else { return nil }
+        // Get UIImage on main (required by ImageRenderer), extract its backing
+        // CGImage (fast pointer copy), then do all heavy PNG encoding +
+        // metadata stripping off the main thread.
+        guard let cgImage = renderer.uiImage?.cgImage else { return nil }
 
         let cleanData = await Task.detached(priority: .userInitiated) {
             encodePNGStrippingMetadata(from: cgImage)
