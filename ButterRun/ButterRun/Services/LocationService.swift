@@ -49,6 +49,13 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         locationManager.requestWhenInUseAuthorization()
     }
 
+    /// Whether location services are available and authorized.
+    var isLocationAvailable: Bool {
+        CLLocationManager.locationServicesEnabled() &&
+        authorizationStatus != .denied &&
+        authorizationStatus != .restricted
+    }
+
     func startTracking() {
         locations = []
         routeBuffer = []
@@ -67,6 +74,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
 
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.showsBackgroundLocationIndicator = true
         locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.startUpdatingLocation()
     }
@@ -75,6 +83,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         isTracking = false
         locationManager.stopUpdatingLocation()
         locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.showsBackgroundLocationIndicator = false
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.pausesLocationUpdatesAutomatically = false
     }
@@ -234,6 +243,20 @@ extension LocationService: CLLocationManagerDelegate {
         gpsSignalState = .lost
         // Re-enable updates immediately since we need continuous tracking for running
         manager.startUpdatingLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        guard let clError = error as? CLError else { return }
+        switch clError.code {
+        case .denied:
+            // User revoked permission or location services disabled system-wide
+            isAuthDenied = true
+            gpsSignalState = .lost
+        case .network:
+            gpsSignalState = .weak
+        default:
+            break
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations newLocations: [CLLocation]) {
