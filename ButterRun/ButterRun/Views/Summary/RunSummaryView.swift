@@ -449,11 +449,10 @@ struct RunSummaryView: View {
         stravaError = nil
         Task {
             var activityId: Int64?
-            var uploadError: String?
             do {
                 activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
             } catch {
-                uploadError = error.localizedDescription
+                // Don't expose raw error details (may contain tokens/URLs) — use generic message
             }
             await MainActor.run {
                 if let activityId {
@@ -461,7 +460,7 @@ struct RunSummaryView: View {
                     try? modelContext.save()
                     stravaUploaded = true
                 } else {
-                    stravaError = uploadError
+                    stravaError = "Upload failed. Check your connection and try again."
                 }
                 stravaUploading = false
             }

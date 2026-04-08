@@ -58,6 +58,7 @@ class RunDraftService {
 
     /// Load an existing draft (on main context for UI).
     func loadDraft(context: ModelContext) -> RunDraft? {
+        dispatchPrecondition(condition: .onQueue(.main))
         do {
             let descriptor = FetchDescriptor<RunDraft>()
             return try context.fetch(descriptor).first
@@ -69,6 +70,7 @@ class RunDraftService {
 
     /// Delete all drafts.
     func deleteDraft(context: ModelContext) {
+        dispatchPrecondition(condition: .onQueue(.main))
         do {
             try context.delete(model: RunDraft.self)
             try context.save()
@@ -79,6 +81,7 @@ class RunDraftService {
 
     /// Auto-purge drafts older than 48 hours.
     func purgeStale(context: ModelContext) {
+        dispatchPrecondition(condition: .onQueue(.main))
         let cutoff = Date().addingTimeInterval(-48 * 60 * 60)
         do {
             try context.delete(model: RunDraft.self, where: #Predicate<RunDraft> {
