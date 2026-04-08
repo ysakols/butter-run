@@ -115,7 +115,7 @@ class HealthKitService {
 
             // Add energy burned sample
             guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else {
-                builder.discardWorkout()
+                await builder.discardWorkout()
                 return false
             }
             let energySample = HKQuantitySample(
@@ -127,7 +127,7 @@ class HealthKitService {
 
             // Add distance sample
             guard let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else {
-                builder.discardWorkout()
+                await builder.discardWorkout()
                 return false
             }
             let distanceSample = HKQuantitySample(
@@ -171,7 +171,7 @@ class HealthKitService {
             try await builder.finishWorkout()
             return true
         } catch {
-            builder.discardWorkout()
+            await builder.discardWorkout()
             return false
         }
     }
