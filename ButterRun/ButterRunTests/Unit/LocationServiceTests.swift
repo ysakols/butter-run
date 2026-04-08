@@ -45,6 +45,21 @@ final class LocationServiceTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
+    func test_decodeRoute_outOfRangeCoords_skipped() {
+        // Latitude outside [-90, 90] or longitude outside [-180, 180] should be filtered
+        let coords: [[Double]] = [
+            [91.0, 0.0],       // latitude too high
+            [-91.0, 0.0],      // latitude too low
+            [0.0, 181.0],      // longitude too high
+            [0.0, -181.0],     // longitude too low
+            [37.7749, -122.4]  // valid
+        ]
+        let data = try! JSONEncoder().encode(coords)
+        let result = LocationService.decodeRoute(data)
+        XCTAssertEqual(result.count, 1, "Only the valid coordinate should survive range validation")
+        XCTAssertEqual(result[0].latitude, 37.7749, accuracy: 0.0001)
+    }
+
     // MARK: - Encode/Decode Roundtrip (via direct data)
 
     func test_encodeDecodeRoundtrip() {
@@ -81,5 +96,36 @@ final class LocationServiceTests: XCTestCase {
         XCTAssertFalse(service.isTracking)
         XCTAssertEqual(service.gpsSignalState, .strong)
         XCTAssertFalse(service.routeIsDirty)
+    }
+
+    // MARK: - Async Route Encoding
+
+    func test_encodeRouteAsync_emptyBuffer_returnsEmptyArray() async {
+        let service = LocationService()
+        let data = await service.encodeRouteAsync()
+        // Empty route buffer encodes as an empty JSON array "[]"
+        XCTAssertNotNil(data)
+        let decoded = LocationService.decodeRoute(data!)
+        XCTAssertTrue(decoded.isEmpty, "Empty buffer should decode to empty coordinate array")
+    }
+
+    func test_encodeRouteAsync_returnsCachedData() async {
+        let service = LocationService()
+        // Prime the cache via sync encode
+        _ = service.encodeRoute()
+
+        // Async should return the same cached result
+        let data = await service.encodeRouteAsync()
+        let syncData = service.encodeRoute()
+        XCTAssertEqual(data, syncData)
+    }
+
+    func test_encodeRouteAsync_smallBuffer_matchesSyncEncode() async {
+        // We can't easily inject route points without tracking, but we can
+        // verify the async path delegates to sync for small buffers.
+        let service = LocationService()
+        let asyncResult = await service.encodeRouteAsync()
+        let syncResult = service.encodeRoute()
+        XCTAssertEqual(asyncResult, syncResult)
     }
 }

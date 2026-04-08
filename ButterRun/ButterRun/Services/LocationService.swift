@@ -23,6 +23,8 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     private(set) var routeIsDirty = false
     /// Cached encoded route data, invalidated when new points arrive.
     private var cachedRouteData: Data?
+    /// Generation counter incremented on every new GPS point; prevents stale async write-backs.
+    private var routeGeneration: Int = 0
 
     private var previousLocation: CLLocation?
     private var previousAltitude: Double?
@@ -47,9 +49,17 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         locationManager.requestWhenInUseAuthorization()
     }
 
+    /// Whether location services are available and authorized.
+    var isLocationAvailable: Bool {
+        CLLocationManager.locationServicesEnabled() &&
+        authorizationStatus != .denied &&
+        authorizationStatus != .restricted
+    }
+
     func startTracking() {
         locations = []
         routeBuffer = []
+        routeGeneration = 0
         routeIsDirty = false
         cachedRouteData = nil
         totalDistanceMeters = 0
@@ -64,6 +74,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
 
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.showsBackgroundLocationIndicator = true
         locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.startUpdatingLocation()
     }
@@ -72,6 +83,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         isTracking = false
         locationManager.stopUpdatingLocation()
         locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.showsBackgroundLocationIndicator = false
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.pausesLocationUpdatesAutomatically = false
     }
@@ -80,6 +92,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         isTracking = false
         locationManager.stopUpdatingLocation()
         locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.showsBackgroundLocationIndicator = false
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.pausesLocationUpdatesAutomatically = false
     }
@@ -89,6 +102,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         previousLocation = locations.last
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.showsBackgroundLocationIndicator = true
         locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.startUpdatingLocation()
     }
@@ -107,7 +121,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
             let asLocations = routeBuffer.map {
                 CLLocation(latitude: $0[0], longitude: $0[1])
             }
-            let simplified = simplifyRoute(asLocations, maxPoints: 5000)
+            let simplified = Self.simplifyRoute(asLocations, maxPoints: 5000)
             coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
         } else {
             coords = routeBuffer
@@ -119,14 +133,16 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     }
 
     // MARK: - Route Simplification (Douglas-Peucker)
+    // These are static to enforce that they access no instance state,
+    // making them safe to call from any thread.
 
-    private func simplifyRoute(_ points: [CLLocation], maxPoints: Int) -> [CLLocation] {
+    private static func simplifyRoute(_ points: [CLLocation], maxPoints: Int) -> [CLLocation] {
         guard points.count > maxPoints else { return points }
         let epsilon = findEpsilon(points: points, targetCount: maxPoints)
         return douglasPeucker(points, epsilon: epsilon)
     }
 
-    private func findEpsilon(points: [CLLocation], targetCount: Int) -> Double {
+    private static func findEpsilon(points: [CLLocation], targetCount: Int) -> Double {
         var lo = 0.0, hi = 100.0
         for _ in 0..<20 {
             let mid = (lo + hi) / 2
@@ -140,7 +156,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         return hi
     }
 
-    private func douglasPeucker(_ points: [CLLocation], epsilon: Double) -> [CLLocation] {
+    private static func douglasPeucker(_ points: [CLLocation], epsilon: Double) -> [CLLocation] {
         guard points.count > 2, let first = points.first, let last = points.last else { return points }
         var maxDist = 0.0
         var index = 0
@@ -160,7 +176,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         }
     }
 
-    private func perpendicularDistance(point: CLLocation, lineStart: CLLocation, lineEnd: CLLocation) -> Double {
+    private static func perpendicularDistance(point: CLLocation, lineStart: CLLocation, lineEnd: CLLocation) -> Double {
         let a = point.distance(from: lineStart)
         let b = point.distance(from: lineEnd)
         let c = lineStart.distance(from: lineEnd)
@@ -170,12 +186,48 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         return (2 * area) / c
     }
 
+    /// Async route encoding — runs Douglas-Peucker off the main thread for large routes.
+    /// Must be called from the main thread (all LocationService state is main-thread-only).
+    @MainActor
+    func encodeRouteAsync() async -> Data? {
+        // Fast path: cache hit
+        if !routeIsDirty, let cached = cachedRouteData {
+            return cached
+        }
+        if routeBuffer.count <= 5000 {
+            // Lightweight — just JSON encode, fine on any thread
+            return encodeRoute()
+        }
+        // Heavy path: dispatch simplification to background
+        let buffer = routeBuffer
+        let generationAtStart = routeGeneration
+        return await withCheckedContinuation { [weak self] continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let asLocations = buffer.map { CLLocation(latitude: $0[0], longitude: $0[1]) }
+                let simplified = LocationService.simplifyRoute(asLocations, maxPoints: 5000)
+                let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
+                let data = try? JSONEncoder().encode(coords)
+                // Resume on main so the cache is updated before the caller sees the result,
+                // preventing redundant Douglas-Peucker runs by concurrent callers.
+                DispatchQueue.main.async { [weak self] in
+                    if let self, self.routeGeneration == generationAtStart {
+                        self.cachedRouteData = data
+                        self.routeIsDirty = false
+                    }
+                    continuation.resume(returning: data)
+                }
+            }
+        }
+    }
+
     static func decodeRoute(_ data: Data) -> [CLLocationCoordinate2D] {
         guard let coords = try? JSONDecoder().decode([[Double]].self, from: data) else {
             return []
         }
         return coords.compactMap { pair in
-            guard pair.count >= 2 else { return nil }
+            guard pair.count >= 2,
+                  (-90...90).contains(pair[0]),
+                  (-180...180).contains(pair[1]) else { return nil }
             return CLLocationCoordinate2D(latitude: pair[0], longitude: pair[1])
         }
     }
@@ -193,6 +245,20 @@ extension LocationService: CLLocationManagerDelegate {
         gpsSignalState = .lost
         // Re-enable updates immediately since we need continuous tracking for running
         manager.startUpdatingLocation()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        guard let clError = error as? CLError else { return }
+        switch clError.code {
+        case .denied:
+            // User revoked permission or location services disabled system-wide
+            isAuthDenied = true
+            gpsSignalState = .lost
+        case .network:
+            gpsSignalState = .weak
+        default:
+            break
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations newLocations: [CLLocation]) {
@@ -256,6 +322,7 @@ extension LocationService: CLLocationManagerDelegate {
             }
 
             routeBuffer.append([location.coordinate.latitude, location.coordinate.longitude])
+            routeGeneration += 1
             routeIsDirty = true
             cachedRouteData = nil
             locations.append(location)

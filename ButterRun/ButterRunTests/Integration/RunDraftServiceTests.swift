@@ -7,14 +7,15 @@ final class RunDraftServiceTests: XCTestCase {
     var context: ModelContext!
     var service: RunDraftService!
 
-    override func setUp() async throws {
+    override func setUp() {
+        super.setUp()
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        container = try ModelContainer(
+        container = try! ModelContainer(
             for: Run.self, Split.self, ButterEntry.self, UserProfile.self, Achievement.self, RunDraft.self,
             configurations: config
         )
         context = ModelContext(container)
-        service = RunDraftService(container: container)
+        service = RunDraftService(context: context)
     }
 
     func test_saveDraft_createsRecord() throws {
@@ -30,9 +31,7 @@ final class RunDraftServiceTests: XCTestCase {
             butterEntriesData: nil
         )
 
-        // Need a fresh context to see background writes
-        let freshContext = ModelContext(container)
-        let drafts = try freshContext.fetch(FetchDescriptor<RunDraft>())
+        let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 1)
         XCTAssertEqual(drafts.first?.elapsedSeconds, 120)
     }
@@ -50,8 +49,7 @@ final class RunDraftServiceTests: XCTestCase {
             butterEntriesData: nil
         )
 
-        let freshContext = ModelContext(container)
-        let draft = service.loadDraft(context: freshContext)
+        let draft = service.loadDraft()
         XCTAssertNotNil(draft)
         XCTAssertEqual(draft?.elapsedSeconds, 300)
         XCTAssertTrue(draft?.isButterZeroChallenge ?? false)
@@ -70,10 +68,9 @@ final class RunDraftServiceTests: XCTestCase {
             butterEntriesData: nil
         )
 
-        let freshContext = ModelContext(container)
-        service.deleteDraft(context: freshContext)
+        service.deleteDraft()
 
-        let drafts = try freshContext.fetch(FetchDescriptor<RunDraft>())
+        let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 0)
     }
 
@@ -90,8 +87,7 @@ final class RunDraftServiceTests: XCTestCase {
             isButterZeroChallenge: false, routeData: nil, butterEntriesData: nil
         )
 
-        let freshContext = ModelContext(container)
-        let drafts = try freshContext.fetch(FetchDescriptor<RunDraft>())
+        let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 1)
         XCTAssertEqual(drafts.first?.elapsedSeconds, 200)
     }
@@ -103,7 +99,7 @@ final class RunDraftServiceTests: XCTestCase {
         context.insert(draft)
         try context.save()
 
-        service.purgeStale(context: context)
+        service.purgeStale()
 
         let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 0)
@@ -115,9 +111,45 @@ final class RunDraftServiceTests: XCTestCase {
         context.insert(draft)
         try context.save()
 
-        service.purgeStale(context: context)
+        service.purgeStale()
 
         let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 1)
+    }
+
+    func test_purgeStale_selectiveDelete_keepsRecentRemovesOld() throws {
+        // Insert a stale draft (49 hours old)
+        let oldDraft = RunDraft(startDate: .now, elapsedSeconds: 50)
+        oldDraft.lastCheckpoint = Date().addingTimeInterval(-49 * 60 * 60)
+        context.insert(oldDraft)
+
+        // Insert a recent draft
+        let newDraft = RunDraft(startDate: .now, elapsedSeconds: 200)
+        newDraft.lastCheckpoint = Date()
+        context.insert(newDraft)
+        try context.save()
+
+        let beforeCount = try context.fetch(FetchDescriptor<RunDraft>()).count
+        XCTAssertEqual(beforeCount, 2)
+
+        service.purgeStale()
+
+        let remaining = try context.fetch(FetchDescriptor<RunDraft>())
+        XCTAssertEqual(remaining.count, 1, "Only the recent draft should survive purge")
+        XCTAssertEqual(remaining.first?.elapsedSeconds, 200)
+    }
+
+    func test_batchDelete_removesAllDrafts() throws {
+        // Insert multiple drafts directly
+        context.insert(RunDraft(startDate: .now, elapsedSeconds: 10))
+        context.insert(RunDraft(startDate: .now, elapsedSeconds: 20))
+        context.insert(RunDraft(startDate: .now, elapsedSeconds: 30))
+        try context.save()
+
+        XCTAssertEqual(try context.fetch(FetchDescriptor<RunDraft>()).count, 3)
+
+        service.deleteDraft()
+
+        XCTAssertEqual(try context.fetch(FetchDescriptor<RunDraft>()).count, 0)
     }
 }

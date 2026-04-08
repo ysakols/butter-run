@@ -10,6 +10,7 @@ struct RunSummaryView: View {
 
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
+    @State private var isGeneratingShare = false
     @State private var meltProgress: Double = 0
     @State private var shareMode: ShareCardMode = .story
     @State private var newAchievements: [AchievementType] = []
@@ -120,13 +121,22 @@ struct RunSummaryView: View {
                     Button {
                         generateAndShare()
                     } label: {
-                        Label("Share My Run", systemImage: "square.and.arrow.up")
-                            .font(.system(.body, design: .rounded, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
-                            .foregroundStyle(ButterTheme.onPrimaryAction)
+                        ZStack {
+                            Label("Share My Run", systemImage: "square.and.arrow.up")
+                                .font(.system(.body, design: .rounded, weight: .semibold))
+                                .opacity(isGeneratingShare ? 0 : 1)
+
+                            if isGeneratingShare {
+                                ProgressView()
+                                    .tint(ButterTheme.onPrimaryAction)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
+                        .foregroundStyle(ButterTheme.onPrimaryAction)
                     }
+                    .disabled(isGeneratingShare)
                     .padding(.horizontal)
                     .accessibilityLabel("Share run results")
 
@@ -418,6 +428,7 @@ struct RunSummaryView: View {
             let service = HealthKitService()
             let success = await service.saveWorkout(run: run, pauseResumeEvents: pauseResumeEvents)
             await MainActor.run {
+                healthKitSyncing = false
                 if success {
                     run.healthKitSynced = true
                     do {
@@ -428,7 +439,6 @@ struct RunSummaryView: View {
                     }
                 } else {
                     healthKitError = "Could not save to Apple Health. Check permissions in Settings."
-                    healthKitSyncing = false
                 }
             }
         }
@@ -438,15 +448,22 @@ struct RunSummaryView: View {
         stravaUploading = true
         stravaError = nil
         Task {
+            var activityId: Int64?
             do {
-                let activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
-                run.stravaActivityId = activityId
-                try? modelContext.save()
-                stravaUploaded = true
+                activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
             } catch {
-                stravaError = error.localizedDescription
+                // Don't expose raw error details (may contain tokens/URLs) — use generic message
             }
-            stravaUploading = false
+            await MainActor.run {
+                if let activityId {
+                    run.stravaActivityId = activityId
+                    try? modelContext.save()
+                    stravaUploaded = true
+                } else {
+                    stravaError = "Upload failed. Check your connection and try again."
+                }
+                stravaUploading = false
+            }
         }
     }
 
@@ -463,10 +480,14 @@ struct RunSummaryView: View {
         }
     }
 
-    @MainActor
     private func generateAndShare() {
-        shareImage = ShareImageRenderer.render(run: run, usesMiles: usesMiles, mode: shareMode)
-        showShareSheet = true
+        guard !isGeneratingShare else { return }
+        isGeneratingShare = true
+        Task {
+            shareImage = await ShareImageRenderer.render(run: run, usesMiles: usesMiles, mode: shareMode)
+            showShareSheet = shareImage != nil
+            isGeneratingShare = false
+        }
     }
 }
 

@@ -80,6 +80,37 @@ final class HistoryUITests: XCTestCase {
         XCTAssertTrue(allRunsHeader.waitForExistence(timeout: 5))
     }
 
+    func test_showMoreButton_hiddenWithFewRuns() {
+        // Start and stop a single run
+        tapStartRun()
+
+        let pauseButton = app.buttons["Pause run"]
+        XCTAssertTrue(pauseButton.waitForExistence(timeout: 5))
+
+        let stopButton = app.buttons["Stop run"]
+        XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
+        stopButton.press(forDuration: 3.5)
+
+        let endRunButton = app.buttons["End Run"]
+        XCTAssertTrue(endRunButton.waitForExistence(timeout: 3))
+        endRunButton.tap()
+
+        let doneButton = app.buttons["Done"]
+        XCTAssertTrue(doneButton.waitForExistence(timeout: 5))
+        doneButton.tap()
+
+        // Navigate to History
+        let historyTab = app.tabBars.buttons["History"]
+        historyTab.tap()
+
+        let allRunsHeader = app.staticTexts["All Runs"]
+        XCTAssertTrue(allRunsHeader.waitForExistence(timeout: 5))
+
+        // "Show More" should NOT appear with only 1 run (threshold is 50)
+        let showMore = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Show More'")).firstMatch
+        XCTAssertFalse(showMore.exists, "Show More button should not appear when run count is below visible limit")
+    }
+
     func test_manualRunEntry() {
         // First create a run so the list renders (empty state doesn't show "Log Manual Run")
         tapStartRun()

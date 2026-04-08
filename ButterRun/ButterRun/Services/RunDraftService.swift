@@ -5,17 +5,15 @@ import OSLog
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.butterrun", category: "RunDraftService")
 
 /// Thread safety: all methods must be called from the main thread.
-/// ModelContext is not thread-safe; callers are responsible for main-thread dispatch.
+/// ModelContext is not thread-safe; all access is through a single context.
 class RunDraftService {
-    private let container: ModelContainer
-    /// Persistent context for draft saves. Must only be accessed from the main thread.
-    private var persistentContext: ModelContext?
+    private let context: ModelContext
 
-    init(container: ModelContainer) {
-        self.container = container
+    init(context: ModelContext) {
+        self.context = context
     }
 
-    /// Save a draft checkpoint. Uses a persistent ModelContext (main-thread only).
+    /// Save a draft checkpoint (main-thread only).
     func saveDraft(
         startDate: Date,
         elapsedSeconds: Double,
@@ -27,17 +25,13 @@ class RunDraftService {
         routeData: Data?,
         butterEntriesData: Data?
     ) {
-        if persistentContext == nil {
-            persistentContext = ModelContext(container)
-        }
-        guard let context = persistentContext else { return }
+        dispatchPrecondition(condition: .onQueue(.main))
 
         // Delete any existing draft first (only one at a time)
-        let descriptor = FetchDescriptor<RunDraft>()
-        if let existing = try? context.fetch(descriptor) {
-            for draft in existing {
-                context.delete(draft)
-            }
+        do {
+            try context.delete(model: RunDraft.self)
+        } catch {
+            logger.warning("Failed to delete existing draft before save: \(error, privacy: .public)")
         }
 
         let draft = RunDraft(
@@ -60,8 +54,9 @@ class RunDraftService {
         }
     }
 
-    /// Load an existing draft (on main context for UI).
-    func loadDraft(context: ModelContext) -> RunDraft? {
+    /// Load an existing draft.
+    func loadDraft() -> RunDraft? {
+        dispatchPrecondition(condition: .onQueue(.main))
         do {
             let descriptor = FetchDescriptor<RunDraft>()
             return try context.fetch(descriptor).first
@@ -72,13 +67,10 @@ class RunDraftService {
     }
 
     /// Delete all drafts.
-    func deleteDraft(context: ModelContext) {
+    func deleteDraft() {
+        dispatchPrecondition(condition: .onQueue(.main))
         do {
-            let descriptor = FetchDescriptor<RunDraft>()
-            let drafts = try context.fetch(descriptor)
-            for draft in drafts {
-                context.delete(draft)
-            }
+            try context.delete(model: RunDraft.self)
             try context.save()
         } catch {
             logger.error("Failed to delete run draft: \(error, privacy: .public)")
@@ -86,14 +78,13 @@ class RunDraftService {
     }
 
     /// Auto-purge drafts older than 48 hours.
-    func purgeStale(context: ModelContext) {
+    func purgeStale() {
+        dispatchPrecondition(condition: .onQueue(.main))
         let cutoff = Date().addingTimeInterval(-48 * 60 * 60)
         do {
-            let descriptor = FetchDescriptor<RunDraft>()
-            let drafts = try context.fetch(descriptor)
-            for draft in drafts where draft.lastCheckpoint < cutoff {
-                context.delete(draft)
-            }
+            try context.delete(model: RunDraft.self, where: #Predicate<RunDraft> {
+                $0.lastCheckpoint < cutoff
+            })
             try context.save()
         } catch {
             logger.error("Failed to purge stale drafts: \(error, privacy: .public)")

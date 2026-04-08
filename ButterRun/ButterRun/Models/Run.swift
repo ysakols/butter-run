@@ -10,7 +10,7 @@ import SwiftData
 /// ``isManualEntry`` were reconstructed from crash-recovery drafts rather than recorded live.
 @Model
 class Run {
-    @Attribute(.spotlight) var id: UUID
+    var id: UUID
     @Attribute(.spotlight) var startDate: Date
     var endDate: Date?
     var distanceMeters: Double
@@ -25,8 +25,8 @@ class Run {
     var elevationLossMeters: Double
     var averageCadence: Double?
     var routePolyline: Data?
-    @Relationship(deleteRule: .cascade) var splits: [Split]
-    @Relationship(deleteRule: .cascade) var butterEntries: [ButterEntry]
+    @Relationship(deleteRule: .cascade, inverse: \Split.run) var splits: [Split]
+    @Relationship(deleteRule: .cascade, inverse: \ButterEntry.run) var butterEntries: [ButterEntry]
     var isButterZeroChallenge: Bool
     var notes: String?
 

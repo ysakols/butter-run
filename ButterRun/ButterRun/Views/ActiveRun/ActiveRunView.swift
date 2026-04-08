@@ -116,7 +116,7 @@ struct ActiveRunView: View {
         .onAppear {
             viewModel.configure(profile: profile)
             viewModel.isButterZeroChallenge = isButterZeroChallenge
-            let draftService = RunDraftService(container: modelContext.container)
+            let draftService = RunDraftService(context: modelContext)
             viewModel.setDraftService(draftService)
             viewModel.startRun()
             if isChurnEnabled, let config = churnConfig {
@@ -219,8 +219,8 @@ struct ActiveRunView: View {
         modelContext.insert(run)
         try? modelContext.save()
         // Delete draft on successful finish
-        let draftService = RunDraftService(container: modelContext.container)
-        draftService.deleteDraft(context: modelContext)
+        let draftService = RunDraftService(context: modelContext)
+        draftService.deleteDraft()
         completedRun = run
         showSummary = true
     }

@@ -2,6 +2,13 @@ import SwiftUI
 import SwiftData
 
 // MARK: - Schema Versioning
+//
+// NOTE: All versions reference the current model types rather than version-specific
+// nested types. This is sufficient because all migrations are lightweight (adding
+// optional fields or new models with defaults). SwiftData detects schema changes by
+// comparing the on-disk SQLite columns against the current model, not the Swift types.
+// If a future migration requires custom data transformation, the affected version(s)
+// must define nested model types capturing the "from" schema shape.
 
 enum SchemaV1: VersionedSchema {
     static var versionIdentifier = Schema.Version(1, 0, 0)
@@ -265,8 +272,8 @@ struct ContentView: View {
             }
 
             // Purge stale drafts on launch
-            let service = RunDraftService(container: modelContext.container)
-            service.purgeStale(context: modelContext)
+            let service = RunDraftService(context: modelContext)
+            service.purgeStale()
 
             // Check for a crash report from a previous session (guard against re-trigger)
             if pendingCrashReport == nil, let report = CrashReportService.pendingReport() {
@@ -317,8 +324,8 @@ struct CrashRecoveryWrapper<Content: View>: View {
     }
 
     private func checkForDraft() {
-        let service = RunDraftService(container: modelContext.container)
-        if let draft = service.loadDraft(context: modelContext) {
+        let service = RunDraftService(context: modelContext)
+        if let draft = service.loadDraft() {
             recoveredDraft = draft
             showRecoveryPrompt = true
         }
@@ -361,8 +368,8 @@ struct CrashRecoveryWrapper<Content: View>: View {
     }
 
     private func discardDraft() {
-        let service = RunDraftService(container: modelContext.container)
-        service.deleteDraft(context: modelContext)
+        let service = RunDraftService(context: modelContext)
+        service.deleteDraft()
         recoveredDraft = nil
     }
 }

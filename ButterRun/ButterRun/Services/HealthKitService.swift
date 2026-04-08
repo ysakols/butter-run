@@ -95,7 +95,7 @@ class HealthKitService {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                 let flag = ResumeOnce()
 
-                Task {
+                let collectionTask = Task {
                     do {
                         try await builder.beginCollection(at: startDate)
                         if flag.tryAcquire() { continuation.resume() }
@@ -105,15 +105,19 @@ class HealthKitService {
                 }
 
                 Task {
-                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
                     if flag.tryAcquire() {
+                        collectionTask.cancel()
                         continuation.resume(throwing: CancellationError())
                     }
                 }
             }
 
             // Add energy burned sample
-            guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return false }
+            guard let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else {
+                builder.discardWorkout()
+                return false
+            }
             let energySample = HKQuantitySample(
                 type: energyType,
                 quantity: HKQuantity(unit: .kilocalorie(), doubleValue: run.totalCaloriesBurned),
@@ -122,7 +126,10 @@ class HealthKitService {
             )
 
             // Add distance sample
-            guard let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else { return false }
+            guard let distanceType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) else {
+                builder.discardWorkout()
+                return false
+            }
             let distanceSample = HKQuantitySample(
                 type: distanceType,
                 quantity: HKQuantity(unit: .meter(), doubleValue: run.distanceMeters),
@@ -147,7 +154,7 @@ class HealthKitService {
                 let totalElapsed = endDate.timeIntervalSince(startDate)
                 let pausedTime = totalElapsed - run.durationSeconds
                 if pausedTime > 1 {
-                    let pauseDate = endDate.addingTimeInterval(-pausedTime)
+                    let pauseDate = max(startDate, endDate.addingTimeInterval(-pausedTime))
                     let resumeDate = endDate.addingTimeInterval(-1)
                     try await builder.addWorkoutEvents([
                         HKWorkoutEvent(type: .pause, dateInterval: DateInterval(start: pauseDate, duration: 0), metadata: nil),
@@ -156,11 +163,11 @@ class HealthKitService {
                 }
             }
 
-            try await builder.endCollection(at: endDate)
             try await builder.addMetadata([
                 "ButterBurnedPats": run.totalButterBurnedTsp,
                 "Source": "Butter Run"
             ])
+            try await builder.endCollection(at: endDate)
             try await builder.finishWorkout()
             return true
         } catch {

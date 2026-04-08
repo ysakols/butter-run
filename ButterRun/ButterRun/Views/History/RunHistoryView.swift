@@ -9,6 +9,7 @@ struct RunHistoryView: View {
     @State private var showManualEntry = false
     @State private var runToDelete: Run?
     @State private var showDeleteConfirmation = false
+    @State private var visibleCount = 50
 
     private var usesMiles: Bool { profiles.first?.usesMiles ?? true }
 
@@ -48,7 +49,7 @@ struct RunHistoryView: View {
 
                         // Run list
                         Section("All Runs") {
-                            ForEach(runs, id: \.id) { run in
+                            ForEach(runs.prefix(visibleCount), id: \.id) { run in
                                 NavigationLink {
                                     RunDetailView(run: run, usesMiles: usesMiles)
                                 } label: {
@@ -57,10 +58,23 @@ struct RunHistoryView: View {
                                 .listRowBackground(ButterTheme.surface)
                             }
                             .onDelete { indexSet in
-                                if let index = indexSet.first {
+                                if let index = indexSet.first, index < visibleCount {
                                     runToDelete = runs[index]
                                     showDeleteConfirmation = true
                                 }
+                            }
+
+                            if visibleCount < runs.count {
+                                Button {
+                                    visibleCount += 50
+                                } label: {
+                                    Text("Show More (\(runs.count - visibleCount) remaining)")
+                                        .font(.system(.body, design: .rounded))
+                                        .foregroundStyle(ButterTheme.gold)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 8)
+                                }
+                                .listRowBackground(ButterTheme.surface)
                             }
                         }
 
@@ -106,9 +120,6 @@ struct RunHistoryView: View {
             viewModel.load(runs: runs)
         }
         .onChange(of: runs.count) {
-            viewModel.load(runs: runs)
-        }
-        .onChange(of: runs.first?.id) {
             viewModel.load(runs: runs)
         }
     }
@@ -185,7 +196,7 @@ struct RunRowView: View {
                 Text("pats")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
-                Text("\(Int(round(run.totalButterBurnedTsp * 34))) cal")
+                Text("\(Int(round(run.totalButterBurnedTsp * ButterCalculator.caloriesPerTeaspoon))) cal")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
             }

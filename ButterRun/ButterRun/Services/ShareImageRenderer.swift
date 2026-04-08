@@ -9,25 +9,26 @@ enum ShareCardMode {
 
 struct ShareImageRenderer {
     @MainActor
-    static func render(run: Run, usesMiles: Bool, mode: ShareCardMode = .story) -> UIImage? {
+    static func render(run: Run, usesMiles: Bool, mode: ShareCardMode = .story) async -> UIImage? {
         let view = ShareCardContent(run: run, usesMiles: usesMiles, mode: mode)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
 
-        guard let uiImage = renderer.uiImage else { return nil }
+        // Get UIImage on main (required by ImageRenderer), extract its backing
+        // CGImage (fast pointer copy), then do all heavy PNG encoding +
+        // metadata stripping off the main thread.
+        guard let cgImage = renderer.uiImage?.cgImage else { return nil }
 
-        // Strip EXIF/GPS metadata
-        return stripMetadata(from: uiImage)
+        let cleanData = await Task.detached(priority: .userInitiated) {
+            encodePNGStrippingMetadata(from: cgImage)
+        }.value
+
+        return cleanData.flatMap { UIImage(data: $0) }
     }
 
-    /// Remove all metadata (EXIF, GPS, etc.) from the image
-    private static func stripMetadata(from image: UIImage) -> UIImage? {
-        guard let data = image.pngData(),
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-            return image
-        }
-
+    /// Encode a CGImage as PNG with all metadata (EXIF, GPS, etc.) stripped.
+    /// Runs entirely off the main thread — no UIKit dependencies.
+    private static func encodePNGStrippingMetadata(from cgImage: CGImage) -> Data? {
         let mutableData = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(
             mutableData,
@@ -35,16 +36,16 @@ struct ShareImageRenderer {
             1,
             nil
         ) else {
-            return image
+            return nil
         }
 
-        // Write image without any metadata
+        // Write image without any metadata properties
         CGImageDestinationAddImage(destination, cgImage, nil)
         guard CGImageDestinationFinalize(destination) else {
-            return image
+            return nil
         }
 
-        return UIImage(data: mutableData as Data)
+        return mutableData as Data
     }
 }
 
@@ -202,22 +203,12 @@ struct ShareCardContent: View {
         )
     }
 
-    private func statItem(value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.system(.headline, design: .rounded, weight: .bold))
-                .foregroundStyle(ButterTheme.textPrimary)
-            Text(label)
-                .font(.system(.caption2, design: .rounded))
-                .foregroundStyle(ButterTheme.textSecondary)
-        }
-    }
-
     private func formatPace(_ secondsPerKm: Double, miles: Bool) -> String {
         let secondsPerUnit = miles ? secondsPerKm * 1.60934 : secondsPerKm
+        let unit = miles ? "/mi" : "/km"
+        guard secondsPerUnit.isFinite, secondsPerUnit > 0 else { return "--:--\(unit)" }
         let mins = Int(secondsPerUnit) / 60
         let secs = Int(secondsPerUnit) % 60
-        let unit = miles ? "/mi" : "/km"
         return String(format: "%d:%02d%@", mins, secs, unit)
     }
 }

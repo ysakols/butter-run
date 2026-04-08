@@ -37,7 +37,7 @@ class RunSummaryViewModel {
     }
 
     @MainActor
-    func generateShareImage() -> UIImage? {
-        ShareImageRenderer.render(run: run, usesMiles: usesMiles)
+    func generateShareImage() async -> UIImage? {
+        await ShareImageRenderer.render(run: run, usesMiles: usesMiles)
     }
 }
