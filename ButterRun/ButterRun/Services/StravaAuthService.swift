@@ -1,5 +1,6 @@
 import Foundation
 import AuthenticationServices
+import CommonCrypto
 import UIKit
 
 @MainActor
@@ -11,6 +12,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     private var authSession: ASWebAuthenticationSession?
     private var expectedOAuthState: String?
+    private var pkceCodeVerifier: String?
 
     private enum Keys {
         static let accessToken = "strava_access_token"
@@ -66,7 +68,10 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
         let state = UUID().uuidString
         expectedOAuthState = state
-        guard let url = buildAuthorizeURL(state: state) else { return }
+        let verifier = Self.generateCodeVerifier()
+        pkceCodeVerifier = verifier
+        let challenge = Self.generateCodeChallenge(from: verifier)
+        guard let url = buildAuthorizeURL(state: state, codeChallenge: challenge) else { return }
 
         isAuthorizing = true
 
@@ -102,11 +107,13 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
                 self.expectedOAuthState = nil
 
                 do {
-                    try await self.exchangeToken(code: code)
+                    try await self.exchangeToken(code: code, codeVerifier: self.pkceCodeVerifier)
+                    self.pkceCodeVerifier = nil
                 } catch {
                     #if DEBUG
                     print("Strava token exchange failed: \(error.localizedDescription)")
                     #endif
+                    self.pkceCodeVerifier = nil
                 }
                 self.authSession = nil
             }
@@ -119,13 +126,16 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     // MARK: - Exchange Token
 
-    private func exchangeToken(code: String) async throws {
-        let params: [String: String] = [
+    private func exchangeToken(code: String, codeVerifier: String?) async throws {
+        var params: [String: String] = [
             "client_id": StravaConfig.clientID,
             "client_secret": StravaConfig.clientSecret,
             "code": code,
             "grant_type": "authorization_code"
         ]
+        if let codeVerifier {
+            params["code_verifier"] = codeVerifier
+        }
 
         let json = try await performTokenRequest(params)
 
@@ -217,7 +227,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     // MARK: - Private Helpers
 
-    private func buildAuthorizeURL(state: String) -> URL? {
+    private func buildAuthorizeURL(state: String, codeChallenge: String) -> URL? {
         var components = URLComponents(string: StravaConfig.authorizeURL)
         components?.queryItems = [
             URLQueryItem(name: "client_id", value: StravaConfig.clientID),
@@ -225,9 +235,30 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "approval_prompt", value: "auto"),
             URLQueryItem(name: "scope", value: StravaConfig.scopes),
-            URLQueryItem(name: "state", value: state)
+            URLQueryItem(name: "state", value: state),
+            URLQueryItem(name: "code_challenge_method", value: "S256"),
+            URLQueryItem(name: "code_challenge", value: codeChallenge)
         ]
         return components?.url
+    }
+
+    // MARK: - PKCE Helpers
+
+    /// Generate a cryptographically random code verifier (43-128 chars, RFC 7636).
+    private static func generateCodeVerifier() -> String {
+        var bytes = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return Data(bytes).base64URLEncoded()
+    }
+
+    /// SHA256 hash of the verifier, base64url-encoded (RFC 7636 S256).
+    private static func generateCodeChallenge(from verifier: String) -> String {
+        let data = Data(verifier.utf8)
+        var hash = [UInt8](repeating: 0, count: 32)
+        data.withUnsafeBytes { buf in
+            _ = CC_SHA256(buf.baseAddress, CC_LONG(data.count), &hash)
+        }
+        return Data(hash).base64URLEncoded()
     }
 
     private func performTokenRequest(_ params: [String: String]) async throws -> [String: Any] {
@@ -285,5 +316,17 @@ enum StravaAuthError: LocalizedError {
         case .missingRefreshToken:
             return "No refresh token available. Please re-authorize with Strava."
         }
+    }
+}
+
+// MARK: - PKCE Base64URL Encoding
+
+private extension Data {
+    /// Base64url encoding per RFC 4648 §5 (no padding, URL-safe alphabet).
+    func base64URLEncoded() -> String {
+        base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
     }
 }

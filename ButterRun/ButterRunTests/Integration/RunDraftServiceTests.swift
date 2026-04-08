@@ -14,7 +14,7 @@ final class RunDraftServiceTests: XCTestCase {
             configurations: config
         )
         context = ModelContext(container)
-        service = RunDraftService(container: container)
+        service = RunDraftService(context: context)
     }
 
     func test_saveDraft_createsRecord() throws {
@@ -50,8 +50,7 @@ final class RunDraftServiceTests: XCTestCase {
             butterEntriesData: nil
         )
 
-        let freshContext = ModelContext(container)
-        let draft = service.loadDraft(context: freshContext)
+        let draft = service.loadDraft()
         XCTAssertNotNil(draft)
         XCTAssertEqual(draft?.elapsedSeconds, 300)
         XCTAssertTrue(draft?.isButterZeroChallenge ?? false)
@@ -70,10 +69,9 @@ final class RunDraftServiceTests: XCTestCase {
             butterEntriesData: nil
         )
 
-        let freshContext = ModelContext(container)
-        service.deleteDraft(context: freshContext)
+        service.deleteDraft()
 
-        let drafts = try freshContext.fetch(FetchDescriptor<RunDraft>())
+        let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 0)
     }
 
@@ -103,7 +101,7 @@ final class RunDraftServiceTests: XCTestCase {
         context.insert(draft)
         try context.save()
 
-        service.purgeStale(context: context)
+        service.purgeStale()
 
         let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 0)
@@ -115,7 +113,7 @@ final class RunDraftServiceTests: XCTestCase {
         context.insert(draft)
         try context.save()
 
-        service.purgeStale(context: context)
+        service.purgeStale()
 
         let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 1)
@@ -136,7 +134,7 @@ final class RunDraftServiceTests: XCTestCase {
         let beforeCount = try context.fetch(FetchDescriptor<RunDraft>()).count
         XCTAssertEqual(beforeCount, 2)
 
-        service.purgeStale(context: context)
+        service.purgeStale()
 
         let remaining = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(remaining.count, 1, "Only the recent draft should survive purge")
@@ -152,7 +150,7 @@ final class RunDraftServiceTests: XCTestCase {
 
         XCTAssertEqual(try context.fetch(FetchDescriptor<RunDraft>()).count, 3)
 
-        service.deleteDraft(context: context)
+        service.deleteDraft()
 
         XCTAssertEqual(try context.fetch(FetchDescriptor<RunDraft>()).count, 0)
     }
