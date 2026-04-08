@@ -207,17 +207,6 @@ struct ShareCardContent: View {
         )
     }
 
-    private func statItem(value: String, label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.system(.headline, design: .rounded, weight: .bold))
-                .foregroundStyle(ButterTheme.textPrimary)
-            Text(label)
-                .font(.system(.caption2, design: .rounded))
-                .foregroundStyle(ButterTheme.textSecondary)
-        }
-    }
-
     private func formatPace(_ secondsPerKm: Double, miles: Bool) -> String {
         let secondsPerUnit = miles ? secondsPerKm * 1.60934 : secondsPerKm
         let mins = Int(secondsPerUnit) / 60

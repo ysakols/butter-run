@@ -58,7 +58,7 @@ struct RunHistoryView: View {
                                 .listRowBackground(ButterTheme.surface)
                             }
                             .onDelete { indexSet in
-                                if let index = indexSet.first, index < runs.count {
+                                if let index = indexSet.first, index < visibleCount {
                                     runToDelete = runs[index]
                                     showDeleteConfirmation = true
                                 }
@@ -196,7 +196,7 @@ struct RunRowView: View {
                 Text("pats")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
-                Text("\(Int(round(run.totalButterBurnedTsp * 34))) cal")
+                Text("\(Int(round(run.totalButterBurnedTsp * ButterCalculator.caloriesPerTeaspoon))) cal")
                     .font(.system(.caption2, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
             }

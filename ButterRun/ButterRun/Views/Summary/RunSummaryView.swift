@@ -448,15 +448,23 @@ struct RunSummaryView: View {
         stravaUploading = true
         stravaError = nil
         Task {
+            var activityId: Int64?
+            var uploadError: String?
             do {
-                let activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
-                run.stravaActivityId = activityId
-                try? modelContext.save()
-                stravaUploaded = true
+                activityId = try await StravaUploadService.shared.uploadRun(run: run, authService: stravaAuth)
             } catch {
-                stravaError = error.localizedDescription
+                uploadError = error.localizedDescription
             }
-            stravaUploading = false
+            await MainActor.run {
+                if let activityId {
+                    run.stravaActivityId = activityId
+                    try? modelContext.save()
+                    stravaUploaded = true
+                } else {
+                    stravaError = uploadError
+                }
+                stravaUploading = false
+            }
         }
     }
 

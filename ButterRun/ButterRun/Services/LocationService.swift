@@ -110,7 +110,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
             let asLocations = routeBuffer.map {
                 CLLocation(latitude: $0[0], longitude: $0[1])
             }
-            let simplified = simplifyRoute(asLocations, maxPoints: 5000)
+            let simplified = Self.simplifyRoute(asLocations, maxPoints: 5000)
             coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
         } else {
             coords = routeBuffer
@@ -122,14 +122,16 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     }
 
     // MARK: - Route Simplification (Douglas-Peucker)
+    // These are static to enforce that they access no instance state,
+    // making them safe to call from any thread.
 
-    private func simplifyRoute(_ points: [CLLocation], maxPoints: Int) -> [CLLocation] {
+    private static func simplifyRoute(_ points: [CLLocation], maxPoints: Int) -> [CLLocation] {
         guard points.count > maxPoints else { return points }
         let epsilon = findEpsilon(points: points, targetCount: maxPoints)
         return douglasPeucker(points, epsilon: epsilon)
     }
 
-    private func findEpsilon(points: [CLLocation], targetCount: Int) -> Double {
+    private static func findEpsilon(points: [CLLocation], targetCount: Int) -> Double {
         var lo = 0.0, hi = 100.0
         for _ in 0..<20 {
             let mid = (lo + hi) / 2
@@ -143,7 +145,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         return hi
     }
 
-    private func douglasPeucker(_ points: [CLLocation], epsilon: Double) -> [CLLocation] {
+    private static func douglasPeucker(_ points: [CLLocation], epsilon: Double) -> [CLLocation] {
         guard points.count > 2, let first = points.first, let last = points.last else { return points }
         var maxDist = 0.0
         var index = 0
@@ -163,7 +165,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         }
     }
 
-    private func perpendicularDistance(point: CLLocation, lineStart: CLLocation, lineEnd: CLLocation) -> Double {
+    private static func perpendicularDistance(point: CLLocation, lineStart: CLLocation, lineEnd: CLLocation) -> Double {
         let a = point.distance(from: lineStart)
         let b = point.distance(from: lineEnd)
         let c = lineStart.distance(from: lineEnd)
@@ -190,17 +192,8 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         let generationAtStart = routeGeneration
         return await withCheckedContinuation { [weak self] continuation in
             DispatchQueue.global(qos: .userInitiated).async {
-                // simplifyRoute is a pure function over the snapshot — safe without self
                 let asLocations = buffer.map { CLLocation(latitude: $0[0], longitude: $0[1]) }
-                let simplified: [CLLocation]
-                if let self {
-                    simplified = self.simplifyRoute(asLocations, maxPoints: 5000)
-                } else {
-                    // Service deallocated — return the data without simplification
-                    let coords = asLocations.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
-                    continuation.resume(returning: try? JSONEncoder().encode(coords))
-                    return
-                }
+                let simplified = LocationService.simplifyRoute(asLocations, maxPoints: 5000)
                 let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
                 let data = try? JSONEncoder().encode(coords)
                 DispatchQueue.main.async { [weak self] in
