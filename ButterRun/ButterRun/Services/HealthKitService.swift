@@ -95,7 +95,7 @@ class HealthKitService {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                 let flag = ResumeOnce()
 
-                Task {
+                let collectionTask = Task {
                     do {
                         try await builder.beginCollection(at: startDate)
                         if flag.tryAcquire() { continuation.resume() }
@@ -107,6 +107,7 @@ class HealthKitService {
                 Task {
                     try? await Task.sleep(nanoseconds: 2_000_000_000)
                     if flag.tryAcquire() {
+                        collectionTask.cancel()
                         continuation.resume(throwing: CancellationError())
                     }
                 }

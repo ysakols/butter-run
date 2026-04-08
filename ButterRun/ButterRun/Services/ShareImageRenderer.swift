@@ -27,7 +27,7 @@ struct ShareImageRenderer {
     }
 
     /// Remove all metadata (EXIF, GPS, etc.) from PNG data. Returns clean PNG data.
-    nonisolated private static func stripMetadata(from pngData: Data) -> Data? {
+    private static func stripMetadata(from pngData: Data) -> Data? {
         guard let source = CGImageSourceCreateWithData(pngData as CFData, nil),
               let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
             return nil

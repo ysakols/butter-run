@@ -188,13 +188,23 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         // Heavy path: dispatch simplification to background
         let buffer = routeBuffer
         let generationAtStart = routeGeneration
-        return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async { [self] in
+        return await withCheckedContinuation { [weak self] continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                // simplifyRoute is a pure function over the snapshot — safe without self
                 let asLocations = buffer.map { CLLocation(latitude: $0[0], longitude: $0[1]) }
-                let simplified = self.simplifyRoute(asLocations, maxPoints: 5000)
+                let simplified: [CLLocation]
+                if let self {
+                    simplified = self.simplifyRoute(asLocations, maxPoints: 5000)
+                } else {
+                    // Service deallocated — return the data without simplification
+                    let coords = asLocations.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
+                    continuation.resume(returning: try? JSONEncoder().encode(coords))
+                    return
+                }
                 let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
                 let data = try? JSONEncoder().encode(coords)
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
                     // Only update cache if no new GPS points arrived since we started
                     if self.routeGeneration == generationAtStart {
                         self.cachedRouteData = data

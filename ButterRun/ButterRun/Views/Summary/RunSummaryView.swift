@@ -428,6 +428,7 @@ struct RunSummaryView: View {
             let service = HealthKitService()
             let success = await service.saveWorkout(run: run, pauseResumeEvents: pauseResumeEvents)
             await MainActor.run {
+                healthKitSyncing = false
                 if success {
                     run.healthKitSynced = true
                     do {
@@ -438,7 +439,6 @@ struct RunSummaryView: View {
                     }
                 } else {
                     healthKitError = "Could not save to Apple Health. Check permissions in Settings."
-                    healthKitSyncing = false
                 }
             }
         }

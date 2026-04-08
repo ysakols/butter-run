@@ -27,6 +27,7 @@ class RunDraftService {
         routeData: Data?,
         butterEntriesData: Data?
     ) {
+        dispatchPrecondition(condition: .onQueue(.main))
         if persistentContext == nil {
             persistentContext = ModelContext(container)
         }

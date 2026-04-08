@@ -456,10 +456,9 @@ class ActiveRunViewModel {
         if lastRouteUpdate.map({ Date().timeIntervalSince($0) >= 5 }) ?? true {
             if locationService.routeIsDirty, !isEncodingRoute {
                 isEncodingRoute = true
-                let service = locationService as? LocationService
                 Task { @MainActor [weak self] in
                     guard let self else { return }
-                    if let data = await service?.encodeRouteAsync() ?? locationService.encodeRoute() {
+                    if let data = await locationService.encodeRouteAsync() {
                         routeCoordinates = LocationService.decodeRoute(data)
                     }
                     isEncodingRoute = false
@@ -542,10 +541,9 @@ class ActiveRunViewModel {
         let isZero = isButterZeroChallenge
 
         // Save draft — route encode may run off-main for large routes
-        let service = locationService as? LocationService
         Task { @MainActor [weak self] in
             guard let self else { return }
-            let routeData = await service?.encodeRouteAsync() ?? locationService.encodeRoute()
+            let routeData = await locationService.encodeRouteAsync()
             draftService?.saveDraft(
                 startDate: start,
                 elapsedSeconds: elapsed,
