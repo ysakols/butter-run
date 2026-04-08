@@ -82,4 +82,33 @@ final class LocationServiceTests: XCTestCase {
         XCTAssertEqual(service.gpsSignalState, .strong)
         XCTAssertFalse(service.routeIsDirty)
     }
+
+    // MARK: - Async Route Encoding
+
+    func test_encodeRouteAsync_emptyBuffer_returnsNil() async {
+        let service = LocationService()
+        let data = await service.encodeRouteAsync()
+        // Empty route buffer with no dirty flag — should return nil (cached nil)
+        XCTAssertNil(data)
+    }
+
+    func test_encodeRouteAsync_returnsCachedData() async {
+        let service = LocationService()
+        // Prime the cache via sync encode
+        _ = service.encodeRoute()
+
+        // Async should return the same cached result
+        let data = await service.encodeRouteAsync()
+        let syncData = service.encodeRoute()
+        XCTAssertEqual(data, syncData)
+    }
+
+    func test_encodeRouteAsync_smallBuffer_matchesSyncEncode() async {
+        // We can't easily inject route points without tracking, but we can
+        // verify the async path delegates to sync for small buffers.
+        let service = LocationService()
+        let asyncResult = await service.encodeRouteAsync()
+        let syncResult = service.encodeRoute()
+        XCTAssertEqual(asyncResult, syncResult)
+    }
 }

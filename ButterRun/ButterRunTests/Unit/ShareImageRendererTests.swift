@@ -40,4 +40,19 @@ final class ShareImageRendererTests: XCTestCase {
         let image = await ShareImageRenderer.render(run: run, usesMiles: true)
         XCTAssertNotNil(image)
     }
+
+    // MARK: - RunSummaryViewModel Integration
+
+    @MainActor
+    func test_viewModel_generateShareImage() async {
+        let run = Run(startDate: .now, isButterZeroChallenge: false)
+        run.distanceMeters = 10000
+        run.durationSeconds = 3600
+        run.totalButterBurnedTsp = 6.0
+        run.averagePaceSecondsPerKm = 360
+
+        let viewModel = RunSummaryViewModel(run: run, usesMiles: true)
+        let image = await viewModel.generateShareImage()
+        XCTAssertNotNil(image, "RunSummaryViewModel.generateShareImage should return a non-nil image")
+    }
 }

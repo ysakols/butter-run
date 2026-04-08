@@ -120,4 +120,40 @@ final class RunDraftServiceTests: XCTestCase {
         let drafts = try context.fetch(FetchDescriptor<RunDraft>())
         XCTAssertEqual(drafts.count, 1)
     }
+
+    func test_purgeStale_selectiveDelete_keepsRecentRemovesOld() throws {
+        // Insert a stale draft (49 hours old)
+        let oldDraft = RunDraft(startDate: .now, elapsedSeconds: 50)
+        oldDraft.lastCheckpoint = Date().addingTimeInterval(-49 * 60 * 60)
+        context.insert(oldDraft)
+
+        // Insert a recent draft
+        let newDraft = RunDraft(startDate: .now, elapsedSeconds: 200)
+        newDraft.lastCheckpoint = Date()
+        context.insert(newDraft)
+        try context.save()
+
+        let beforeCount = try context.fetch(FetchDescriptor<RunDraft>()).count
+        XCTAssertEqual(beforeCount, 2)
+
+        service.purgeStale(context: context)
+
+        let remaining = try context.fetch(FetchDescriptor<RunDraft>())
+        XCTAssertEqual(remaining.count, 1, "Only the recent draft should survive purge")
+        XCTAssertEqual(remaining.first?.elapsedSeconds, 200)
+    }
+
+    func test_batchDelete_removesAllDrafts() throws {
+        // Insert multiple drafts directly
+        context.insert(RunDraft(startDate: .now, elapsedSeconds: 10))
+        context.insert(RunDraft(startDate: .now, elapsedSeconds: 20))
+        context.insert(RunDraft(startDate: .now, elapsedSeconds: 30))
+        try context.save()
+
+        XCTAssertEqual(try context.fetch(FetchDescriptor<RunDraft>()).count, 3)
+
+        service.deleteDraft(context: context)
+
+        XCTAssertEqual(try context.fetch(FetchDescriptor<RunDraft>()).count, 0)
+    }
 }
