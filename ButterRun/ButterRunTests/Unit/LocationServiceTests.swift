@@ -100,11 +100,13 @@ final class LocationServiceTests: XCTestCase {
 
     // MARK: - Async Route Encoding
 
-    func test_encodeRouteAsync_emptyBuffer_returnsNil() async {
+    func test_encodeRouteAsync_emptyBuffer_returnsEmptyArray() async {
         let service = LocationService()
         let data = await service.encodeRouteAsync()
-        // Empty route buffer with no dirty flag — should return nil (cached nil)
-        XCTAssertNil(data)
+        // Empty route buffer encodes as an empty JSON array "[]"
+        XCTAssertNotNil(data)
+        let decoded = LocationService.decodeRoute(data!)
+        XCTAssertTrue(decoded.isEmpty, "Empty buffer should decode to empty coordinate array")
     }
 
     func test_encodeRouteAsync_returnsCachedData() async {
