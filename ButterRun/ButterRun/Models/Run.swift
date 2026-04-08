@@ -25,8 +25,8 @@ class Run {
     var elevationLossMeters: Double
     var averageCadence: Double?
     var routePolyline: Data?
-    @Relationship(deleteRule: .cascade) var splits: [Split]
-    @Relationship(deleteRule: .cascade) var butterEntries: [ButterEntry]
+    @Relationship(deleteRule: .cascade, inverse: \Split.run) var splits: [Split]
+    @Relationship(deleteRule: .cascade, inverse: \ButterEntry.run) var butterEntries: [ButterEntry]
     var isButterZeroChallenge: Bool
     var notes: String?
 

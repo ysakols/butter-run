@@ -34,7 +34,11 @@ class RunDraftService {
         guard let context = persistentContext else { return }
 
         // Delete any existing draft first (only one at a time)
-        try? context.delete(model: RunDraft.self)
+        do {
+            try context.delete(model: RunDraft.self)
+        } catch {
+            logger.warning("Failed to delete existing draft before save: \(error, privacy: .public)")
+        }
 
         let draft = RunDraft(
             startDate: startDate,
