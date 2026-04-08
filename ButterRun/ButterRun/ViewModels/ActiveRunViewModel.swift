@@ -97,6 +97,11 @@ class ActiveRunViewModel {
         self.churnEstimator = churnEstimator
     }
 
+    deinit {
+        timer?.invalidate()
+        audioDeactivationWork?.cancel()
+    }
+
     // MARK: - Computed Properties
 
     /// Actual pause/resume timestamps recorded during the run, for HealthKit integration.

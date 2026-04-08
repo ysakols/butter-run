@@ -14,25 +14,20 @@ struct ShareImageRenderer {
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
 
-        guard let rawImage = renderer.uiImage else { return nil }
+        // Get the CGImage on main (fast pointer copy), then do all heavy
+        // PNG encoding + metadata stripping off the main thread.
+        guard let cgImage = renderer.cgImage else { return nil }
 
-        // Convert to PNG on main actor, then strip metadata off-main using Sendable Data
-        guard let pngData = rawImage.pngData() else { return rawImage }
-
-        let strippedData = await Task.detached(priority: .userInitiated) {
-            stripMetadata(from: pngData)
+        let cleanData = await Task.detached(priority: .userInitiated) {
+            encodePNGStrippingMetadata(from: cgImage)
         }.value
 
-        return strippedData.flatMap { UIImage(data: $0) } ?? rawImage
+        return cleanData.flatMap { UIImage(data: $0) }
     }
 
-    /// Remove all metadata (EXIF, GPS, etc.) from PNG data. Returns clean PNG data.
-    private static func stripMetadata(from pngData: Data) -> Data? {
-        guard let source = CGImageSourceCreateWithData(pngData as CFData, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-            return nil
-        }
-
+    /// Encode a CGImage as PNG with all metadata (EXIF, GPS, etc.) stripped.
+    /// Runs entirely off the main thread — no UIKit dependencies.
+    private static func encodePNGStrippingMetadata(from cgImage: CGImage) -> Data? {
         let mutableData = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(
             mutableData,
@@ -43,7 +38,7 @@ struct ShareImageRenderer {
             return nil
         }
 
-        // Write image without any metadata
+        // Write image without any metadata properties
         CGImageDestinationAddImage(destination, cgImage, nil)
         guard CGImageDestinationFinalize(destination) else {
             return nil
@@ -209,9 +204,10 @@ struct ShareCardContent: View {
 
     private func formatPace(_ secondsPerKm: Double, miles: Bool) -> String {
         let secondsPerUnit = miles ? secondsPerKm * 1.60934 : secondsPerKm
+        let unit = miles ? "/mi" : "/km"
+        guard secondsPerUnit.isFinite, secondsPerUnit > 0 else { return "--:--\(unit)" }
         let mins = Int(secondsPerUnit) / 60
         let secs = Int(secondsPerUnit) % 60
-        let unit = miles ? "/mi" : "/km"
         return String(format: "%d:%02d%@", mins, secs, unit)
     }
 }
