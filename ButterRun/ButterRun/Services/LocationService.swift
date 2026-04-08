@@ -92,6 +92,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         isTracking = false
         locationManager.stopUpdatingLocation()
         locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.showsBackgroundLocationIndicator = false
         locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         locationManager.pausesLocationUpdatesAutomatically = false
     }
@@ -205,15 +206,15 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
                 let simplified = LocationService.simplifyRoute(asLocations, maxPoints: 5000)
                 let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
                 let data = try? JSONEncoder().encode(coords)
+                // Resume on main so the cache is updated before the caller sees the result,
+                // preventing redundant Douglas-Peucker runs by concurrent callers.
                 DispatchQueue.main.async { [weak self] in
-                    guard let self else { return }
-                    // Only update cache if no new GPS points arrived since we started
-                    if self.routeGeneration == generationAtStart {
+                    if let self, self.routeGeneration == generationAtStart {
                         self.cachedRouteData = data
                         self.routeIsDirty = false
                     }
+                    continuation.resume(returning: data)
                 }
-                continuation.resume(returning: data)
             }
         }
     }
