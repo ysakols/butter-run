@@ -33,12 +33,7 @@ class RunDraftService {
         guard let context = persistentContext else { return }
 
         // Delete any existing draft first (only one at a time)
-        let descriptor = FetchDescriptor<RunDraft>()
-        if let existing = try? context.fetch(descriptor) {
-            for draft in existing {
-                context.delete(draft)
-            }
-        }
+        try? context.delete(model: RunDraft.self)
 
         let draft = RunDraft(
             startDate: startDate,
@@ -74,11 +69,7 @@ class RunDraftService {
     /// Delete all drafts.
     func deleteDraft(context: ModelContext) {
         do {
-            let descriptor = FetchDescriptor<RunDraft>()
-            let drafts = try context.fetch(descriptor)
-            for draft in drafts {
-                context.delete(draft)
-            }
+            try context.delete(model: RunDraft.self)
             try context.save()
         } catch {
             logger.error("Failed to delete run draft: \(error, privacy: .public)")
@@ -89,11 +80,9 @@ class RunDraftService {
     func purgeStale(context: ModelContext) {
         let cutoff = Date().addingTimeInterval(-48 * 60 * 60)
         do {
-            let descriptor = FetchDescriptor<RunDraft>()
-            let drafts = try context.fetch(descriptor)
-            for draft in drafts where draft.lastCheckpoint < cutoff {
-                context.delete(draft)
-            }
+            try context.delete(model: RunDraft.self, where: #Predicate<RunDraft> {
+                $0.lastCheckpoint < cutoff
+            })
             try context.save()
         } catch {
             logger.error("Failed to purge stale drafts: \(error, privacy: .public)")

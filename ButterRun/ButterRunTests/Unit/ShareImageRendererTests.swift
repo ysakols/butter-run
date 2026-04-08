@@ -4,7 +4,7 @@ import XCTest
 final class ShareImageRendererTests: XCTestCase {
 
     @MainActor
-    func test_render_returnsNonNilImage() {
+    func test_render_returnsNonNilImage() async {
         let run = Run(startDate: .now, isButterZeroChallenge: false)
         run.distanceMeters = 5000
         run.durationSeconds = 1800
@@ -13,23 +13,23 @@ final class ShareImageRendererTests: XCTestCase {
         run.netButterTsp = -2.0
         run.averagePaceSecondsPerKm = 360
 
-        let image = ShareImageRenderer.render(run: run, usesMiles: true, mode: .story)
+        let image = await ShareImageRenderer.render(run: run, usesMiles: true, mode: .story)
         XCTAssertNotNil(image, "ShareImageRenderer should produce a non-nil UIImage for story mode")
     }
 
     @MainActor
-    func test_render_squareMode() {
+    func test_render_squareMode() async {
         let run = Run(startDate: .now, isButterZeroChallenge: false)
         run.distanceMeters = 3000
         run.durationSeconds = 900
         run.totalButterBurnedTsp = 1.5
 
-        let image = ShareImageRenderer.render(run: run, usesMiles: false, mode: .square)
+        let image = await ShareImageRenderer.render(run: run, usesMiles: false, mode: .square)
         XCTAssertNotNil(image, "ShareImageRenderer should produce a non-nil UIImage for square mode")
     }
 
     @MainActor
-    func test_render_butterZeroRun() {
+    func test_render_butterZeroRun() async {
         let run = Run(startDate: .now, isButterZeroChallenge: true)
         run.distanceMeters = 5000
         run.durationSeconds = 1500
@@ -37,7 +37,7 @@ final class ShareImageRendererTests: XCTestCase {
         run.totalButterEatenTsp = 2.1
         run.netButterTsp = 0.1
 
-        let image = ShareImageRenderer.render(run: run, usesMiles: true)
+        let image = await ShareImageRenderer.render(run: run, usesMiles: true)
         XCTAssertNotNil(image)
     }
 }

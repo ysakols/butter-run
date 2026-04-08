@@ -10,6 +10,7 @@ struct RunSummaryView: View {
 
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
+    @State private var isGeneratingShare = false
     @State private var meltProgress: Double = 0
     @State private var shareMode: ShareCardMode = .story
     @State private var newAchievements: [AchievementType] = []
@@ -120,13 +121,22 @@ struct RunSummaryView: View {
                     Button {
                         generateAndShare()
                     } label: {
-                        Label("Share My Run", systemImage: "square.and.arrow.up")
-                            .font(.system(.body, design: .rounded, weight: .semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
-                            .foregroundStyle(ButterTheme.onPrimaryAction)
+                        ZStack {
+                            Label("Share My Run", systemImage: "square.and.arrow.up")
+                                .font(.system(.body, design: .rounded, weight: .semibold))
+                                .opacity(isGeneratingShare ? 0 : 1)
+
+                            if isGeneratingShare {
+                                ProgressView()
+                                    .tint(ButterTheme.onPrimaryAction)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(ButterTheme.gold, in: RoundedRectangle(cornerRadius: 12))
+                        .foregroundStyle(ButterTheme.onPrimaryAction)
                     }
+                    .disabled(isGeneratingShare)
                     .padding(.horizontal)
                     .accessibilityLabel("Share run results")
 
@@ -463,10 +473,14 @@ struct RunSummaryView: View {
         }
     }
 
-    @MainActor
     private func generateAndShare() {
-        shareImage = ShareImageRenderer.render(run: run, usesMiles: usesMiles, mode: shareMode)
-        showShareSheet = true
+        guard !isGeneratingShare else { return }
+        isGeneratingShare = true
+        Task {
+            shareImage = await ShareImageRenderer.render(run: run, usesMiles: usesMiles, mode: shareMode)
+            showShareSheet = shareImage != nil
+            isGeneratingShare = false
+        }
     }
 }
 

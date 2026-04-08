@@ -9,19 +9,21 @@ enum ShareCardMode {
 
 struct ShareImageRenderer {
     @MainActor
-    static func render(run: Run, usesMiles: Bool, mode: ShareCardMode = .story) -> UIImage? {
+    static func render(run: Run, usesMiles: Bool, mode: ShareCardMode = .story) async -> UIImage? {
         let view = ShareCardContent(run: run, usesMiles: usesMiles, mode: mode)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
 
-        guard let uiImage = renderer.uiImage else { return nil }
+        guard let rawImage = renderer.uiImage else { return nil }
 
-        // Strip EXIF/GPS metadata
-        return stripMetadata(from: uiImage)
+        // Strip EXIF/GPS metadata off the main thread
+        return await Task.detached(priority: .userInitiated) {
+            stripMetadata(from: rawImage) ?? rawImage
+        }.value
     }
 
     /// Remove all metadata (EXIF, GPS, etc.) from the image
-    private static func stripMetadata(from image: UIImage) -> UIImage? {
+    nonisolated private static func stripMetadata(from image: UIImage) -> UIImage? {
         guard let data = image.pngData(),
               let source = CGImageSourceCreateWithData(data as CFData, nil),
               let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {

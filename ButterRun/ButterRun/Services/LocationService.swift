@@ -170,6 +170,33 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         return (2 * area) / c
     }
 
+    /// Async route encoding — runs Douglas-Peucker off the main thread for large routes.
+    func encodeRouteAsync() async -> Data? {
+        // Fast path: cache hit
+        if !routeIsDirty, let cached = cachedRouteData {
+            return cached
+        }
+        if routeBuffer.count <= 5000 {
+            // Lightweight — just JSON encode, fine on any thread
+            return encodeRoute()
+        }
+        // Heavy path: dispatch simplification to background
+        let buffer = routeBuffer
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async { [self] in
+                let asLocations = buffer.map { CLLocation(latitude: $0[0], longitude: $0[1]) }
+                let simplified = self.simplifyRoute(asLocations, maxPoints: 5000)
+                let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
+                let data = try? JSONEncoder().encode(coords)
+                DispatchQueue.main.async {
+                    self.cachedRouteData = data
+                    self.routeIsDirty = false
+                }
+                continuation.resume(returning: data)
+            }
+        }
+    }
+
     static func decodeRoute(_ data: Data) -> [CLLocationCoordinate2D] {
         guard let coords = try? JSONDecoder().decode([[Double]].self, from: data) else {
             return []

@@ -95,3 +95,5 @@ class Run {
         return try? JSONDecoder().decode(ChurnResult.self, from: data)
     }
 }
+
+#Index<Run>([\.startDate])

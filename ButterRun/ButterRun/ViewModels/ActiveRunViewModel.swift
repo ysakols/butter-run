@@ -69,6 +69,7 @@ class ActiveRunViewModel {
     private var lastDraftSave: Date?
     private var lastLocationUpdate: Date?
     private var lastRouteUpdate: Date?
+    private var isEncodingRoute = false
     private var lastTickTime: Date?
     private var previousSplitCount: Int = 0
     private var distanceAtAutoPause: Double = 0
@@ -452,9 +453,15 @@ class ActiveRunViewModel {
 
         // Update route coordinates for live map (throttled to every 5s, skipped if no new points)
         if lastRouteUpdate.map({ Date().timeIntervalSince($0) >= 5 }) ?? true {
-            if locationService.routeIsDirty {
-                if let data = locationService.encodeRoute() {
-                    routeCoordinates = LocationService.decodeRoute(data)
+            if locationService.routeIsDirty, !isEncodingRoute {
+                isEncodingRoute = true
+                let service = locationService as? LocationService
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if let data = await service?.encodeRouteAsync() ?? locationService.encodeRoute() {
+                        routeCoordinates = LocationService.decodeRoute(data)
+                    }
+                    isEncodingRoute = false
                 }
             }
             lastRouteUpdate = Date()
@@ -524,18 +531,31 @@ class ActiveRunViewModel {
         }
         let entriesData = try? JSONEncoder().encode(snapshots)
 
-        // Save draft on main thread — lightweight single-row upsert every 30s
-        let routeData = locationService.encodeRoute()
-        draftService?.saveDraft(
-            startDate: startDate ?? .now,
-            elapsedSeconds: elapsedSeconds,
-            pausedDuration: pausedDuration,
-            distanceMeters: distanceMeters,
-            butterBurnedTsp: butterBurnedTsp,
-            butterEatenTsp: butterEatenTsp,
-            isButterZeroChallenge: isButterZeroChallenge,
-            routeData: routeData,
-            butterEntriesData: entriesData
-        )
+        // Snapshot values for async context
+        let start = startDate ?? .now
+        let elapsed = elapsedSeconds
+        let paused = pausedDuration
+        let distance = distanceMeters
+        let burned = butterBurnedTsp
+        let eaten = butterEatenTsp
+        let isZero = isButterZeroChallenge
+
+        // Save draft — route encode may run off-main for large routes
+        let service = locationService as? LocationService
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let routeData = await service?.encodeRouteAsync() ?? locationService.encodeRoute()
+            draftService?.saveDraft(
+                startDate: start,
+                elapsedSeconds: elapsed,
+                pausedDuration: paused,
+                distanceMeters: distance,
+                butterBurnedTsp: burned,
+                butterEatenTsp: eaten,
+                isButterZeroChallenge: isZero,
+                routeData: routeData,
+                butterEntriesData: entriesData
+            )
+        }
     }
 }
