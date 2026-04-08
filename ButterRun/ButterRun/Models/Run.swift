@@ -10,7 +10,7 @@ import SwiftData
 /// ``isManualEntry`` were reconstructed from crash-recovery drafts rather than recorded live.
 @Model
 class Run {
-    @Attribute(.spotlight) var id: UUID
+    var id: UUID
     @Attribute(.spotlight) var startDate: Date
     var endDate: Date?
     var distanceMeters: Double
