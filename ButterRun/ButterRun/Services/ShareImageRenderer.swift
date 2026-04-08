@@ -16,18 +16,21 @@ struct ShareImageRenderer {
 
         guard let rawImage = renderer.uiImage else { return nil }
 
-        // Strip EXIF/GPS metadata off the main thread
-        return await Task.detached(priority: .userInitiated) {
-            stripMetadata(from: rawImage) ?? rawImage
+        // Convert to PNG on main actor, then strip metadata off-main using Sendable Data
+        guard let pngData = rawImage.pngData() else { return rawImage }
+
+        let strippedData = await Task.detached(priority: .userInitiated) {
+            stripMetadata(from: pngData)
         }.value
+
+        return strippedData.flatMap { UIImage(data: $0) } ?? rawImage
     }
 
-    /// Remove all metadata (EXIF, GPS, etc.) from the image
-    nonisolated private static func stripMetadata(from image: UIImage) -> UIImage? {
-        guard let data = image.pngData(),
-              let source = CGImageSourceCreateWithData(data as CFData, nil),
+    /// Remove all metadata (EXIF, GPS, etc.) from PNG data. Returns clean PNG data.
+    nonisolated private static func stripMetadata(from pngData: Data) -> Data? {
+        guard let source = CGImageSourceCreateWithData(pngData as CFData, nil),
               let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-            return image
+            return nil
         }
 
         let mutableData = NSMutableData()
@@ -37,16 +40,16 @@ struct ShareImageRenderer {
             1,
             nil
         ) else {
-            return image
+            return nil
         }
 
         // Write image without any metadata
         CGImageDestinationAddImage(destination, cgImage, nil)
         guard CGImageDestinationFinalize(destination) else {
-            return image
+            return nil
         }
 
-        return UIImage(data: mutableData as Data)
+        return mutableData as Data
     }
 }
 

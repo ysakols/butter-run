@@ -45,6 +45,21 @@ final class LocationServiceTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
+    func test_decodeRoute_outOfRangeCoords_skipped() {
+        // Latitude outside [-90, 90] or longitude outside [-180, 180] should be filtered
+        let coords: [[Double]] = [
+            [91.0, 0.0],       // latitude too high
+            [-91.0, 0.0],      // latitude too low
+            [0.0, 181.0],      // longitude too high
+            [0.0, -181.0],     // longitude too low
+            [37.7749, -122.4]  // valid
+        ]
+        let data = try! JSONEncoder().encode(coords)
+        let result = LocationService.decodeRoute(data)
+        XCTAssertEqual(result.count, 1, "Only the valid coordinate should survive range validation")
+        XCTAssertEqual(result[0].latitude, 37.7749, accuracy: 0.0001)
+    }
+
     // MARK: - Encode/Decode Roundtrip (via direct data)
 
     func test_encodeDecodeRoundtrip() {

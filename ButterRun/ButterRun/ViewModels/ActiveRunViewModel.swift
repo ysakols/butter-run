@@ -271,6 +271,7 @@ class ActiveRunViewModel {
 
         state = .finished
         timer?.invalidate()
+        isEncodingRoute = false
         locationService.stopTracking()
         motionService.stopTracking()
         cancellables.removeAll()

@@ -23,6 +23,8 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     private(set) var routeIsDirty = false
     /// Cached encoded route data, invalidated when new points arrive.
     private var cachedRouteData: Data?
+    /// Generation counter incremented on every new GPS point; prevents stale async write-backs.
+    private var routeGeneration: Int = 0
 
     private var previousLocation: CLLocation?
     private var previousAltitude: Double?
@@ -50,6 +52,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     func startTracking() {
         locations = []
         routeBuffer = []
+        routeGeneration = 0
         routeIsDirty = false
         cachedRouteData = nil
         totalDistanceMeters = 0
@@ -171,6 +174,8 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
     }
 
     /// Async route encoding — runs Douglas-Peucker off the main thread for large routes.
+    /// Must be called from the main thread (all LocationService state is main-thread-only).
+    @MainActor
     func encodeRouteAsync() async -> Data? {
         // Fast path: cache hit
         if !routeIsDirty, let cached = cachedRouteData {
@@ -182,6 +187,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         }
         // Heavy path: dispatch simplification to background
         let buffer = routeBuffer
+        let generationAtStart = routeGeneration
         return await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async { [self] in
                 let asLocations = buffer.map { CLLocation(latitude: $0[0], longitude: $0[1]) }
@@ -189,8 +195,11 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
                 let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }
                 let data = try? JSONEncoder().encode(coords)
                 DispatchQueue.main.async {
-                    self.cachedRouteData = data
-                    self.routeIsDirty = false
+                    // Only update cache if no new GPS points arrived since we started
+                    if self.routeGeneration == generationAtStart {
+                        self.cachedRouteData = data
+                        self.routeIsDirty = false
+                    }
                 }
                 continuation.resume(returning: data)
             }
@@ -202,7 +211,9 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
             return []
         }
         return coords.compactMap { pair in
-            guard pair.count >= 2 else { return nil }
+            guard pair.count >= 2,
+                  (-90...90).contains(pair[0]),
+                  (-180...180).contains(pair[1]) else { return nil }
             return CLLocationCoordinate2D(latitude: pair[0], longitude: pair[1])
         }
     }
@@ -283,6 +294,7 @@ extension LocationService: CLLocationManagerDelegate {
             }
 
             routeBuffer.append([location.coordinate.latitude, location.coordinate.longitude])
+            routeGeneration += 1
             routeIsDirty = true
             cachedRouteData = nil
             locations.append(location)
