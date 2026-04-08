@@ -247,7 +247,8 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     /// Generate a cryptographically random code verifier (43-128 chars, RFC 7636).
     private static func generateCodeVerifier() -> String {
         var bytes = [UInt8](repeating: 0, count: 32)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        precondition(status == errSecSuccess, "Failed to generate random bytes for PKCE code verifier")
         return Data(bytes).base64URLEncoded()
     }
 

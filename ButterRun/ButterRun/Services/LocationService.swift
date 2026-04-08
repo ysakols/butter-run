@@ -102,6 +102,7 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         previousLocation = locations.last
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.showsBackgroundLocationIndicator = true
         locationManager.pausesLocationUpdatesAutomatically = false
         locationManager.startUpdatingLocation()
     }

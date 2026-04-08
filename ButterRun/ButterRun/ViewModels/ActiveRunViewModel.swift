@@ -70,6 +70,7 @@ class ActiveRunViewModel {
     private var lastLocationUpdate: Date?
     private var lastRouteUpdate: Date?
     private var isEncodingRoute = false
+    private var pendingDraftTask: Task<Void, Never>?
     private var lastTickTime: Date?
     private var previousSplitCount: Int = 0
     private var distanceAtAutoPause: Double = 0
@@ -277,6 +278,8 @@ class ActiveRunViewModel {
         state = .finished
         timer?.invalidate()
         isEncodingRoute = false
+        pendingDraftTask?.cancel()
+        pendingDraftTask = nil
         locationService.stopTracking()
         motionService.stopTracking()
         cancellables.removeAll()
@@ -545,10 +548,14 @@ class ActiveRunViewModel {
         let eaten = butterEatenTsp
         let isZero = isButterZeroChallenge
 
-        // Save draft — route encode may run off-main for large routes
-        Task { @MainActor [weak self] in
-            guard let self else { return }
+        // Save draft — route encode may run off-main for large routes.
+        // Skip if a route encoding is already in flight to avoid redundant Douglas-Peucker.
+        guard !isEncodingRoute else { return }
+        pendingDraftTask?.cancel()
+        pendingDraftTask = Task { @MainActor [weak self] in
+            guard let self, state == .running else { return }
             let routeData = await locationService.encodeRouteAsync()
+            guard !Task.isCancelled, state == .running else { return }
             draftService?.saveDraft(
                 startDate: start,
                 elapsedSeconds: elapsed,
