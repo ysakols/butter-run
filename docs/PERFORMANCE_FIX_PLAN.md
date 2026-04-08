@@ -1,16 +1,18 @@
 # Performance Fix Plan — Butter Run
 
 Step-by-step implementation plan for all 6 issues from the performance evaluation.
+Deployment target: **iOS 18.0+**
 
 ---
 
 ## Fix 1 (P0): Async Share Image Rendering
 
-**Problem:** `ShareImageRenderer.render()` runs at 3x scale on the main thread, freezing the UI for 2–5 seconds when the user taps "Share."
+**Problem:** `ShareImageRenderer.render()` runs at 3× scale on the main thread, freezing the UI for 2–5 seconds when the user taps "Share."
 
 **Files:**
 - `Services/ShareImageRenderer.swift`
 - `Views/Summary/RunSummaryView.swift`
+- `ViewModels/RunSummaryViewModel.swift`
 - `ButterRunTests/Unit/ShareImageRendererTests.swift`
 
 **Steps:**
@@ -30,7 +32,7 @@ Step-by-step implementation plan for all 6 issues from the performance evaluatio
          }.value
      }
      ```
-   - Make `stripMetadata` a `static` non-isolated method (it uses only CoreGraphics, no UI).
+   - Make `stripMetadata` a `nonisolated static` method (it uses only CoreGraphics, no UI).
 
 2. **`RunSummaryView.swift`** — Add loading state to `generateAndShare()`:
    - Add `@State private var isGeneratingShare = false`.
@@ -49,7 +51,18 @@ Step-by-step implementation plan for all 6 issues from the performance evaluatio
    - Show `ProgressView` overlay on the share button when `isGeneratingShare` is true.
    - Disable the share button while generating.
 
-3. **`ShareImageRendererTests.swift`** — Update test calls to use `await`.
+3. **`RunSummaryViewModel.swift`** — Update `generateShareImage()` (line 40–42):
+   ```swift
+   @MainActor
+   func generateShareImage() async -> UIImage? {
+       await ShareImageRenderer.render(run: run, usesMiles: usesMiles)
+   }
+   ```
+
+4. **`ShareImageRendererTests.swift`** — Update all 3 test calls to use `await`:
+   ```swift
+   let image = await ShareImageRenderer.render(run: run, usesMiles: true, mode: .story)
+   ```
 
 **Risk:** Low. The `ImageRenderer.uiImage` capture is still on main (required), only the EXIF strip moves off-main.
 
@@ -78,7 +91,7 @@ Step-by-step implementation plan for all 6 issues from the performance evaluatio
            return encodeRoute()
        }
        // Heavy path: dispatch simplification to background
-       let buffer = routeBuffer  // snapshot
+       let buffer = routeBuffer  // snapshot value type
        return await withCheckedContinuation { continuation in
            DispatchQueue.global(qos: .userInitiated).async {
                let asLocations = buffer.map { CLLocation(latitude: $0[0], longitude: $0[1]) }
@@ -94,31 +107,49 @@ Step-by-step implementation plan for all 6 issues from the performance evaluatio
        }
    }
    ```
-   - The existing sync `encodeRoute()` stays unchanged for callers that need synchronous access.
-   - No protocol change needed — `encodeRoute()` on the protocol stays sync; `encodeRouteAsync()` is an implementation detail used by the ViewModel.
+   - The existing sync `encodeRoute()` stays unchanged — no protocol change needed.
+   - `encodeRouteAsync()` is an implementation detail on `LocationService`, not on the `LocationTracking` protocol.
+   - `MockLocationService` in tests (`ActiveRunViewModelTests.swift:35`) is unaffected — it only implements the sync protocol method.
 
-2. **`ActiveRunViewModel.swift`** — Use async encoding in non-critical paths:
-   - **`updateMetrics()` (line 454–461):** Replace the sync `encodeRoute()` call with a `Task` that calls `encodeRouteAsync()`. Add a guard flag (`isEncodingRoute`) to prevent overlapping tasks:
-     ```swift
-     private var isEncodingRoute = false
-     
-     // In updateMetrics(), replace the route update block:
-     if lastRouteUpdate.map({ Date().timeIntervalSince($0) >= 5 }) ?? true {
-         if locationService.routeIsDirty, !isEncodingRoute {
-             isEncodingRoute = true
-             let service = locationService as? LocationService
-             Task { @MainActor in
-                 if let data = await service?.encodeRouteAsync() ?? locationService.encodeRoute() {
-                     routeCoordinates = LocationService.decodeRoute(data)
-                 }
-                 isEncodingRoute = false
-             }
-         }
-         lastRouteUpdate = Date()
-     }
-     ```
-   - **`checkDraftSave()` (line 528):** Same pattern — use `Task` with async encode.
-   - **`stopRun()` (line 305):** Keep the sync `encodeRoute()` call. By this point the route was already cached by the 5-second update cycle, so it hits the fast path (just returns `cachedRouteData`).
+2. **`ActiveRunViewModel.swift`** — Use async encoding in the two non-critical paths:
+
+   Add a guard flag:
+   ```swift
+   private var isEncodingRoute = false
+   ```
+
+   **`updateMetrics()` (lines 454–461)** — replace the sync route update block:
+   ```swift
+   if lastRouteUpdate.map({ Date().timeIntervalSince($0) >= 5 }) ?? true {
+       if locationService.routeIsDirty, !isEncodingRoute {
+           isEncodingRoute = true
+           let service = locationService as? LocationService
+           Task { @MainActor in
+               if let data = await service?.encodeRouteAsync() ?? locationService.encodeRoute() {
+                   routeCoordinates = LocationService.decodeRoute(data)
+               }
+               isEncodingRoute = false
+           }
+       }
+       lastRouteUpdate = Date()
+   }
+   ```
+
+   **`checkDraftSave()` (line 528)** — wrap route encode in a Task:
+   ```swift
+   let service = locationService as? LocationService
+   Task { @MainActor in
+       let routeData = await service?.encodeRouteAsync() ?? locationService.encodeRoute()
+       draftService?.saveDraft(
+           startDate: startDate ?? .now,
+           // ... remaining params unchanged ...
+           routeData: routeData,
+           butterEntriesData: entriesData
+       )
+   }
+   ```
+
+   **`stopRun()` (line 305)** — keep the sync `locationService.encodeRoute()` call. By this point the route was already cached by the 5-second update cycle, so it hits the fast path (returns `cachedRouteData`).
 
 **Risk:** Low. The sync path is unchanged. The async path only activates for routes >5000 points. `stopRun()` always hits the cache.
 
@@ -126,26 +157,36 @@ Step-by-step implementation plan for all 6 issues from the performance evaluatio
 
 ## Fix 3 (P1): Paginate Run History
 
-**Problem:** `@Query` loads all `Run` objects into memory. `ForEach` renders all rows. Degrades linearly with run count.
+**Problem:** `@Query` loads all `Run` objects. `ForEach` renders all rows. Degrades linearly with run count.
 
 **Files:**
 - `Views/History/RunHistoryView.swift`
 
 **Steps:**
 
-1. **Add progressive display** — keep `@Query` for reactivity but limit rendered rows:
+1. Add state for progressive display:
    ```swift
    @State private var visibleCount = 50
    ```
 
-2. **Update the `ForEach`** in the "All Runs" section:
+2. Update the `ForEach` in the "All Runs" section (lines 50–65):
    ```swift
    Section("All Runs") {
        ForEach(runs.prefix(visibleCount), id: \.id) { run in
-           NavigationLink { ... } label: { ... }
+           NavigationLink {
+               RunDetailView(run: run, usesMiles: usesMiles)
+           } label: {
+               RunRowView(run: run, usesMiles: usesMiles)
+           }
+           .listRowBackground(ButterTheme.surface)
        }
-       .onDelete { ... }  // adjust indexing for prefix
-       
+       .onDelete { indexSet in
+           if let index = indexSet.first, index < runs.count {
+               runToDelete = runs[index]
+               showDeleteConfirmation = true
+           }
+       }
+
        if visibleCount < runs.count {
            Button {
                visibleCount += 50
@@ -161,18 +202,9 @@ Step-by-step implementation plan for all 6 issues from the performance evaluatio
    }
    ```
 
-3. **Fix `onDelete` for prefixed array** — the delete handler indexes into the full `runs` array, but `ForEach` only shows a prefix. Adjust:
-   ```swift
-   .onDelete { indexSet in
-       if let index = indexSet.first, index < runs.count {
-           runToDelete = runs[index]
-           showDeleteConfirmation = true
-       }
-   }
-   ```
-   This works because `runs.prefix(visibleCount)` preserves indexing relative to `runs`.
+   `runs.prefix(visibleCount)` preserves indices from the original array, so `onDelete` indexing is correct.
 
-**Note:** SwiftData `@Query` fetches all matching objects, but SwiftData uses faulting for relationship properties (`splits`, `butterEntries`, `routePolyline`). Scalar fields on `Run` are ~200 bytes each, so 1000 runs = ~200 KB. The pagination primarily prevents `List` from creating all row views upfront and bounds the `viewModel.load(runs:)` iteration for summary stats.
+**Note:** SwiftData uses faulting for relationship properties (`splits`, `butterEntries`, `routePolyline`). Scalar fields on `Run` are ~200 bytes each, so even 1000 runs = ~200 KB. The pagination primarily bounds the `List` row creation and the `viewModel.load(runs:)` summary iteration.
 
 **Risk:** Very low. Purely additive change.
 
@@ -195,7 +227,9 @@ Step-by-step implementation plan for all 6 issues from the performance evaluatio
    try? await Task.sleep(nanoseconds: 2_000_000_000)
    ```
 
-That's it. One line change. The `beginCollection` call either succeeds within milliseconds or hangs indefinitely (entitlement issue), so 2 seconds is more than enough to distinguish success from failure.
+One line. The `beginCollection` call either succeeds within milliseconds or hangs indefinitely (entitlement issue), so 2 seconds is more than enough.
+
+**Side effect:** `HealthKitServiceTests.test_saveWorkout_withoutAuthorization_returnsFalse` will finish 3 seconds faster per run.
 
 **Risk:** Negligible.
 
@@ -208,44 +242,23 @@ That's it. One line change. The `beginCollection` call either succeeds within mi
 **File:**
 - `Models/Run.swift`
 
-**Constraint:** The app targets iOS 17.0. The SwiftData `#Index` macro requires iOS 18.0+.
-
 **Steps:**
 
-1. **Add an availability-gated index** using `#Index` for iOS 18+ users (majority of the user base by now), with graceful degradation for iOS 17:
+1. Add the `#Index` macro after the `Run` class definition:
    ```swift
    @Model
    class Run {
-       // existing properties...
+       // ... existing properties ...
    }
 
-   // Index for faster history queries (iOS 18+)
-   #if swift(>=5.10)
-   @available(iOS 18.0, *)
-   extension Run {
-       static var schemaMetadata: [Schema.PropertyMetadata] {
-           // SwiftData picks up #Index at migration time
-       }
-   }
-   #endif
+   #Index<Run>([\.startDate])
    ```
 
-   Actually, the correct approach is simpler. SwiftData `#Index` is a schema-level macro applied alongside `@Model`. Since it requires iOS 18, the cleanest approach:
-   ```swift
-   @Model
-   class Run {
-       @Attribute(.spotlight) var id: UUID
-       @Attribute(.spotlight) var startDate: Date
-       // ...
-   }
-   ```
-   `startDate` already has `@Attribute(.spotlight)` which creates a CoreSpotlight index. For database-level query performance, we need to wait for iOS 18 or bump the deployment target.
+   SwiftData handles lightweight schema migration automatically — adding an index does not require a versioned migration plan.
 
-**Alternative:** Since raising the deployment target to iOS 18 may not be desired, and `.spotlight` already provides indexing, mark this as **deferred** until the app drops iOS 17 support. The pagination fix (Fix 3) is the more impactful improvement for query performance.
+2. The existing `@Attribute(.spotlight)` on `startDate` provides CoreSpotlight indexing (for system search). `#Index` adds a **SQLite index** for faster SwiftData query sorting and filtering. Both can coexist.
 
-**Decision:** Add a `// TODO: Add #Index([\.startDate]) when iOS 18 is the minimum target` comment and defer the actual implementation.
-
-**Risk:** None (deferred).
+**Risk:** Negligible. Additive schema change with automatic migration.
 
 ---
 
@@ -258,22 +271,21 @@ That's it. One line change. The `beginCollection` call either succeeds within mi
 
 **Steps:**
 
-1. **Replace fetch-then-delete with `try context.delete(model:)`** (iOS 17 batch delete):
+1. **`saveDraft()` (lines 36–41)** — Replace fetch-then-delete with batch delete:
    ```swift
-   // Before (lines 36-41):
+   // Before:
    let descriptor = FetchDescriptor<RunDraft>()
    if let existing = try? context.fetch(descriptor) {
        for draft in existing {
            context.delete(draft)
        }
    }
-   
+
    // After:
    try? context.delete(model: RunDraft.self)
    ```
-   `ModelContext.delete(model:)` performs a batch delete without loading objects into memory.
 
-2. **Apply the same pattern to `deleteDraft()`** (lines 75-84):
+2. **`deleteDraft()` (lines 75–84)** — Same pattern:
    ```swift
    func deleteDraft(context: ModelContext) {
        do {
@@ -285,7 +297,7 @@ That's it. One line change. The `beginCollection` call either succeeds within mi
    }
    ```
 
-3. **Apply to `purgeStale()`** (lines 89-101) — this one needs a predicate for the date filter:
+3. **`purgeStale()` (lines 89–101)** — Use predicate-based batch delete:
    ```swift
    func purgeStale(context: ModelContext) {
        let cutoff = Date().addingTimeInterval(-48 * 60 * 60)
@@ -300,21 +312,32 @@ That's it. One line change. The `beginCollection` call either succeeds within mi
    }
    ```
 
-**Risk:** Low. `ModelContext.delete(model:)` is the idiomatic SwiftData pattern. Tests in `RunDraftServiceTests.swift` should cover this.
+**Test coverage:** `RunDraftServiceTests` covers save/overwrite/delete/purge flows. The batch delete API is a drop-in replacement — same observable behavior, less memory.
+
+**Risk:** Low.
+
+---
+
+## Deployment Target Change
+
+Bump `IPHONEOS_DEPLOYMENT_TARGET` from `17.0` to `18.0` in:
+- `scripts/generate_xcodeproj.py` (3 occurrences: lines 449, 467, 480)
+- `ButterRun/ButterRun.xcodeproj/project.pbxproj` (6 occurrences)
+
+Best approach: update `generate_xcodeproj.py` then regenerate the Xcode project with `python3 scripts/generate_xcodeproj.py`.
 
 ---
 
 ## Implementation Order
 
-| Step | Fix | Effort | Dependencies |
-|------|-----|--------|--------------|
-| 1 | Fix 4: HealthKit timeout | 5 min | None |
-| 2 | Fix 6: Batch delete drafts | 15 min | None |
-| 3 | Fix 5: Index startDate | 5 min | None (deferred — add TODO comment) |
-| 4 | Fix 3: Paginate history | 30 min | None |
-| 5 | Fix 1: Async share rendering | 45 min | None |
-| 6 | Fix 2: Background route simplification | 45 min | None |
-
-**Total estimated effort:** ~2.5 hours
+| Step | Fix | Effort | Files Changed |
+|------|-----|--------|---------------|
+| 0 | Bump deployment target to iOS 18 | trivial | `generate_xcodeproj.py`, regenerate project |
+| 1 | Fix 4: HealthKit timeout | 1 line | `HealthKitService.swift` |
+| 2 | Fix 5: Index startDate | 1 line | `Run.swift` |
+| 3 | Fix 6: Batch delete drafts | 3 methods | `RunDraftService.swift` |
+| 4 | Fix 3: Paginate history | 1 file | `RunHistoryView.swift` |
+| 5 | Fix 1: Async share rendering | 4 files | `ShareImageRenderer.swift`, `RunSummaryView.swift`, `RunSummaryViewModel.swift`, tests |
+| 6 | Fix 2: Background route simplification | 2 files | `LocationService.swift`, `ActiveRunViewModel.swift` |
 
 Start with the easy wins (Fixes 4, 5, 6) to build momentum, then tackle the two async refactors (Fixes 1, 2) which require more careful testing.
