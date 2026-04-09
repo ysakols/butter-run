@@ -5,16 +5,18 @@ struct RunHistoryView: View {
     @Query(sort: \Run.startDate, order: .reverse) private var runs: [Run]
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
+    @Environment(DeepLinkRouter.self) private var router
     @State private var viewModel = RunHistoryViewModel()
     @State private var showManualEntry = false
     @State private var runToDelete: Run?
     @State private var showDeleteConfirmation = false
     @State private var visibleCount = 50
+    @State private var navigationPath = NavigationPath()
 
     private var usesMiles: Bool { profiles.first?.usesMiles ?? true }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 ButterTheme.background.ignoresSafeArea()
 
@@ -50,9 +52,7 @@ struct RunHistoryView: View {
                         // Run list
                         Section("All Runs") {
                             ForEach(runs.prefix(visibleCount), id: \.id) { run in
-                                NavigationLink {
-                                    RunDetailView(run: run, usesMiles: usesMiles)
-                                } label: {
+                                NavigationLink(value: run) {
                                     RunRowView(run: run, usesMiles: usesMiles)
                                 }
                                 .listRowBackground(ButterTheme.surface)
@@ -94,6 +94,17 @@ struct RunHistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .navigationDestination(for: Run.self) { run in
+                RunDetailView(run: run, usesMiles: usesMiles)
+            }
+            .onChange(of: router.pending, initial: true) {
+                if case .run(let id) = router.pending {
+                    if let run = runs.first(where: { $0.id == id }) {
+                        navigationPath.append(run)
+                    }
+                    router.pending = nil
+                }
+            }
             .sheet(isPresented: $showManualEntry) {
                 ManualRunEntryView()
             }

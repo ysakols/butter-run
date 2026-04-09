@@ -71,6 +71,7 @@ enum ButterRunMigrationPlan: SchemaMigrationPlan {
 @main
 struct ButterRunApp: App {
     @StateObject private var stravaAuth = StravaAuthService()
+    @State private var deepLinkRouter = DeepLinkRouter()
     let container: ModelContainer
     let containerError: Error?
 
@@ -136,9 +137,13 @@ struct ButterRunApp: App {
                 } else {
                     ContentView()
                         .environmentObject(stravaAuth)
+                        .environment(deepLinkRouter)
                 }
             }
             .preferredColorScheme(.light)
+            .onOpenURL { url in
+                deepLinkRouter.handle(url)
+            }
         }
         .modelContainer(container)
     }
@@ -375,29 +380,41 @@ struct CrashRecoveryWrapper<Content: View>: View {
 }
 
 struct MainTabView: View {
+    @Environment(DeepLinkRouter.self) private var router
+    @State private var selectedTab = 0
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             HomeView()
                 .tabItem {
                     Label("Run", systemImage: "figure.run")
                 }
+                .tag(0)
 
             RunHistoryView()
                 .tabItem {
                     Label("History", systemImage: "clock.arrow.circlepath")
                 }
+                .tag(1)
 
             ChurnGuideView()
                 .tabItem {
                     Label("Guide", systemImage: "book")
                 }
+                .tag(2)
 
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
                 }
+                .tag(3)
         }
         .tint(ButterTheme.gold)
+        .onChange(of: router.pending) {
+            if case .run = router.pending {
+                selectedTab = 1
+            }
+        }
     }
 }
 

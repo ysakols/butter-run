@@ -170,10 +170,20 @@ struct RunDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("Edit") {
-                    showEdit = true
+                HStack(spacing: 16) {
+                    ShareLink(
+                        item: URL(string: "butterrun://run/\(run.id.uuidString)")!,
+                        message: Text("Check out my Butter Run!")
+                    ) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .foregroundStyle(ButterTheme.gold)
+
+                    Button("Edit") {
+                        showEdit = true
+                    }
+                    .foregroundStyle(ButterTheme.gold)
                 }
-                .foregroundStyle(ButterTheme.gold)
             }
         }
         .sheet(isPresented: $showEdit) {

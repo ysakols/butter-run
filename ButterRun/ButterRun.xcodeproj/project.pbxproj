@@ -52,6 +52,7 @@
 		5351E7E8F8F661A02DB26280 /* EatButterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B38FA49CD8267A66E262FE /* EatButterSheet.swift */; };
 		553EEE4B91C9604A6914863A /* LocationPermissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E244230A667ABA79B42FBD0B /* LocationPermissionView.swift */; };
 		5AA2AC5C1D5A65E804E9824F /* ActiveRunViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DC67E14069EB469BACDCF4 /* ActiveRunViewModel.swift */; };
+		5C07A4242E208CB85F95CC97 /* DeepLinkRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F1C8E6BB40EDB5FEF9D242 /* DeepLinkRouterTests.swift */; };
 		63D6B5374A3DCE2C02CF6CBE /* ButterEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8B94BC09F7F7CFAB88283E /* ButterEntry.swift */; };
 		68B4459A48128405D25DD5AD /* HistoryUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59709DF6843E6FD437114B3A /* HistoryUITests.swift */; };
 		6BB4BCC7B289184444C9A721 /* AchievementServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B54EBB2553DFEB32C19C90B /* AchievementServiceTests.swift */; };
@@ -65,6 +66,7 @@
 		7857158C8EEF2693E563B084 /* GoldButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56D0AA281283DD42C51381B /* GoldButton.swift */; };
 		7C3CA7538DA78EB4CA07CD27 /* Split.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889BE675F2F301198B7C4C1F /* Split.swift */; };
 		7D717B9B60273E334CE0EEC4 /* OnboardingPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F65298CB621CA6760ED1C73 /* OnboardingPage.swift */; };
+		7DAA68754DFB6857D68D4FF1 /* DeepLinkRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F35E29351BB64739C1037B5B /* DeepLinkRouter.swift */; };
 		802CF0BCCD86A09CBADDFCA7 /* ShareImageRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F9520CB5A40BED64AFFFF3B /* ShareImageRendererTests.swift */; };
 		80BC296FF0E444A0AB20595A /* ActiveRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36BDF48F543478E75C5735CC /* ActiveRunView.swift */; };
 		81F853C83C58695A447F52C1 /* MotionTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37817993EB79F1E5352A58B1 /* MotionTracking.swift */; };
@@ -147,6 +149,7 @@
 		33B3AE8A7253E33D2A11E4B7 /* StatRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatRow.swift; sourceTree = "<group>"; };
 		36BDF48F543478E75C5735CC /* ActiveRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveRunView.swift; sourceTree = "<group>"; };
 		37817993EB79F1E5352A58B1 /* MotionTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionTracking.swift; sourceTree = "<group>"; };
+		37F1C8E6BB40EDB5FEF9D242 /* DeepLinkRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkRouterTests.swift; sourceTree = "<group>"; };
 		38DD419EE41F65D83741A30C /* SheetHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetHeader.swift; sourceTree = "<group>"; };
 		3B0E47530F30901A7E665636 /* RunHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunHistoryView.swift; sourceTree = "<group>"; };
 		3E15CAFA46B3F86F18FA6F1F /* CrashReportMailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportMailView.swift; sourceTree = "<group>"; };
@@ -225,6 +228,7 @@
 		EDAD06FEF0A8614B8A0D39A5 /* ButterChurnEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButterChurnEstimator.swift; sourceTree = "<group>"; };
 		EEB12D2020E76EEF8EDE8691 /* RunDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDetailView.swift; sourceTree = "<group>"; };
 		F2BAD918EC1EA379676F973B /* ContextualStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualStrip.swift; sourceTree = "<group>"; };
+		F35E29351BB64739C1037B5B /* DeepLinkRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkRouter.swift; sourceTree = "<group>"; };
 		F56D0AA281283DD42C51381B /* GoldButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoldButton.swift; sourceTree = "<group>"; };
 		F67B89012815F80191A0070E /* SplitTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitTable.swift; sourceTree = "<group>"; };
 		F8E4AF1A04EE3C3B3AE9457A /* StravaIntegrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StravaIntegrationView.swift; sourceTree = "<group>"; };
@@ -308,6 +312,7 @@
 				C6984E1952CE66E1D6D66320 /* ButterCalculator.swift */,
 				EDAD06FEF0A8614B8A0D39A5 /* ButterChurnEstimator.swift */,
 				8CA58F9359B1E4A4095CC182 /* CrashReportService.swift */,
+				F35E29351BB64739C1037B5B /* DeepLinkRouter.swift */,
 				972197EC4269F2D8A623868A /* HapticService.swift */,
 				3E7051E38064DBD2C4344733 /* HealthKitService.swift */,
 				5D9ACBCD75D3B074E7314EBE /* KeychainService.swift */,
@@ -502,6 +507,7 @@
 				D53A60FC0CF3E07CF4862DD4 /* ButterCalculatorTests.swift */,
 				4532E72C0B521CE557D0CBF1 /* ChurnEstimatorTests.swift */,
 				D58B79CF7A37BEF6704C81F0 /* CrashReportServiceTests.swift */,
+				37F1C8E6BB40EDB5FEF9D242 /* DeepLinkRouterTests.swift */,
 				CF335BBAA5E226F02E679567 /* FormatterTests.swift */,
 				50427265D317661E19A51DC2 /* HealthKitServiceTests.swift */,
 				7D73D5FC97FAECF749CF0356 /* LocationServiceTests.swift */,
@@ -693,6 +699,7 @@
 				C62F3B6811D29EAA395DEE88 /* ButterCalculator.swift in Sources */,
 				3C7AAE967167FEC1E4EC26A8 /* ButterChurnEstimator.swift in Sources */,
 				0AEBA8BE46BEA2782F1259E4 /* CrashReportService.swift in Sources */,
+				7DAA68754DFB6857D68D4FF1 /* DeepLinkRouter.swift in Sources */,
 				6E6762AD0043D5F207DA7D40 /* HapticService.swift in Sources */,
 				F19D3A3110A141F1E68961E7 /* HealthKitService.swift in Sources */,
 				4C9D1367C00ED75D3B74E609 /* KeychainService.swift in Sources */,
@@ -768,6 +775,7 @@
 				7615C1CC56CB448366F4EA1E /* ButterCalculatorTests.swift in Sources */,
 				3C20AE7DAC6CDDC86137F297 /* ChurnEstimatorTests.swift in Sources */,
 				AF1124896BC41804592E29B2 /* CrashReportServiceTests.swift in Sources */,
+				5C07A4242E208CB85F95CC97 /* DeepLinkRouterTests.swift in Sources */,
 				6BD12AE531FC0736365DBF59 /* FormatterTests.swift in Sources */,
 				1438436FDE7E3EB7FEFEFC68 /* HealthKitServiceTests.swift in Sources */,
 				22BCDC079CFA6381376847AD /* LocationServiceTests.swift in Sources */,
