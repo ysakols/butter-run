@@ -1,6 +1,6 @@
 # Privacy Policy — Butter Run
 
-**Last updated:** April 7, 2026
+**Last updated:** April 9, 2026
 
 Butter Run ("the App") is committed to protecting your privacy. This policy explains what data the App collects, how it is used, and your rights.
 
@@ -78,4 +78,4 @@ We may update this policy from time to time. Material changes will be communicat
 
 ## Contact
 
-If you have questions about this privacy policy, please open an issue on the [Butter Run GitHub repository](https://github.com/ysakols/butter-run) or email spltr3app@gmail.com.
+If you have questions about this privacy policy, please email spltr3app@gmail.com.

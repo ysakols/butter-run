@@ -271,7 +271,7 @@ The Developer shall not be liable for any failure or delay in performing obligat
 
 ## 19. Termination
 
-We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 4 (Medical Disclaimer), 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 11 (No Guaranteed Results), 12 (Dispute Resolution), 13 (Statute of Limitations), 14 (Privacy and Data), 15 (Apple-Specific Terms), 17 (Intellectual Property), 18 (Force Majeure), 20 (Severability), 21 (Entire Agreement), 22 (No Waiver), 23 (Assignment), and 24 (Governing Law).
+We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 4 (Medical Disclaimer), 5 (Assumption of Risk), 6 (Prohibited Uses), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 11 (No Guaranteed Results), 12 (Dispute Resolution), 13 (Statute of Limitations), 14 (Privacy and Data), 15 (Apple-Specific Terms), 17 (Intellectual Property), 18 (Force Majeure), 20 (Severability), 21 (Entire Agreement), 22 (No Waiver), 23 (Assignment), and 24 (Governing Law).
 
 ## 20. Severability
 

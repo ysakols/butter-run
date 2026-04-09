@@ -83,7 +83,7 @@ The App makes no guarantees regarding fitness outcomes, weight loss, weight gain
 
 12.2 ALL DISPUTES SHALL BE DETERMINED BY BINDING ARBITRATION administered by JAMS under its Streamlined Arbitration Rules. The Federal Arbitration Act (9 U.S.C. §§ 1–16) governs this arbitration agreement. Arbitration shall take place remotely or in California.
 
-12.3 CLASS ACTION WAIVER: EACH PARTY MAY BRING CLAIMS ONLY IN INDIVIDUAL CAPACITY, NOT AS PART OF ANY CLASS OR REPRESENTATIVE PROCEEDING. If this class action waiver is found unenforceable, the entirety of this arbitration agreement (Section 12) shall be null and void.
+12.3 CLASS ACTION WAIVER: EACH PARTY MAY BRING CLAIMS ONLY IN INDIVIDUAL CAPACITY, NOT AS PART OF ANY CLASS OR REPRESENTATIVE PROCEEDING. If this class action waiver is found unenforceable, the entirety of this arbitration agreement (Section 12) shall be null and void, and all disputes shall be resolved in court as set forth in Section 24.
 
 12.4 For 25+ similar demands in 60 days, a bellwether process of 10 randomly selected cases applies.
 
@@ -127,7 +127,7 @@ The Developer is not liable for failures caused by events beyond reasonable cont
 
 19. TERMINATION
 
-We may terminate your access at any time. Sections 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 22, 23, 24, and 25 survive termination.
+We may terminate your access at any time. Sections 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 22, 23, 24, and 25 survive termination.
 
 20. SEVERABILITY
 
@@ -155,12 +155,12 @@ Questions or arbitration opt-out: email spltr3app@gmail.com.
 
 26. ACKNOWLEDGMENT
 
-BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS, INCLUDING THE MEDICAL DISCLAIMER (§4), ASSUMPTION OF RISK (§5), RELEASE AND WAIVER (§7), DISCLAIMER OF WARRANTIES (§8), LIMITATION OF LIABILITY (§9), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (§12), STATUTE OF LIMITATIONS (§13), THIRD-PARTY SERVICES (§16), AND ASSIGNMENT (§23), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.
+BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS, INCLUDING THE MEDICAL DISCLAIMER (§4), ASSUMPTION OF RISK (§5), PROHIBITED USES (§6), RELEASE AND WAIVER (§7), DISCLAIMER OF WARRANTIES (§8), LIMITATION OF LIABILITY (§9), INDEMNIFICATION (§10), NO GUARANTEED RESULTS (§11), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (§12), STATUTE OF LIMITATIONS (§13), APPLE-SPECIFIC TERMS (§15), THIRD-PARTY SERVICES (§16), AND ASSIGNMENT (§23), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.
 """
 
     static let privacyPolicy = """
 PRIVACY POLICY — BUTTER RUN
-Last updated: April 7, 2026
+Last updated: April 9, 2026
 
 Butter Run ("the App") is committed to protecting your privacy. This policy explains what data the App collects, how it is used, and your rights.
 
@@ -204,7 +204,7 @@ YOUR RIGHTS
 • Access: All your data is visible within the App.
 • Deletion: Delete individual runs, or delete the App to remove all local data. For Strava data, use Strava's data management tools.
 • Portability: Runs saved to Apple Health can be exported through Apple's Health app.
-• Data Requests: Contact us at spltr3app@gmail.com or via GitHub to exercise rights under applicable privacy laws (including CCPA).
+• Data Requests: Contact us at spltr3app@gmail.com to exercise rights under applicable privacy laws (including CCPA).
 
 CHILDREN'S PRIVACY
 
@@ -216,6 +216,6 @@ Material changes will be communicated through the App with at least 14 days' not
 
 CONTACT
 
-Questions: open an issue at github.com/ysakols/butter-run or email spltr3app@gmail.com.
+Questions: email spltr3app@gmail.com.
 """
 }
