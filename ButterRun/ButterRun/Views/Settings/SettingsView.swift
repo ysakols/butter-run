@@ -302,9 +302,9 @@ struct SettingsView: View {
         previousWeightKg = p.weightKg
         weightUnitSetting = p.weightUnit
         if weightUnitSetting == "lbs" {
-            weightDisplay = (p.weightKg * 2.20462).rounded()
+            weightDisplay = p.weightKg * 2.20462
         } else {
-            weightDisplay = p.weightKg.rounded()
+            weightDisplay = p.weightKg
         }
         usesMiles = p.usesMiles
         voiceFeedback = p.voiceFeedbackEnabled
