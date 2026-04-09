@@ -167,6 +167,7 @@ struct ManualRunEntryView: View {
             try modelContext.save()
         } catch {
             showSaveError = true
+            return
         }
         dismiss()
     }

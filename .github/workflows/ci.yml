@@ -36,11 +36,12 @@ jobs:
           xcodebuild -version
 
       - name: Verify generated Xcode project is up to date
+        working-directory: .
         run: |
           python3 scripts/generate_xcodeproj.py
-          if ! git diff --quiet ButterRun/ButterRun.xcodeproj/project.pbxproj; then
+          if ! git diff --quiet -- ButterRun/ButterRun.xcodeproj/project.pbxproj; then
             echo "ERROR: project.pbxproj is out of date. Run scripts/generate_xcodeproj.py and commit."
-            git diff ButterRun/ButterRun.xcodeproj/project.pbxproj | head -50
+            git diff -- ButterRun/ButterRun.xcodeproj/project.pbxproj | head -50
             exit 1
           fi
 

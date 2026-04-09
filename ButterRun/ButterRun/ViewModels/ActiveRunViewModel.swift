@@ -361,7 +361,7 @@ class ActiveRunViewModel {
     }
 
     func eatButter(serving: ButterServing, customTsp: Double = 0) {
-        let entry = ButterEntry(serving: serving, customTeaspoons: max(0, customTsp))
+        let entry = ButterEntry(serving: serving, customTeaspoons: customTsp)
         butterEntries.append(entry)
         butterEatenTsp += entry.teaspoonEquivalent
 
