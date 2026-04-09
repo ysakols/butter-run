@@ -13,7 +13,6 @@ enum DeepLinkDestination: Equatable {
 /// The router is injected into the environment as an `@Observable` object so that
 /// ``MainTabView`` can switch tabs and ``RunHistoryView`` can push the target run.
 @Observable
-@MainActor
 final class DeepLinkRouter {
     private static let scheme = "butterrun"
 
