@@ -76,7 +76,7 @@ class StravaUploadService {
     // MARK: - Activity Metadata
 
     /// Builds the Strava activity name for a run.
-    static func activityName(for run: Run) -> String {
+    nonisolated static func activityName(for run: Run) -> String {
         let miles = run.distanceMeters / 1609.344
         let milesFormatted = String(format: "%.1f", miles)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
@@ -84,7 +84,7 @@ class StravaUploadService {
     }
 
     /// Builds the Strava activity description for a run.
-    static func activityDescription(for run: Run) -> String {
+    nonisolated static func activityDescription(for run: Run) -> String {
         let milesFormatted = String(format: "%.1f", run.distanceMeters / 1609.344)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
 
