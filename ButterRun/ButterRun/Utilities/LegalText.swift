@@ -7,7 +7,7 @@ enum LegalText {
 
     static let termsOfService = """
 TERMS OF SERVICE — BUTTER RUN
-Last updated: April 7, 2026
+Last updated: April 9, 2026
 
 IMPORTANT: PLEASE READ THESE TERMS OF SERVICE CAREFULLY BEFORE USING BUTTER RUN. BY TAPPING "I AGREE" OR USING THE APP, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS. IF YOU DO NOT AGREE, DO NOT USE THE APP.
 
@@ -19,7 +19,7 @@ Your agreement is formed when you first tap "I Agree" during the App's initial s
 
 2. CHANGES TO TERMS
 
-We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance) with at least thirty (30) days' notice before taking effect. Non-material changes take effect upon posting. Your continued use of the App after the effective date constitutes acceptance of the revised Terms. If you do not agree, you must stop using the App and delete it.
+We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance) with at least fourteen (14) days' notice before taking effect. Non-material changes take effect upon posting. Your continued use of the App after the effective date constitutes acceptance of the revised Terms. If you do not agree, you must stop using the App and delete it.
 
 3. DESCRIPTION OF THE APP
 
@@ -81,19 +81,21 @@ The App makes no guarantees regarding fitness outcomes, weight loss, weight gain
 
 12.1 You agree to first attempt informal resolution for at least 30 days.
 
-12.2 ALL DISPUTES SHALL BE DETERMINED BY BINDING ARBITRATION administered by JAMS under its Streamlined Arbitration Rules. Arbitration shall take place remotely or in California.
+12.2 ALL DISPUTES SHALL BE DETERMINED BY BINDING ARBITRATION administered by JAMS under its Streamlined Arbitration Rules. The Federal Arbitration Act (9 U.S.C. §§ 1–16) governs this arbitration agreement. Arbitration shall take place remotely or in California.
 
-12.3 CLASS ACTION WAIVER: EACH PARTY MAY BRING CLAIMS ONLY IN INDIVIDUAL CAPACITY, NOT AS PART OF ANY CLASS OR REPRESENTATIVE PROCEEDING.
+12.3 CLASS ACTION WAIVER: EACH PARTY MAY BRING CLAIMS ONLY IN INDIVIDUAL CAPACITY, NOT AS PART OF ANY CLASS OR REPRESENTATIVE PROCEEDING. If this class action waiver is found unenforceable, the entirety of this arbitration agreement (Section 12) shall be null and void.
 
 12.4 For 25+ similar demands in 60 days, a bellwether process of 10 randomly selected cases applies.
 
 12.5 Either party may bring individual small claims court actions.
 
-12.6 For claims ≤$10,000, the Developer pays all arbitration fees. For larger claims, fees are shared unless cost-prohibitive to you.
+12.6 Arbitration fees shall be allocated per the provider's consumer fee schedule. You pay your initial filing fee; the Developer pays remaining arbitration costs. Each party bears its own attorneys' fees unless applicable law provides otherwise.
 
-12.7 You may opt out of arbitration within 30 days of first accepting these Terms by sending written notice to the contact in Section 24.
+12.7 You may opt out of arbitration within 30 days of first accepting these Terms by sending written notice (including via email) to the contact in Section 25.
 
 12.8 Arbitration proceedings are confidential unless required by law.
+
+12.9 The Developer may seek injunctive or equitable relief in any court to protect intellectual property rights, data security, or enforce Section 6, without first arbitrating and without posting a bond.
 
 13. STATUTE OF LIMITATIONS
 
@@ -111,13 +113,13 @@ The Developer is not responsible for any loss of data from any cause. You are re
 
 These Terms are between you and the Developer, not Apple. Apple and its subsidiaries are third-party beneficiaries of these Terms. The Developer, not Apple, is responsible for maintenance, support, product claims, and intellectual property claims. Apple's sole warranty obligation is to refund the purchase price (if any) for App nonconformance.
 
-16. THIRD-PARTY FRAMEWORKS
+16. THIRD-PARTY SERVICES AND FRAMEWORKS
 
-The App uses Apple frameworks (CoreLocation, CoreMotion, HealthKit, MapKit, AVFoundation). The Developer makes no warranties regarding their accuracy, reliability, or availability.
+The App uses Apple frameworks (CoreLocation, CoreMotion, HealthKit, MapKit, AVFoundation) and offers optional integration with third-party services such as Strava. The Developer makes no warranties regarding the accuracy, reliability, availability, or security of these frameworks or third-party services. The Developer disclaims all liability arising from your use of such services.
 
 17. INTELLECTUAL PROPERTY
 
-The App and all associated content are owned by the Developer and protected by intellectual property laws.
+The App and all associated content are owned by the Developer and protected by intellectual property laws. You may not copy, modify, distribute, sell, lease, reverse engineer, decompile, or disassemble any part of the App.
 
 18. FORCE MAJEURE
 
@@ -125,7 +127,7 @@ The Developer is not liable for failures caused by events beyond reasonable cont
 
 19. TERMINATION
 
-We may terminate your access at any time. Sections 5, 7, 8, 9, 10, 12, 13, and 17 survive termination.
+We may terminate your access at any time. Sections 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 22, 23, 24, and 25 survive termination.
 
 20. SEVERABILITY
 
@@ -139,17 +141,21 @@ These Terms and the Privacy Policy constitute the entire agreement.
 
 Failure to enforce any provision is not a waiver. Waivers must be in writing.
 
-23. GOVERNING LAW
+23. ASSIGNMENT
+
+The Developer may assign these Terms without your consent. You may not assign without the Developer's written consent. Unauthorized assignment is void.
+
+24. GOVERNING LAW
 
 California law governs. If arbitration does not apply, California state and federal courts have exclusive jurisdiction.
 
-24. CONTACT
+25. CONTACT
 
-Questions or arbitration opt-out: open an issue at github.com/ysakols/butter-run or email spltr3app@gmail.com.
+Questions or arbitration opt-out: email spltr3app@gmail.com.
 
-25. ACKNOWLEDGMENT
+26. ACKNOWLEDGMENT
 
-BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS, INCLUDING THE MEDICAL DISCLAIMER (§4), ASSUMPTION OF RISK (§5), RELEASE AND WAIVER (§7), DISCLAIMER OF WARRANTIES (§8), LIMITATION OF LIABILITY (§9), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (§12), AND STATUTE OF LIMITATIONS (§13), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.
+BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS, INCLUDING THE MEDICAL DISCLAIMER (§4), ASSUMPTION OF RISK (§5), RELEASE AND WAIVER (§7), DISCLAIMER OF WARRANTIES (§8), LIMITATION OF LIABILITY (§9), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (§12), STATUTE OF LIMITATIONS (§13), THIRD-PARTY SERVICES (§16), AND ASSIGNMENT (§23), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.
 """
 
     static let privacyPolicy = """
@@ -206,7 +212,7 @@ Butter Run is not intended for children under 13. We do not knowingly collect pe
 
 CHANGES TO THIS POLICY
 
-Material changes will be communicated through the App with at least 30 days' notice.
+Material changes will be communicated through the App with at least 14 days' notice.
 
 CONTACT
 

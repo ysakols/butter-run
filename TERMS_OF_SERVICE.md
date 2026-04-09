@@ -271,7 +271,7 @@ The Developer shall not be liable for any failure or delay in performing obligat
 
 ## 19. Termination
 
-We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 12 (Dispute Resolution), 13 (Statute of Limitations), 17 (Intellectual Property), 23 (Assignment), and 24 (Governing Law).
+We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 4 (Medical Disclaimer), 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 11 (No Guaranteed Results), 12 (Dispute Resolution), 13 (Statute of Limitations), 14 (Privacy and Data), 15 (Apple-Specific Terms), 17 (Intellectual Property), 18 (Force Majeure), 20 (Severability), 21 (Entire Agreement), 22 (No Waiver), 23 (Assignment), and 24 (Governing Law).
 
 ## 20. Severability
 
@@ -299,4 +299,4 @@ If you have questions about these Terms of Service, wish to exercise your arbitr
 
 ## 26. Acknowledgment
 
-**BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS OF SERVICE, INCLUDING THE MEDICAL DISCLAIMER (SECTION 4), ASSUMPTION OF RISK (SECTION 5), PROHIBITED USES (SECTION 6), RELEASE AND WAIVER (SECTION 7), DISCLAIMER OF WARRANTIES (SECTION 8), LIMITATION OF LIABILITY (SECTION 9), INDEMNIFICATION (SECTION 10), NO GUARANTEED RESULTS (SECTION 11), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (SECTION 12), STATUTE OF LIMITATIONS (SECTION 13), APPLE-SPECIFIC TERMS (SECTION 15), AND ASSIGNMENT (SECTION 23), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.**
+**BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS OF SERVICE, INCLUDING THE MEDICAL DISCLAIMER (SECTION 4), ASSUMPTION OF RISK (SECTION 5), PROHIBITED USES (SECTION 6), RELEASE AND WAIVER (SECTION 7), DISCLAIMER OF WARRANTIES (SECTION 8), LIMITATION OF LIABILITY (SECTION 9), INDEMNIFICATION (SECTION 10), NO GUARANTEED RESULTS (SECTION 11), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (SECTION 12), STATUTE OF LIMITATIONS (SECTION 13), APPLE-SPECIFIC TERMS (SECTION 15), THIRD-PARTY SERVICES (SECTION 16), AND ASSIGNMENT (SECTION 23), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.**
