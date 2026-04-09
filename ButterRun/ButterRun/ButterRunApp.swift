@@ -184,7 +184,7 @@ struct ContentView: View {
     @State private var showCopiedToast = false
 
     /// Increment this when the ToS changes materially to re-trigger acceptance.
-    private static let currentTosVersion = "2026-04-08-v1"
+    private static let currentTosVersion = "2026-04-09-v1"
 
     var body: some View {
         Group {
