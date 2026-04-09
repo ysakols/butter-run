@@ -74,6 +74,9 @@ final class StravaTests: XCTestCase {
             XCTAssertNotNil(error.errorDescription, "\(error) should have a description")
             XCTAssertFalse(error.errorDescription!.isEmpty, "\(error) description should not be empty")
         }
+        // Verify uploadFailed interpolates its associated value
+        let uploadError = StravaUploadError.uploadFailed("timeout")
+        XCTAssertTrue(uploadError.errorDescription!.contains("timeout"), "uploadFailed should include the reason")
     }
 
     // MARK: - UploadStatus Tests

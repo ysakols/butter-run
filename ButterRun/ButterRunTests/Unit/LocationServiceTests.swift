@@ -119,5 +119,4 @@ final class LocationServiceTests: XCTestCase {
         let syncData = service.encodeRoute()
         XCTAssertEqual(data, syncData)
     }
-
 }
