@@ -1,3 +1,7 @@
+> **Note:** This document reflects the original v1.0 design and is partially outdated.  
+> For the current design, see [UI Redesign Spec](docs/superpowers/specs/2026-04-05-ui-redesign-design.md).  
+> Key changes since v1.0: light cream theme, "pats" terminology, 4-tab layout, Strava integration, HealthKit sync, achievements system.
+
 # Butter Run — App Design Specification
 
 > *"Run it off. One pat at a time."*

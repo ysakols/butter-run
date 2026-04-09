@@ -183,7 +183,7 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(ButterTheme.background.ignoresSafeArea())
             .onAppear { loadProfile() }
-            .onChange(of: displayName) { _, _ in saveProfile() }
+            .onDisappear { saveProfile() }
             .onChange(of: weightDisplay) { _, _ in
                 // Convert display value to kg for internal tracking
                 if weightUnitSetting == "lbs" {
@@ -327,7 +327,7 @@ struct SettingsView: View {
             try modelContext.delete(model: UserProfile.self)
             try modelContext.save()
         } catch {
-            // Deletion failed; user can retry
+            showSaveError = true
         }
     }
 

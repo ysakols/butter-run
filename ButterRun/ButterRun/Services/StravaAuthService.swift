@@ -13,6 +13,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     private var authSession: ASWebAuthenticationSession?
     private var expectedOAuthState: String?
     private var pkceCodeVerifier: String?
+    private var activeRefreshTask: Task<Void, Error>?
 
     private enum Keys {
         static let accessToken = "strava_access_token"
@@ -164,7 +165,15 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     // MARK: - Refresh Token
 
     /// Refreshes the access token if it will expire within 5 minutes.
+    /// Serializes concurrent callers so only one refresh network request is in flight at a time.
     func refreshTokenIfNeeded() async throws {
+        // If a refresh is already in flight, await it
+        if let existing = activeRefreshTask {
+            try await existing.value
+            return
+        }
+
+        // Check if refresh is needed
         guard let expiryString = KeychainService.load(key: Keys.tokenExpiry),
               let expiresAt = TimeInterval(expiryString)
         else {
@@ -177,29 +186,37 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
             return
         }
 
-        guard let refreshToken = KeychainService.load(key: Keys.refreshToken) else {
-            throw StravaAuthError.missingRefreshToken
+        // Start a new refresh task
+        let task = Task { [weak self] in
+            guard let self else { throw StravaAuthError.missingRefreshToken }
+
+            guard let refreshToken = KeychainService.load(key: Keys.refreshToken) else {
+                throw StravaAuthError.missingRefreshToken
+            }
+
+            let params: [String: String] = [
+                "client_id": StravaConfig.clientID,
+                "client_secret": StravaConfig.clientSecret,
+                "refresh_token": refreshToken,
+                "grant_type": "refresh_token"
+            ]
+
+            let json = try await self.performTokenRequest(params)
+
+            guard let newAccessToken = json["access_token"] as? String,
+                  let newRefreshToken = json["refresh_token"] as? String,
+                  let newExpiresAt = json["expires_at"] as? Int
+            else {
+                throw StravaAuthError.invalidTokenResponse
+            }
+
+            KeychainService.save(key: Keys.accessToken, value: newAccessToken)
+            KeychainService.save(key: Keys.refreshToken, value: newRefreshToken)
+            KeychainService.save(key: Keys.tokenExpiry, value: String(newExpiresAt))
         }
-
-        let params: [String: String] = [
-            "client_id": StravaConfig.clientID,
-            "client_secret": StravaConfig.clientSecret,
-            "refresh_token": refreshToken,
-            "grant_type": "refresh_token"
-        ]
-
-        let json = try await performTokenRequest(params)
-
-        guard let newAccessToken = json["access_token"] as? String,
-              let newRefreshToken = json["refresh_token"] as? String,
-              let newExpiresAt = json["expires_at"] as? Int
-        else {
-            throw StravaAuthError.invalidTokenResponse
-        }
-
-        KeychainService.save(key: Keys.accessToken, value: newAccessToken)
-        KeychainService.save(key: Keys.refreshToken, value: newRefreshToken)
-        KeychainService.save(key: Keys.tokenExpiry, value: String(newExpiresAt))
+        activeRefreshTask = task
+        defer { activeRefreshTask = nil }
+        try await task.value
     }
 
     // MARK: - Disconnect

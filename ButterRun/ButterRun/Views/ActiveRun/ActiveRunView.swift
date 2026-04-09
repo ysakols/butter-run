@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 struct ActiveRunView: View {
     @Environment(\.modelContext) private var modelContext
@@ -24,6 +25,7 @@ struct ActiveRunView: View {
     @State private var isCountingDown = true
     @State private var countdownTask: Task<Void, Never>?
     @ScaledMetric(relativeTo: .largeTitle) private var heroFontSize: CGFloat = 56
+    @State private var showLocationDeniedAlert = false
 
     var body: some View {
         ZStack {
@@ -129,6 +131,12 @@ struct ActiveRunView: View {
             viewModel.isButterZeroChallenge = isButterZeroChallenge
             let draftService = RunDraftService(context: modelContext)
             viewModel.setDraftService(draftService)
+
+            let status = CLLocationManager().authorizationStatus
+            if status == .denied || status == .restricted {
+                showLocationDeniedAlert = true
+            }
+
             startCountdown()
         }
         .onDisappear {
@@ -140,6 +148,16 @@ struct ActiveRunView: View {
                 showUndoToast = true
             }
             .presentationDetents([.medium])
+        }
+        .alert("Location Access Required", isPresented: $showLocationDeniedAlert) {
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("ButterRun needs location access to track your run. Please enable it in Settings.")
         }
         .alert("Save Error", isPresented: $showSaveError) {
             Button("OK", role: .cancel) {}

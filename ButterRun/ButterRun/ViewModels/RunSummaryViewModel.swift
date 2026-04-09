@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-@Observable
+@MainActor @Observable
 class RunSummaryViewModel {
     let run: Run
     let usesMiles: Bool

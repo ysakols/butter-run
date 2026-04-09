@@ -1,7 +1,7 @@
 # Butter Run — UI Redesign Spec
 
 **Date:** 2026-04-05
-**Status:** Draft — Pending user review
+**Status:** Implemented
 **Scope:** Full visual redesign + terminology change + new features
 
 ## Context

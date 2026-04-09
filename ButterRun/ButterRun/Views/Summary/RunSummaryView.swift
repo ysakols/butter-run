@@ -23,6 +23,7 @@ struct RunSummaryView: View {
     @State private var showSaveError = false
     @State private var healthKitSyncing = false
     @State private var healthKitError: String?
+    @State private var hasPerformedSetup = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.modelContext) private var modelContext
 
@@ -189,6 +190,9 @@ struct RunSummaryView: View {
                 Text("Your data could not be saved. Please try again.")
             }
             .onAppear {
+                guard !hasPerformedSetup else { return }
+                hasPerformedSetup = true
+
                 let service = AchievementService()
                 let descriptor = FetchDescriptor<Run>()
                 let allRunsList = (try? modelContext.fetch(descriptor)) ?? []
