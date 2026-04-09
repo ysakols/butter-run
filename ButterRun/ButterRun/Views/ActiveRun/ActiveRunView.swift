@@ -21,6 +21,7 @@ struct ActiveRunView: View {
     @State private var showUndoToast = false
     @State private var countdownValue: Int = 3
     @State private var isCountingDown = true
+    @State private var countdownTask: Task<Void, Never>?
     @ScaledMetric(relativeTo: .largeTitle) private var heroFontSize: CGFloat = 56
 
     var body: some View {
@@ -128,6 +129,9 @@ struct ActiveRunView: View {
             let draftService = RunDraftService(context: modelContext)
             viewModel.setDraftService(draftService)
             startCountdown()
+        }
+        .onDisappear {
+            countdownTask?.cancel()
         }
         .sheet(isPresented: $showEatButterSheet) {
             EatButterSheet { serving, customTsp in
@@ -256,22 +260,31 @@ struct ActiveRunView: View {
         }
         #endif
 
-        func tick(remaining: Int) {
-            if remaining <= 0 {
-                // Show "Go!" briefly then dismiss
-                withAnimation { countdownValue = 0 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        countdownTask = Task {
+            do {
+                try await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { withAnimation { countdownValue = 2 } }
+
+                try await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { withAnimation { countdownValue = 1 } }
+
+                try await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { withAnimation { countdownValue = 0 } }
+
+                try await Task.sleep(for: .seconds(0.5))
+                guard !Task.isCancelled else { return }
+
+                await MainActor.run {
                     withAnimation { isCountingDown = false }
                     beginRun()
                 }
-                return
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                withAnimation { countdownValue = remaining - 1 }
-                tick(remaining: remaining - 1)
+            } catch {
+                // Task was cancelled
             }
         }
-        tick(remaining: 3)
     }
 
     private func beginRun() {
