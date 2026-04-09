@@ -178,7 +178,8 @@ struct RunSummaryView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 if let image = shareImage {
-                    ShareSheetView(image: image, isPresented: $showShareSheet)
+                    let deepLink = DeepLinkRouter.url(forRunID: run.id)
+                    ShareSheetView(items: [image, deepLink], isPresented: $showShareSheet)
                 }
             }
             .onAppear {
@@ -525,12 +526,12 @@ struct SplitRowView: View {
 }
 
 struct ShareSheetView: UIViewControllerRepresentable {
-    let image: UIImage
+    let items: [Any]
     @Binding var isPresented: Bool
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let controller = UIActivityViewController(
-            activityItems: [image],
+            activityItems: items,
             applicationActivities: nil
         )
         controller.completionWithItemsHandler = { _, _, _, _ in
