@@ -257,13 +257,13 @@ In the event of any third-party claim that the App or your possession and use of
 
 You acknowledge and agree that Apple and its subsidiaries are third-party beneficiaries of these Terms, and that upon your acceptance of these Terms, Apple will have the right (and will be deemed to have accepted the right) to enforce these Terms against you as a third-party beneficiary thereof.
 
-## 16. Third-Party Frameworks
+## 16. Third-Party Services and Frameworks
 
-The App uses Apple's native frameworks including CoreLocation, CoreMotion, HealthKit, MapKit, and AVFoundation. The Developer makes no representations or warranties regarding the accuracy, reliability, or availability of these frameworks. Any inaccuracies in GPS data, motion data, health data, map data, or audio output are beyond the Developer's control.
+The App uses Apple's native frameworks including CoreLocation, CoreMotion, HealthKit, MapKit, and AVFoundation. The App also offers optional integration with third-party services such as Strava. The Developer makes no representations or warranties regarding the accuracy, reliability, availability, or security of these frameworks or third-party services. Any inaccuracies in GPS data, motion data, health data, map data, audio output, or data transmitted to or received from third-party services are beyond the Developer's control. Your use of any third-party service is subject to that service's own terms and privacy policies, and the Developer disclaims all liability arising from your use of such services.
 
 ## 17. Intellectual Property
 
-The App and all associated content, features, and functionality (including but not limited to text, graphics, logos, icons, images, audio, and software) are owned by the Developer and are protected by copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, sell, or lease any part of the App without the Developer's prior written consent.
+The App and all associated content, features, and functionality (including but not limited to text, graphics, logos, icons, images, audio, and software) are owned by the Developer and are protected by copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, sell, lease, reverse engineer, decompile, or disassemble any part of the App without the Developer's prior written consent.
 
 ## 18. Force Majeure
 
@@ -271,7 +271,7 @@ The Developer shall not be liable for any failure or delay in performing obligat
 
 ## 19. Termination
 
-We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 12 (Dispute Resolution), 13 (Statute of Limitations), 17 (Intellectual Property), and 23 (Assignment).
+We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 12 (Dispute Resolution), 13 (Statute of Limitations), 17 (Intellectual Property), 23 (Assignment), and 24 (Governing Law).
 
 ## 20. Severability
 
