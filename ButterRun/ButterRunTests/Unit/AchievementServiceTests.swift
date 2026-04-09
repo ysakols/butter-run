@@ -7,6 +7,7 @@ final class AchievementServiceTests: XCTestCase {
     var context: ModelContext!
     var service: AchievementService!
 
+    @MainActor
     override func setUp() async throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         container = try ModelContainer(

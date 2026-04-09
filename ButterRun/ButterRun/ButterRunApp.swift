@@ -473,28 +473,22 @@ struct ScrollableDocumentView: View {
             .padding(.bottom, 12)
 
             // Scrollable document text
-            GeometryReader { outerGeo in
-                ScrollView {
-                    Text(text)
-                        .font(.system(.footnote, design: .rounded))
-                        .foregroundStyle(ButterTheme.textPrimary)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 20)
+            ScrollView {
+                Text(text)
+                    .font(.system(.footnote, design: .rounded))
+                    .foregroundStyle(ButterTheme.textPrimary)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
 
-                    // Invisible marker at the bottom to detect scroll position
-                    GeometryReader { geo in
-                        Color.clear
-                            .preference(key: ScrollBottomPreferenceKey.self, value: geo.frame(in: .named("scroll")).maxY)
-                    }
+                // Marker near the bottom — when visible, user has scrolled far enough
+                Color.clear
                     .frame(height: 1)
-                }
-                .coordinateSpace(name: "scroll")
-                .onPreferenceChange(ScrollBottomPreferenceKey.self) { maxY in
-                    if maxY < outerGeo.size.height + 100 {
+                    .id("bottom")
+                    .onAppear {
                         hasScrolledToBottom = true
                     }
-                }
             }
+            .frame(maxHeight: .infinity)
             .background(ButterTheme.surface)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 16)
@@ -529,10 +523,4 @@ struct ScrollableDocumentView: View {
     }
 }
 
-private struct ScrollBottomPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = .infinity
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = min(value, nextValue())
-    }
-}
 

@@ -6,7 +6,8 @@ struct OnboardingWalkthroughView: View {
 
     @State private var currentPage = 0
     @State private var displayName = ""
-    @State private var weightValue: Double = Locale.current.measurementSystem == .us ? 154.0 : 70.0
+    @State private var weightValue: Double = 0
+    @State private var weightText: String = ""
     @State private var weightUnit: String = Locale.current.measurementSystem == .us ? "lbs" : "kg"
     @State private var useMiles: Bool = Locale.current.measurementSystem == .us
 
@@ -141,11 +142,14 @@ struct OnboardingWalkthroughView: View {
 
                         Spacer()
 
-                        TextField(weightUnit, value: $weightValue, format: .number)
+                        TextField(weightUnit, text: $weightText)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                             .keyboardType(.decimalPad)
                             .accessibilityLabel("Weight in \(weightUnit)")
+                            .onChange(of: weightText) { _, newValue in
+                                weightValue = Double(newValue) ?? 0
+                            }
 
                         Picker("Weight unit", selection: $weightUnit) {
                             Text("lbs").tag("lbs")
@@ -161,9 +165,12 @@ struct OnboardingWalkthroughView: View {
                 }
                 .onChange(of: weightUnit) { oldUnit, newUnit in
                     if oldUnit == "kg" && newUnit == "lbs" {
-                        weightValue = weightValue * 2.20462
+                        weightValue = (weightValue * 2.20462).rounded()
                     } else if oldUnit == "lbs" && newUnit == "kg" {
-                        weightValue = weightValue / 2.20462
+                        weightValue = (weightValue / 2.20462).rounded()
+                    }
+                    if weightValue > 0 {
+                        weightText = String(Int(round(weightValue)))
                     }
                 }
 
@@ -268,19 +275,36 @@ struct OnboardingWalkthroughView: View {
     }
 
     private func navigationButtons(page: Int) -> some View {
-        Button {
-            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = page + 1 }
-        } label: {
-            Text("Next")
-                .font(ButterTypography.buttonText)
-                .foregroundStyle(ButterTheme.onPrimaryAction)
-                .frame(maxWidth: .infinity)
-                .frame(height: ButterSpacing.buttonHeight)
-                .background(ButterTheme.gold)
-                .clipShape(RoundedRectangle(cornerRadius: ButterSpacing.buttonCornerRadius))
+        HStack(spacing: 12) {
+            if page > 0 {
+                Button {
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = page - 1 }
+                } label: {
+                    Text("Back")
+                        .font(ButterTypography.buttonText)
+                        .foregroundStyle(ButterTheme.textSecondary)
+                        .frame(height: ButterSpacing.buttonHeight)
+                        .frame(maxWidth: .infinity)
+                        .background(ButterTheme.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: ButterSpacing.buttonCornerRadius))
+                        .overlay(RoundedRectangle(cornerRadius: ButterSpacing.buttonCornerRadius).stroke(ButterTheme.surfaceBorder, lineWidth: 1))
+                }
+                .accessibilityLabel("Back")
+            }
+
+            Button {
+                withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) { currentPage = page + 1 }
+            } label: {
+                Text("Next")
+                    .font(ButterTypography.buttonText)
+                    .foregroundStyle(ButterTheme.onPrimaryAction)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: ButterSpacing.buttonHeight)
+                    .background(ButterTheme.gold)
+                    .clipShape(RoundedRectangle(cornerRadius: ButterSpacing.buttonCornerRadius))
+            }
+            .accessibilityLabel("Next")
         }
-        .accessibilityLabel("Next")
-        .accessibilityHint("Go to next onboarding page")
         .padding(.horizontal, 24)
         .padding(.top, 8)
     }

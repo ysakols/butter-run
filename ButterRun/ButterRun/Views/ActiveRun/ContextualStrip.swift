@@ -14,58 +14,86 @@ struct ContextualStrip: View {
     private var isNearZero: Bool { abs(netTsp) < 0.3 }
 
     var body: some View {
-        VStack(spacing: 8) {
-            // Butter Zero row
+        VStack(spacing: isButterZero && isChurnEnabled ? 12 : 0) {
+            // Butter Zero section
             if isButterZero {
-                HStack {
-                    Text("Butter Zero")
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundStyle(ButterTheme.textSecondary)
-                    InfoButton(title: "Butter Zero", bodyText: "Eat butter during your run and try to match what you burn. Track as + or − pats from net zero.")
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Butter Zero")
+                            .font(.system(.caption, design: .rounded, weight: .semibold))
+                            .foregroundStyle(ButterTheme.textSecondary)
+                        InfoButton(title: "Butter Zero", bodyText: "Eat butter during your run and try to match what you burn. Track as + or − pats from net zero.")
 
-                    Image(systemName: netTsp >= 0 ? "arrow.up" : "arrow.down")
-                        .font(.caption2)
-                        .foregroundStyle(netColor)
+                        Spacer()
 
-                    Text(netLabel)
-                        .font(.system(.caption, design: .rounded, weight: .bold))
-                        .foregroundStyle(netColor)
+                        HStack(spacing: 4) {
+                            Image(systemName: netTsp >= 0 ? "arrow.up" : "arrow.down")
+                                .font(.caption2)
+                                .foregroundStyle(netColor)
 
-                    Spacer()
-                }
-            }
-
-            // Churn progress row
-            if isChurnEnabled {
-                HStack(spacing: 8) {
-                    Text("Churn:")
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundStyle(ButterTheme.textSecondary)
-
-                    GeometryReader { geo in
-                        let width = geo.size.width
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(ButterTheme.surfaceBorder)
-                                .frame(height: 8)
-                            Capsule()
-                                .fill(ButterTheme.gold)
-                                .frame(width: width * min(1, churnProgress), height: 8)
-                                .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: churnProgress)
+                            Text(netLabel)
+                                .font(.system(.subheadline, design: .rounded, weight: .bold))
+                                .foregroundStyle(netColor)
                         }
                     }
-                    .frame(height: 8)
 
-                    Text(churnStage.name)
-                        .font(.system(.caption2, design: .rounded, weight: .bold))
-                        .foregroundStyle(ButterTheme.gold)
-                        .accessibilityLabel("Churn stage: \(churnStage.name)")
+                    ButterZeroScale(netPats: netTsp, showLabels: false)
                 }
+                .padding(12)
+                .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
+            }
+
+            // Churn Tracker section
+            if isChurnEnabled {
+                VStack(spacing: 10) {
+                    HStack {
+                        Text("Churn Tracker")
+                            .font(.system(.caption, design: .rounded, weight: .semibold))
+                            .foregroundStyle(ButterTheme.textSecondary)
+
+                        Spacer()
+
+                        Text(churnStage.name)
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundStyle(ButterTheme.gold)
+                    }
+
+                    // Stage markers and progress bar
+                    VStack(spacing: 4) {
+                        GeometryReader { geo in
+                            let width = geo.size.width
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(ButterTheme.surfaceBorder)
+                                    .frame(height: 8)
+                                Capsule()
+                                    .fill(ButterTheme.gold)
+                                    .frame(width: width * min(1, churnProgress), height: 8)
+                                    .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: churnProgress)
+                            }
+                        }
+                        .frame(height: 8)
+
+                        // Stage labels along the bar
+                        HStack {
+                            Text("Liquid")
+                            Spacer()
+                            Text("Foamy")
+                            Spacer()
+                            Text("Whipped")
+                            Spacer()
+                            Text("Butter")
+                        }
+                        .font(.system(size: 9, weight: .medium, design: .rounded))
+                        .foregroundStyle(ButterTheme.textSecondary)
+                    }
+                }
+                .padding(12)
+                .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
             }
         }
-        .padding(12)
-        .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(composedAccessibilityLabel)
         .accessibilityAddTraits(.updatesFrequently)

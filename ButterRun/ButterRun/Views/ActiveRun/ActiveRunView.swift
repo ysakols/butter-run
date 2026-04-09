@@ -19,11 +19,21 @@ struct ActiveRunView: View {
     @State private var showSummary = false
     @State private var showMap = false
     @State private var showUndoToast = false
+    @State private var countdownValue: Int = 3
+    @State private var isCountingDown = true
+    @State private var countdownTask: Task<Void, Never>?
     @ScaledMetric(relativeTo: .largeTitle) private var heroFontSize: CGFloat = 56
 
     var body: some View {
         ZStack {
             ButterTheme.background.ignoresSafeArea()
+
+            // Countdown overlay
+            if isCountingDown {
+                countdownOverlay
+                    .transition(.opacity)
+                    .zIndex(100)
+            }
 
             VStack(spacing: 0) {
                 // GPS signal banners
@@ -118,10 +128,10 @@ struct ActiveRunView: View {
             viewModel.isButterZeroChallenge = isButterZeroChallenge
             let draftService = RunDraftService(context: modelContext)
             viewModel.setDraftService(draftService)
-            viewModel.startRun()
-            if isChurnEnabled, let config = churnConfig {
-                viewModel.startChurn(configuration: config)
-            }
+            startCountdown()
+        }
+        .onDisappear {
+            countdownTask?.cancel()
         }
         .sheet(isPresented: $showEatButterSheet) {
             EatButterSheet { serving, customTsp in
@@ -208,6 +218,79 @@ struct ActiveRunView: View {
             LongPressStopButton {
                 finishRun()
             }
+        }
+    }
+
+    // MARK: - Countdown
+
+    private var countdownOverlay: some View {
+        ZStack {
+            ButterTheme.background.ignoresSafeArea()
+
+            VStack(spacing: 16) {
+                if countdownValue > 0 {
+                    Text("\(countdownValue)")
+                        .font(.system(size: 96, weight: .black, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
+                        .contentTransition(.numericText())
+                } else {
+                    Text("Go!")
+                        .font(.system(size: 72, weight: .black, design: .rounded))
+                        .foregroundStyle(ButterTheme.gold)
+                }
+
+                Text(countdownValue > 0 ? "Get ready..." : "")
+                    .font(.system(.title3, design: .rounded))
+                    .foregroundStyle(ButterTheme.textSecondary)
+            }
+        }
+        .accessibilityLabel(countdownValue > 0 ? "Starting in \(countdownValue)" : "Go")
+    }
+
+    private func startCountdown() {
+        countdownValue = 3
+        isCountingDown = true
+
+        // Skip countdown during UI testing
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--skip-countdown") {
+            isCountingDown = false
+            beginRun()
+            return
+        }
+        #endif
+
+        countdownTask = Task {
+            do {
+                try await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { withAnimation { countdownValue = 2 } }
+
+                try await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { withAnimation { countdownValue = 1 } }
+
+                try await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                await MainActor.run { withAnimation { countdownValue = 0 } }
+
+                try await Task.sleep(for: .seconds(0.5))
+                guard !Task.isCancelled else { return }
+
+                await MainActor.run {
+                    withAnimation { isCountingDown = false }
+                    beginRun()
+                }
+            } catch {
+                // Task was cancelled
+            }
+        }
+    }
+
+    private func beginRun() {
+        viewModel.startRun()
+        if isChurnEnabled, let config = churnConfig {
+            viewModel.startChurn(configuration: config)
         }
     }
 

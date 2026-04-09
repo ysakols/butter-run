@@ -83,10 +83,13 @@ struct ButterCalculator {
     }
 
 
-    /// Human-friendly butter description.
+    /// Human-friendly butter description using a larger unit than pats.
+    /// For small amounts (< 3 pats), shows calorie equivalent to avoid
+    /// duplicating the pats display shown elsewhere.
     static func butterDescription(tsp: Double) -> String {
         if tsp < 3 {
-            return String(format: "%.1f pats", tsp)
+            let cals = Int(round(tsp * caloriesPerTeaspoon))
+            return "\(cals) calories"
         } else if tsp < 24 { // less than 1 stick
             let tbsp = tsp / 3.0
             return String(format: "%.1f tbsp", tbsp)

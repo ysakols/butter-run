@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import AVFoundation
 
 private let fallbackURL = URL(string: "https://example.com")!
 
@@ -24,7 +23,6 @@ struct SettingsView: View {
     @State private var showDeleteConfirmation = false
     @State private var showRecalcConfirmation = false
     @State private var weightDebounceTask: Task<Void, Never>?
-    @State private var speechSynthesizer = AVSpeechSynthesizer()
     @EnvironmentObject private var stravaAuth: StravaAuthService
     @State private var autoShareToStrava: Bool = false
 
@@ -66,21 +64,8 @@ struct SettingsView: View {
                 .listRowBackground(ButterTheme.surface)
 
                 Section("Run Settings") {
-                    HStack {
-                        Toggle("Voice Feedback", isOn: $voiceFeedback)
-                            .tint(ButterTheme.gold)
-                        if voiceFeedback {
-                            Button {
-                                previewVoice()
-                            } label: {
-                                Image(systemName: "speaker.wave.2.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(ButterTheme.gold)
-                                    .frame(minWidth: 44, minHeight: 44)
-                            }
-                            .accessibilityLabel("Preview voice feedback")
-                        }
-                    }
+                    Toggle("Voice Feedback", isOn: $voiceFeedback)
+                        .tint(ButterTheme.gold)
                     Toggle("Auto-Pause", isOn: $autoPause)
                         .tint(ButterTheme.gold)
                 }
@@ -103,6 +88,19 @@ struct SettingsView: View {
                             .labelsHidden()
                     }
 
+                    // Strava
+                    StravaIntegrationRow(autoShareToStrava: $autoShareToStrava)
+                        .onChange(of: autoShareToStrava) { _, _ in saveProfile() }
+                        .onChange(of: stravaAuth.isAuthenticated) { _, connected in
+                            if let p = profile {
+                                p.stravaConnected = connected
+                                if !connected {
+                                    autoShareToStrava = false
+                                    p.autoShareToStrava = false
+                                }
+                            }
+                        }
+
                     // Garmin
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -118,24 +116,6 @@ struct SettingsView: View {
                     .opacity(0.5)
                 }
                 .listRowBackground(ButterTheme.surface)
-
-                Section {
-                    StravaIntegrationView(autoShareToStrava: $autoShareToStrava)
-                        .onChange(of: autoShareToStrava) { _, _ in saveProfile() }
-                        .onChange(of: stravaAuth.isAuthenticated) { _, connected in
-                            if let p = profile {
-                                p.stravaConnected = connected
-                                if !connected {
-                                    autoShareToStrava = false
-                                    p.autoShareToStrava = false
-                                }
-                            }
-                        }
-                } header: {
-                    Text("Strava")
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
 
                 Section {
                     infoRow("1 pat butter", "34 calories")
@@ -225,9 +205,9 @@ struct SettingsView: View {
             }
             .onChange(of: weightUnitSetting) { oldUnit, newUnit in
                 if oldUnit == "kg" && newUnit == "lbs" {
-                    weightDisplay = weightDisplay * 2.20462
+                    weightDisplay = (weightDisplay * 2.20462).rounded()
                 } else if oldUnit == "lbs" && newUnit == "kg" {
-                    weightDisplay = weightDisplay / 2.20462
+                    weightDisplay = (weightDisplay / 2.20462).rounded()
                 }
                 saveProfile()
             }
@@ -330,17 +310,6 @@ struct SettingsView: View {
         p.autoPauseEnabled = autoPause
         p.healthKitEnabled = healthKit
         p.autoShareToStrava = autoShareToStrava
-    }
-
-    private func previewVoice() {
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .duckOthers)
-        try? AVAudioSession.sharedInstance().setActive(true)
-        let utterance = AVSpeechUtterance(string: "Half a pat of butter burned. Keep going!")
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        utterance.volume = 0.8
-        speechSynthesizer.stopSpeaking(at: .immediate)
-        speechSynthesizer.speak(utterance)
     }
 
     private func deleteAllData() {

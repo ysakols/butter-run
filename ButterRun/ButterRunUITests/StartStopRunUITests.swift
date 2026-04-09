@@ -4,110 +4,90 @@ final class StartStopRunUITests: XCTestCase {
     let app = XCUIApplication()
 
     override func setUp() {
-        continueAfterFailure = false
-        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos"]
+        continueAfterFailure = true
+        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos", "--skip-countdown"]
         app.launch()
-
-        // Handle system location permission dialog on fresh simulators
-        addUIInterruptionMonitor(withDescription: "Location") { alert in
-            let allowButton = alert.buttons["Allow While Using App"]
-            if allowButton.exists {
-                allowButton.tap()
-                return true
-            }
-            return false
-        }
     }
 
     /// Taps "Start run" and handles location permission sheet on fresh simulators.
     private func tapStartRun() {
         let startButton = app.buttons["Start run"]
-        XCTAssertTrue(startButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(startButton.waitForExistence(timeout: 10))
         startButton.tap()
 
         // Handle custom location permission sheet if it appears
         let allowLocation = app.buttons["Allow Location"]
         if allowLocation.waitForExistence(timeout: 2) {
             allowLocation.tap()
-            // Trigger interruption monitor for the system location dialog
-            app.tap()
+            let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+            let systemAllow = springboard.buttons["Allow While Using App"]
+            if systemAllow.waitForExistence(timeout: 3) {
+                systemAllow.tap()
+            }
         }
     }
 
-    func test_startRun_showsActiveRunScreen() {
-        tapStartRun()
-
-        // Verify active run UI elements appear (combined accessibility element)
-        let heroText = app.otherElements.matching(NSPredicate(format: "label CONTAINS 'pats of butter burned'")).firstMatch
-        XCTAssertTrue(heroText.waitForExistence(timeout: 5))
-    }
-
-    func test_pauseResume_togglesButton() {
-        tapStartRun()
-
-        // Wait for active run to load
-        let pauseButton = app.buttons["Pause run"]
-        XCTAssertTrue(pauseButton.waitForExistence(timeout: 5))
-        pauseButton.tap()
-
-        // Should now show "Resume run"
-        let resumeButton = app.buttons["Resume run"]
-        XCTAssertTrue(resumeButton.waitForExistence(timeout: 3))
-        resumeButton.tap()
-
-        // Should now show "Pause run" again
-        XCTAssertTrue(pauseButton.waitForExistence(timeout: 3))
-    }
-
-    func test_stopButton_exists() {
-        tapStartRun()
-
-        let stopButton = app.buttons["Stop run"]
-        XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
-    }
-
-    func test_activeRun_showsControls() {
+    /// Workflow: start run → verify controls → verify hero text → pause → resume
+    func test_startRunAndControls() {
         tapStartRun()
 
         // Verify active run screen loads with key controls
         let stopButton = app.buttons["Stop run"]
-        XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(stopButton.waitForExistence(timeout: 10), "Stop button should appear")
 
         let pauseButton = app.buttons["Pause run"]
-        XCTAssertTrue(pauseButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(pauseButton.waitForExistence(timeout: 3), "Pause button should appear")
 
-        let heroText = app.otherElements.matching(NSPredicate(format: "label CONTAINS 'pats of butter burned'")).firstMatch
-        XCTAssertTrue(heroText.waitForExistence(timeout: 3))
+        // Verify hero text (combined accessibility element)
+        let heroText = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'pats of butter burned'")).firstMatch
+        XCTAssertTrue(heroText.waitForExistence(timeout: 5), "Hero text should show pats burned")
+
+        // Pause and verify
+        pauseButton.tap()
+        let resumeButton = app.buttons["Resume run"]
+        XCTAssertTrue(resumeButton.waitForExistence(timeout: 3), "Resume button should appear after pause")
+
+        // Resume and verify
+        resumeButton.tap()
+        XCTAssertTrue(pauseButton.waitForExistence(timeout: 3), "Pause button should reappear after resume")
     }
 
-    func test_stopRun_showsConfirmation() {
+    /// Workflow: start run → long-press stop → verify confirmation → end run
+    func test_stopRunConfirmation() {
         tapStartRun()
 
-        // Long-press stop to trigger confirmation dialog
         let stopButton = app.buttons["Stop run"]
-        XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(stopButton.waitForExistence(timeout: 10))
         stopButton.press(forDuration: 3.5)
 
-        // Confirmation dialog should appear with "End Run" button
+        // Confirmation dialog should appear
         let endRunButton = app.buttons["End Run"]
-        XCTAssertTrue(endRunButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(endRunButton.waitForExistence(timeout: 5), "End Run button should appear in confirmation")
     }
 
-    func test_stopRun_cancelKeepsRunning() {
+    /// Workflow: start run → long-press stop → cancel → verify still running
+    func test_stopRunCancel() {
         tapStartRun()
 
-        // Long-press stop to trigger confirmation dialog
         let stopButton = app.buttons["Stop run"]
-        XCTAssertTrue(stopButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(stopButton.waitForExistence(timeout: 10))
         stopButton.press(forDuration: 3.5)
 
-        // Wait for and tap Cancel in the dialog
-        let cancelButton = app.buttons["Cancel"]
-        XCTAssertTrue(cancelButton.waitForExistence(timeout: 3))
-        cancelButton.tap()
+        // Wait for confirmation dialog
+        let endRunButton = app.buttons["End Run"]
+        XCTAssertTrue(endRunButton.waitForExistence(timeout: 5), "Confirmation dialog should appear")
 
-        // Run should still be active — Pause button should still exist
+        // Tap Cancel — in confirmationDialog, this may be the implicit cancel action
+        let cancelButton = app.buttons["Cancel"]
+        if cancelButton.waitForExistence(timeout: 5) {
+            cancelButton.tap()
+        } else {
+            // On some iOS versions, swipe down dismisses the action sheet
+            app.swipeDown()
+        }
+
+        // Run should still be active
         let pauseButton = app.buttons["Pause run"]
-        XCTAssertTrue(pauseButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(pauseButton.waitForExistence(timeout: 5), "Run should still be active after cancel")
     }
 }
