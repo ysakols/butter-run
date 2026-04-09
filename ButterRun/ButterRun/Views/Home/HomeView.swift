@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var showChurnSetup = false
     @State private var churnConfig: ChurnConfiguration?
     @State private var showLocationPermission = false
+    @State private var pendingLocationAction = false
     @State private var locationManager = CLLocationManager()
     @State private var butterTrivia = ButterFacts.random
 
@@ -127,29 +128,32 @@ struct HomeView: View {
                 )
                 .environmentObject(stravaAuth)
             }
-            .sheet(isPresented: $showChurnSetup) {
+            .sheet(isPresented: $showChurnSetup, onDismiss: {
+                if churnConfig != nil {
+                    showActiveRun = true
+                }
+            }) {
                 ChurnSetupSheet { config in
                     churnConfig = config
                     showChurnSetup = false
-                    // Small delay to allow sheet dismissal before full screen cover
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showActiveRun = true
-                    }
                 }
                 .presentationDetents([.medium])
             }
-            .sheet(isPresented: $showLocationPermission) {
+            .sheet(isPresented: $showLocationPermission, onDismiss: {
+                if pendingLocationAction {
+                    pendingLocationAction = false
+                    if isChurnEnabled {
+                        showChurnSetup = true
+                    } else {
+                        showActiveRun = true
+                    }
+                }
+            }) {
                 LocationPermissionView(
                     onAllow: {
                         locationManager.requestWhenInUseAuthorization()
+                        pendingLocationAction = true
                         showLocationPermission = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            if isChurnEnabled {
-                                showChurnSetup = true
-                            } else {
-                                showActiveRun = true
-                            }
-                        }
                     },
                     onDeny: {
                         showLocationPermission = false

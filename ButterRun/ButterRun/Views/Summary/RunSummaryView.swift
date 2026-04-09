@@ -20,6 +20,7 @@ struct RunSummaryView: View {
     @State private var stravaUploaded = false
     @State private var stravaError: String?
     @State private var healthKitSynced = false
+    @State private var showSaveError = false
     @State private var healthKitSyncing = false
     @State private var healthKitError: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -181,6 +182,11 @@ struct RunSummaryView: View {
                     let deepLink = DeepLinkRouter.url(forRunID: run.id)
                     ShareSheetView(items: [image, deepLink], isPresented: $showShareSheet)
                 }
+            }
+            .alert("Save Error", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your data could not be saved. Please try again.")
             }
             .onAppear {
                 let service = AchievementService()
@@ -461,7 +467,11 @@ struct RunSummaryView: View {
             await MainActor.run {
                 if let activityId {
                     run.stravaActivityId = activityId
-                    try? modelContext.save()
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        showSaveError = true
+                    }
                     stravaUploaded = true
                 } else {
                     stravaError = "Upload failed. Check your connection and try again."
@@ -537,6 +547,7 @@ struct ShareSheetView: UIViewControllerRepresentable {
         controller.completionWithItemsHandler = { _, _, _, _ in
             isPresented = false
         }
+        controller.popoverPresentationController?.sourceView = UIView()
         return controller
     }
 

@@ -19,6 +19,7 @@ struct ActiveRunView: View {
     @State private var showSummary = false
     @State private var showMap = false
     @State private var showUndoToast = false
+    @State private var showSaveError = false
     @State private var countdownValue: Int = 3
     @State private var isCountingDown = true
     @State private var countdownTask: Task<Void, Never>?
@@ -139,6 +140,11 @@ struct ActiveRunView: View {
                 showUndoToast = true
             }
             .presentationDetents([.medium])
+        }
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your data could not be saved. Please try again.")
         }
         .fullScreenCover(isPresented: $showSummary) {
             if let run = completedRun {
@@ -300,7 +306,11 @@ struct ActiveRunView: View {
         guard completedRun == nil else { return }
         let run = viewModel.stopRun()
         modelContext.insert(run)
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            showSaveError = true
+        }
         // Delete draft on successful finish
         let draftService = RunDraftService(context: modelContext)
         draftService.deleteDraft()

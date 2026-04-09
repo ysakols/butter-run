@@ -277,6 +277,14 @@ class ActiveRunViewModel {
         // Idempotent: return existing run if already finished
         if state == .finished, let existing = finishedRun { return existing }
 
+        // Prevent stopping from idle state (no run in progress)
+        guard state == .running || state == .paused else {
+            let empty = Run(startDate: .now)
+            finishedRun = empty
+            state = .finished
+            return empty
+        }
+
         state = .finished
         timer?.invalidate()
         isEncodingRoute = false
@@ -351,7 +359,7 @@ class ActiveRunViewModel {
     }
 
     func eatButter(serving: ButterServing, customTsp: Double = 0) {
-        let entry = ButterEntry(serving: serving, customTeaspoons: customTsp)
+        let entry = ButterEntry(serving: serving, customTeaspoons: max(0, customTsp))
         butterEntries.append(entry)
         butterEatenTsp += entry.teaspoonEquivalent
 

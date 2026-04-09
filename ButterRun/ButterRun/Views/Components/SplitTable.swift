@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SplitTable: View {
     struct SplitRow: Identifiable {
-        let id = UUID()
+        var id: Int { index }
         let index: Int
         let pace: String
         let pats: String

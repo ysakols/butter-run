@@ -1,4 +1,4 @@
-# ButterRun Comprehensive Review &amp; Remediation Plan
+# ButterRun Comprehensive Review & Remediation Plan
 
 **Date:** 2026-04-09
 **Scope:** Full repo audit -- security, docs, legal, code quality, tests, CI/CD
@@ -14,7 +14,7 @@
 | # | Domain | Issue | File(s) | Lines |
 |---|--------|-------|---------|-------|
 | C1 | Docs | README claims "no network requests" -- factually false (Strava, MapKit, HealthKit, CrashReport all make network calls) | README.md | 67 |
-| C2 | Code | ActiveRunViewModel missing @MainActor -- @Observable state mutated from timer/Combine callbacks without actor isolation; will break under Swift 6 strict concurrency | ViewModels/ActiveRunViewModel.swift | 17 |
+| C2 | Code | All ViewModels missing @MainActor -- @Observable state mutated from timer/Combine callbacks without actor isolation; will break under Swift 6 strict concurrency (see also H4) | ViewModels/*.swift | -- |
 | C3 | UI | LongPressStopButton Timer fires on RunLoop, mutates @State without @MainActor guarantee; UIImpactFeedbackGenerator created per tick (~30fps) | Views/ActiveRun/LongPressStopButton.swift | 90-113 |
 | C4 | UI | HomeView uses hardcoded DispatchQueue.main.asyncAfter delays (0.3s, 1.0s) for sheet-to-fullScreenCover sequencing -- race condition causes silent presentation failure | Views/Home/HomeView.swift | 135-151 |
 | C5 | Tests | CI only runs unit tests (-only-testing:ButterRunTests), all 6 UI test files completely skipped | .github/workflows/ci.yml | 125 |
@@ -26,7 +26,7 @@
 | H1 | Security | Strava client_secret embedded in app binary via Info.plist/xcconfig -- extractable from IPA | Services/StravaConfig.swift, Info.plist |
 | H2 | Security | No concurrent token refresh protection -- two simultaneous refreshes invalidate each other, de-authenticating user | Services/StravaAuthService.swift:167-203 |
 | H3 | Code | bestPaceSecondsPerKm and averagePaceSecondsPerKm initialized to 0 (infinitely fast) instead of optional/infinity | Models/Run.swift:18-19 |
-| H4 | Code | All 4 ViewModels missing @MainActor (Swift 6 concurrency) | ViewModels/*.swift |
+| H4 | Code | *(consolidated into C2)* | -- |
 | H5 | Code | stopRun() callable from .idle state, creates degenerate Run with 0 distance/duration | ViewModels/ActiveRunViewModel.swift:276 |
 | H6 | UI | try? modelContext.save() silently swallows errors in 5 locations -- user can lose entire run data | ActiveRunView:303, ManualRunEntryView:160, RunHistoryView:133, SettingsView:345, RunSummaryView:464 |
 | H7 | UI | No location permission check before starting run -- deep link can start run without GPS permission | Views/ActiveRun/ActiveRunView.swift:126-131 |
@@ -42,6 +42,7 @@
 | H17 | Tests | Zero tests for Strava OAuth + Upload (648 lines of untested network/auth code) | Services/StravaAuthService.swift, StravaUploadService.swift |
 | H18 | Tests | Zero tests for LocationService.didUpdateLocations -- the core GPS processing (distance, speed, elevation, spike rejection) | Services/LocationService.swift:264-339 |
 | H19 | Tests | ActiveRunViewModel.updateMetrics() (core 1-second metrics loop) never exercised in tests | ViewModels/ActiveRunViewModel.swift:404-492 |
+
 ### MEDIUM (52 issues -- fix before release)
 
 | # | Domain | Issue | File(s) |
@@ -49,7 +50,7 @@
 | M1 | Security | No certificate pinning on Strava API connections | Services/StravaAuthService.swift, StravaUploadService.swift |
 | M2 | Security | Crash reports stored as plaintext, may contain sensitive data in backtraces | Services/CrashReportService.swift:100-108 |
 | M3 | Security | CI missing security scanning (no secret scanning, no static analysis) | .github/workflows/ci.yml |
-| M4 | Security | PrivacyInfo.xcprivacy doesn't declare Strava data sharing | PrivacyInfo.xcprivacy |
+| M4 | Security | *(consolidated into H16)* | -- |
 | M5 | Security | Location data stored unencrypted in SwiftData/SQLite | Services/LocationService.swift, ButterRunApp.swift:108-110 |
 | M6 | Code | UserProfile.preferredUnit and splitDistance are stringly-typed (should be enums) | Models/UserProfile.swift:15-16 |
 | M7 | Code | No validation on weightKg -- can be 0/negative causing divide-by-zero | Models/UserProfile.swift:14 |
@@ -208,6 +209,7 @@ Key LOW items (abbreviated -- full details in agent reports):
 
 **Step 2.7** -- Update SWIFT_VERSION to 6.0
 - Files: `scripts/generate_xcodeproj.py:453,460,470,480,486`, then regenerate project.pbxproj
+- **Note:** This will likely surface additional concurrency warnings beyond Steps 2.1-2.4. Budget extra iteration time.
 - **Depends on:** Steps 2.1-2.4 (all concurrency fixes must be in place first)
 ### PHASE 3: Security Hardening (do third -- before any public release)
 
@@ -252,7 +254,7 @@ Key LOW items (abbreviated -- full details in agent reports):
 - Add: `.env*`, `*.p12`, `*.mobileprovision`, `*.cer`, `*.key`, `*.pem`, `credentials.*`
 - **Depends on:** Nothing
 
-### PHASE 4: Code Quality &amp; Architecture (do fourth -- improves maintainability)
+### PHASE 4: Code Quality & Architecture (do fourth -- improves maintainability)
 
 **Step 4.1** -- Replace stringly-typed UserProfile fields with enums
 - File: `Models/UserProfile.swift:15-16,25`
@@ -373,7 +375,7 @@ Key LOW items (abbreviated -- full details in agent reports):
 - Add `-enableCodeCoverage YES` to xcodebuild, add codeCoverageEnabled to scheme
 - **Depends on:** Step 6.1
 
-### PHASE 7: Build &amp; Tooling Polish (do last)
+### PHASE 7: Build & Tooling Polish (do last)
 
 **Step 7.1** -- Add CI build caching
 - File: `.github/workflows/ci.yml`

@@ -10,6 +10,7 @@ struct RunHistoryView: View {
     @State private var showManualEntry = false
     @State private var runToDelete: Run?
     @State private var showDeleteConfirmation = false
+    @State private var showSaveError = false
     @State private var visibleCount = 50
     @State private var navigationPath = NavigationPath()
 
@@ -130,7 +131,11 @@ struct RunHistoryView: View {
                 Button("Delete", role: .destructive) {
                     if let run = runToDelete {
                         modelContext.delete(run)
-                        try? modelContext.save()
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            showSaveError = true
+                        }
                     }
                     runToDelete = nil
                 }
@@ -140,6 +145,11 @@ struct RunHistoryView: View {
             } message: {
                 Text("This cannot be undone.")
             }
+        }
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your data could not be saved. Please try again.")
         }
         .onAppear {
             viewModel.load(runs: runs)

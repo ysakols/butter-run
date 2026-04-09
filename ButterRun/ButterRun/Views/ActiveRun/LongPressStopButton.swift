@@ -81,7 +81,14 @@ struct LongPressStopButton: View {
 
         // Light haptic at start
         let lightFeedback = UIImpactFeedbackGenerator(style: .light)
+        lightFeedback.prepare()
         lightFeedback.impactOccurred()
+
+        // Pre-create generators for milestone haptics
+        let mediumFeedback = UIImpactFeedbackGenerator(style: .medium)
+        mediumFeedback.prepare()
+        let heavyFeedback = UIImpactFeedbackGenerator(style: .heavy)
+        heavyFeedback.prepare()
 
         var firedHaptic1s = false
         var firedHaptic2s = false
@@ -89,26 +96,26 @@ struct LongPressStopButton: View {
         let startTime = Date()
         let newTimer = Timer.scheduledTimer(withTimeInterval: 0.033, repeats: true) { t in
             let elapsed = Date().timeIntervalSince(startTime)
-            progress = min(CGFloat(elapsed / holdDuration), 1.0)
+            self.progress = min(CGFloat(elapsed / self.holdDuration), 1.0)
 
             // Haptic at 1s and 2s (fire once each)
             if elapsed >= 1.0 && !firedHaptic1s {
                 firedHaptic1s = true
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                mediumFeedback.impactOccurred()
             }
             if elapsed >= 2.0 && !firedHaptic2s {
                 firedHaptic2s = true
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                mediumFeedback.impactOccurred()
             }
 
             // Complete at 3s — show confirmation
-            if elapsed >= holdDuration {
+            if elapsed >= self.holdDuration {
                 t.invalidate()
                 self.timer = nil
-                progress = 1.0
-                isPressed = false
-                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                showConfirmation = true
+                self.progress = 1.0
+                self.isPressed = false
+                heavyFeedback.impactOccurred()
+                self.showConfirmation = true
             }
         }
         timer = newTimer

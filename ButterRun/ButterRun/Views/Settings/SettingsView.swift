@@ -21,6 +21,7 @@ struct SettingsView: View {
     @State private var healthKit: Bool = false
     @State private var loaded = false
     @State private var showDeleteConfirmation = false
+    @State private var showSaveError = false
     @State private var showRecalcConfirmation = false
     @State private var weightDebounceTask: Task<Void, Never>?
     @EnvironmentObject private var stravaAuth: StravaAuthService
@@ -253,6 +254,11 @@ struct SettingsView: View {
             } message: {
                 Text("Your weight changed. Would you like to recalculate butter burned for all past runs with your new weight?")
             }
+            .alert("Save Error", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your data could not be saved. Please try again.")
+            }
         }
     }
 
@@ -342,6 +348,10 @@ struct SettingsView: View {
             run.totalButterBurnedTsp = ButterCalculator.caloriesToButterTsp(calories)
             run.netButterTsp = run.totalButterEatenTsp - run.totalButterBurnedTsp
         }
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            showSaveError = true
+        }
     }
 }
