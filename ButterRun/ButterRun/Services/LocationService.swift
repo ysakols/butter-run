@@ -201,8 +201,8 @@ class LocationService: NSObject, ObservableObject, LocationTracking {
         // Heavy path: dispatch simplification to background
         let buffer = routeBuffer
         let generationAtStart = routeGeneration
-        return await withCheckedContinuation { [weak self] continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let asLocations = buffer.map { CLLocation(latitude: $0[0], longitude: $0[1]) }
                 let simplified = LocationService.simplifyRoute(asLocations, maxPoints: 5000)
                 let coords = simplified.map { [$0.coordinate.latitude, $0.coordinate.longitude] }

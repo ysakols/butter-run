@@ -65,6 +65,9 @@ final class MockVoiceService: VoiceFeedback {
         announcements.append("churn:\(stageName)")
     }
     func announceAutoPause(paused: Bool) {
+        announcements.append(paused ? "auto_paused" : "auto_resumed")
+    }
+    func announcePauseResume(paused: Bool) {
         announcements.append(paused ? "paused" : "resumed")
     }
     func stop() {}

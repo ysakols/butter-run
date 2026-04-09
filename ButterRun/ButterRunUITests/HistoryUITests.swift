@@ -5,7 +5,7 @@ final class HistoryUITests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
-        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos"]
+        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos", "--skip-countdown"]
         app.launch()
 
         // Handle system location permission dialog on fresh simulators
@@ -22,15 +22,20 @@ final class HistoryUITests: XCTestCase {
     /// Taps "Start run" and handles location permission sheet on fresh simulators.
     private func tapStartRun() {
         let startButton = app.buttons["Start run"]
-        XCTAssertTrue(startButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(startButton.waitForExistence(timeout: 10))
         startButton.tap()
 
         // Handle custom location permission sheet if it appears
         let allowLocation = app.buttons["Allow Location"]
         if allowLocation.waitForExistence(timeout: 2) {
             allowLocation.tap()
-            // Trigger interruption monitor for the system location dialog
-            app.tap()
+
+            // Handle system location dialog directly via springboard
+            let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+            let systemAllow = springboard.buttons["Allow While Using App"]
+            if systemAllow.waitForExistence(timeout: 3) {
+                systemAllow.tap()
+            }
         }
     }
 

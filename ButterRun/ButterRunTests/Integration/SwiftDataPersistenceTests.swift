@@ -6,6 +6,7 @@ final class SwiftDataPersistenceTests: XCTestCase {
     var container: ModelContainer!
     var context: ModelContext!
 
+    @MainActor
     override func setUp() async throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         container = try ModelContainer(

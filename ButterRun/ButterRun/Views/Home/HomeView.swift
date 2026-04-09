@@ -43,40 +43,57 @@ struct HomeView: View {
 
                     Spacer()
 
-                    // Butter Zero toggle
-                    VStack(spacing: 12) {
-                        Toggle(isOn: $isButterZero) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 4) {
-                                    Text("Butter Zero")
-                                        .font(.system(.body, design: .rounded, weight: .semibold))
-                                        .foregroundStyle(ButterTheme.textPrimary)
-                                    InfoButton(title: "Butter Zero", bodyText: "Eat butter during your run and try to match what you burn. Track as + or − pats from net zero.")
-                                }
-                                Text("Eat butter mid-run. Try to net zero.")
-                                    .font(.system(.caption, design: .rounded))
-                                    .foregroundStyle(ButterTheme.textSecondary)
-                            }
-                        }
-                        .tint(ButterTheme.gold)
-                        .accessibilityLabel("Butter Zero mode")
+                    // Run Settings card
+                    VStack(spacing: 0) {
+                        Text("Run Settings")
+                            .font(.system(.caption, design: .rounded, weight: .semibold))
+                            .foregroundStyle(ButterTheme.textSecondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.bottom, 10)
 
-                        Toggle(isOn: $isChurnEnabled) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack(spacing: 4) {
-                                    Text("Churn Tracker")
-                                        .font(.system(.body, design: .rounded, weight: .semibold))
-                                        .foregroundStyle(ButterTheme.textPrimary)
-                                    InfoButton(title: "Churn Tracker", bodyText: "Carry cream in a bag. Bouncing churns it into butter in ~6-10 km.")
+                        VStack(spacing: 12) {
+                            Toggle(isOn: $isButterZero) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 4) {
+                                        Text("Butter Zero")
+                                            .font(.system(.body, design: .rounded, weight: .semibold))
+                                            .foregroundStyle(ButterTheme.textPrimary)
+                                        InfoButton(title: "Butter Zero", bodyText: "Eat butter during your run and try to match what you burn. Track as + or − pats from net zero.")
+                                    }
+                                    Text("Eat butter mid-run. Try to net zero.")
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundStyle(ButterTheme.textSecondary)
                                 }
-                                Text("Track butter-churning progress with cream in your pack.")
-                                    .font(.system(.caption, design: .rounded))
-                                    .foregroundStyle(ButterTheme.textSecondary)
                             }
+                            .tint(ButterTheme.gold)
+                            .accessibilityLabel("Butter Zero mode")
+
+                            Divider()
+
+                            Toggle(isOn: $isChurnEnabled) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 4) {
+                                        Text("Churn Tracker")
+                                            .font(.system(.body, design: .rounded, weight: .semibold))
+                                            .foregroundStyle(ButterTheme.textPrimary)
+                                        InfoButton(title: "Churn Tracker", bodyText: "Carry cream in a bag. Bouncing churns it into butter in ~6-10 km.")
+                                    }
+                                    Text("Track butter-churning progress with cream in your pack.")
+                                        .font(.system(.caption, design: .rounded))
+                                        .foregroundStyle(ButterTheme.textSecondary)
+                                }
+                            }
+                            .tint(ButterTheme.gold)
+                            .accessibilityLabel("Churn tracker mode")
                         }
-                        .tint(ButterTheme.gold)
-                        .accessibilityLabel("Churn tracker mode")
                     }
+                    .padding(16)
+                    .background(ButterTheme.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ButterTheme.surfaceBorder, lineWidth: 1)
+                    )
                     .padding(.horizontal, 24)
 
                     // CHURN button

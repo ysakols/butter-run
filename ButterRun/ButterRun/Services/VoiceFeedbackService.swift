@@ -94,6 +94,11 @@ class VoiceFeedbackService: VoiceFeedback {
         speak(paused ? "Auto paused" : "Resumed")
     }
 
+    func announcePauseResume(paused: Bool) {
+        guard isEnabled else { return }
+        speak(paused ? "Paused" : "Resumed")
+    }
+
     func stop() {
         synthesizer.stopSpeaking(at: .immediate)
     }

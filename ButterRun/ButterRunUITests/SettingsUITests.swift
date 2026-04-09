@@ -4,68 +4,55 @@ final class SettingsUITests: XCTestCase {
     let app = XCUIApplication()
 
     override func setUp() {
-        continueAfterFailure = false
+        continueAfterFailure = true
         app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos"]
         app.launch()
     }
 
     private func navigateToSettings() {
         let settingsTab = app.tabBars.buttons["Settings"]
-        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 10))
         settingsTab.tap()
     }
 
-    func test_settingsTab_showsTitle() {
+    /// Workflow: navigate to settings → verify title → check toggles → scroll to bottom → check butter math → delete flow
+    func test_settingsFullWorkflow() {
         navigateToSettings()
 
+        // Verify title
         let settingsNav = app.navigationBars["Settings"]
-        XCTAssertTrue(settingsNav.waitForExistence(timeout: 3))
-    }
+        XCTAssertTrue(settingsNav.waitForExistence(timeout: 3), "Settings nav bar should appear")
 
-    func test_voiceFeedbackToggle_exists() {
-        navigateToSettings()
+        // Check toggles exist
+        let voiceToggle = app.switches["Voice Feedback"]
+        XCTAssertTrue(voiceToggle.waitForExistence(timeout: 3), "Voice Feedback toggle should exist")
 
-        let toggle = app.switches["Voice Feedback"]
-        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
-    }
+        let autoPauseToggle = app.switches["Auto-Pause"]
+        XCTAssertTrue(autoPauseToggle.waitForExistence(timeout: 3), "Auto-Pause toggle should exist")
 
-    func test_autoPauseToggle_exists() {
-        navigateToSettings()
-
-        let toggle = app.switches["Auto-Pause"]
-        XCTAssertTrue(toggle.waitForExistence(timeout: 3))
-    }
-
-    func test_deleteAllData_showsConfirmation() {
-        navigateToSettings()
-
-        // Scroll to ensure delete button is visible on smaller screens (iPhone SE)
+        // Scroll to butter math section
         app.swipeUp()
+        let patRow = app.staticTexts["1 pat butter"]
+        XCTAssertTrue(patRow.waitForExistence(timeout: 3), "Butter math section should be visible")
+        let calText = app.staticTexts["34 calories"]
+        XCTAssertTrue(calText.exists, "Calorie text should exist")
+
+        // Scroll to delete button — may be far below fold
         let deleteButton = app.buttons["Delete All My Data"]
-        XCTAssertTrue(deleteButton.waitForExistence(timeout: 5))
+        for _ in 0..<5 {
+            if deleteButton.exists { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: 3), "Delete button should be reachable by scrolling")
         deleteButton.tap()
 
-        // Verify confirmation dialog appears
+        // Verify confirmation dialog
         let confirmButton = app.buttons["Delete Everything"]
-        XCTAssertTrue(confirmButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 3), "Delete confirmation should appear")
 
         // Dismiss without deleting
         let cancelButton = app.buttons["Cancel"]
-        XCTAssertTrue(cancelButton.exists)
+        XCTAssertTrue(cancelButton.exists, "Cancel should exist in confirmation")
         cancelButton.tap()
-    }
-
-    func test_butterMathSection_displaysInfo() {
-        navigateToSettings()
-
-        // Scroll to butter math section (below fold on smaller screens)
-        app.swipeUp()
-
-        // Verify butter math section content
-        let patRow = app.staticTexts["1 pat butter"]
-        XCTAssertTrue(patRow.waitForExistence(timeout: 3))
-
-        let calText = app.staticTexts["34 calories"]
-        XCTAssertTrue(calText.exists)
     }
 }

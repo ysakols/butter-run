@@ -14,7 +14,7 @@ Your agreement is formed when you first tap "I Agree" during the App's initial s
 
 ## 2. Changes to Terms
 
-We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance) with at least thirty (30) days' notice before taking effect. Non-material changes (such as formatting or clarification) take effect upon posting. Your continued use of the App after the effective date of any changes constitutes acceptance of the revised Terms. If you do not agree to the revised Terms, you must immediately stop using the App and delete it from your device.
+We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance). Non-material changes (such as formatting or clarification) take effect upon posting. Your continued use of the App after the effective date of any changes constitutes acceptance of the revised Terms. If you do not agree to the revised Terms, you must immediately stop using the App and delete it from your device.
 
 ## 3. Description of the App
 
