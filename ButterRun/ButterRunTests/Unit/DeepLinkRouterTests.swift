@@ -3,27 +3,32 @@ import XCTest
 
 final class DeepLinkRouterTests: XCTestCase {
 
+    // MARK: - URL Building
+
+    func test_url_forRunID_producesExpectedFormat() {
+        let id = UUID()
+        let url = DeepLinkRouter.url(forRunID: id)
+        XCTAssertEqual(url.absoluteString, "butterrun://run/\(id.uuidString)")
+    }
+
     // MARK: - URL Parsing
 
     func test_parse_validRunURL() {
         let id = UUID()
-        let url = URL(string: "butterrun://run/\(id.uuidString)")!
-        let destination = DeepLinkRouter.parse(url)
-        XCTAssertEqual(destination, .run(id))
+        let url = DeepLinkRouter.url(forRunID: id)
+        XCTAssertEqual(DeepLinkRouter.parse(url), .run(id))
     }
 
     func test_parse_lowercaseUUID() {
         let id = UUID()
         let url = URL(string: "butterrun://run/\(id.uuidString.lowercased())")!
-        let destination = DeepLinkRouter.parse(url)
-        XCTAssertEqual(destination, .run(id))
+        XCTAssertEqual(DeepLinkRouter.parse(url), .run(id))
     }
 
     func test_parse_uppercaseUUID() {
         let id = UUID()
         let url = URL(string: "butterrun://run/\(id.uuidString.uppercased())")!
-        let destination = DeepLinkRouter.parse(url)
-        XCTAssertEqual(destination, .run(id))
+        XCTAssertEqual(DeepLinkRouter.parse(url), .run(id))
     }
 
     func test_parse_wrongScheme_returnsNil() {
@@ -56,14 +61,13 @@ final class DeepLinkRouterTests: XCTestCase {
         XCTAssertNil(DeepLinkRouter.parse(url))
     }
 
-    // MARK: - Router Handle
+    // MARK: - Router Handle & Consume
 
     func test_handle_validURL_setsPending() {
         let router = DeepLinkRouter()
         let id = UUID()
-        let url = URL(string: "butterrun://run/\(id.uuidString)")!
 
-        let handled = router.handle(url)
+        let handled = router.handle(DeepLinkRouter.url(forRunID: id))
 
         XCTAssertTrue(handled)
         XCTAssertEqual(router.pending, .run(id))
@@ -84,9 +88,26 @@ final class DeepLinkRouterTests: XCTestCase {
         let first = UUID()
         let second = UUID()
 
-        router.handle(URL(string: "butterrun://run/\(first.uuidString)")!)
-        router.handle(URL(string: "butterrun://run/\(second.uuidString)")!)
+        router.handle(DeepLinkRouter.url(forRunID: first))
+        router.handle(DeepLinkRouter.url(forRunID: second))
 
         XCTAssertEqual(router.pending, .run(second))
+    }
+
+    func test_consume_returnsAndClearsPending() {
+        let router = DeepLinkRouter()
+        let id = UUID()
+        router.handle(DeepLinkRouter.url(forRunID: id))
+
+        let consumed = router.consume()
+
+        XCTAssertEqual(consumed, .run(id))
+        XCTAssertNil(router.pending)
+    }
+
+    func test_consume_returnsNilWhenEmpty() {
+        let router = DeepLinkRouter()
+
+        XCTAssertNil(router.consume())
     }
 }

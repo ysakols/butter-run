@@ -98,11 +98,10 @@ struct RunHistoryView: View {
                 RunDetailView(run: run, usesMiles: usesMiles)
             }
             .onChange(of: router.pending, initial: true) {
-                if case .run(let id) = router.pending {
+                if case .run(let id) = router.consume() {
                     if let run = runs.first(where: { $0.id == id }) {
                         navigationPath.append(run)
                     }
-                    router.pending = nil
                 }
             }
             .sheet(isPresented: $showManualEntry) {

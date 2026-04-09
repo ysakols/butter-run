@@ -172,7 +172,7 @@ struct RunDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 HStack(spacing: 16) {
                     ShareLink(
-                        item: URL(string: "butterrun://run/\(run.id.uuidString)")!,
+                        item: DeepLinkRouter.url(forRunID: run.id),
                         message: Text("Check out my Butter Run!")
                     ) {
                         Image(systemName: "square.and.arrow.up")

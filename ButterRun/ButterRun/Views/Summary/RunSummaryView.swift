@@ -171,7 +171,7 @@ struct RunSummaryView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 if let image = shareImage {
-                    let deepLink = URL(string: "butterrun://run/\(run.id.uuidString)")!
+                    let deepLink = DeepLinkRouter.url(forRunID: run.id)
                     ShareSheetView(items: [image, deepLink], isPresented: $showShareSheet)
                 }
             }
