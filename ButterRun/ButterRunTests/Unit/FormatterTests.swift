@@ -52,8 +52,6 @@ final class FormatterTests: XCTestCase {
         XCTAssertEqual(result, "5.00 km")
     }
 
-    // MARK: - Butter
-
     // MARK: - Pats Formatter
 
     func test_pats_zero() {
