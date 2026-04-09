@@ -73,25 +73,19 @@ class StravaUploadService {
         }
     }
 
-    // MARK: - Create Activity
+    // MARK: - Activity Metadata
 
-    /// Creates a manual activity on Strava via POST /activities.
-    /// Returns the new activity ID.
-    func createActivity(run: Run, accessToken: String) async throws -> Int64 {
-        guard let url = URL(string: "\(baseURL)/activities") else {
-            throw StravaUploadError.invalidResponse
-        }
-
-        let miles = run.distanceMeters / 1609.344
-        let milesFormatted = String(format: "%.1f", miles)
+    /// Builds the Strava activity name for a run.
+    nonisolated static func activityName(for run: Run) -> String {
+        let milesFormatted = String(format: "%.1f", run.distanceMiles)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
-        let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) pats)"
+        return "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) pats)"
+    }
 
-        // Strava expects start_date_local as local time WITHOUT timezone
-        let localFormatter = DateFormatter()
-        localFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        localFormatter.locale = Locale(identifier: "en_US_POSIX")
-        let startDateLocal = localFormatter.string(from: run.startDate)
+    /// Builds the Strava activity description for a run.
+    nonisolated static func activityDescription(for run: Run) -> String {
+        let milesFormatted = String(format: "%.1f", run.distanceMiles)
+        let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
 
         var description = "Tracked with Butter Run"
         description += "\nDistance: \(milesFormatted) mi"
@@ -103,6 +97,26 @@ class StravaUploadService {
         if let notes = run.notes, !notes.isEmpty {
             description += "\n\n\(String(notes.prefix(500)))"
         }
+        return description
+    }
+
+    // MARK: - Create Activity
+
+    /// Creates a manual activity on Strava via POST /activities.
+    /// Returns the new activity ID.
+    func createActivity(run: Run, accessToken: String) async throws -> Int64 {
+        guard let url = URL(string: "\(baseURL)/activities") else {
+            throw StravaUploadError.invalidResponse
+        }
+
+        let name = Self.activityName(for: run)
+        let description = Self.activityDescription(for: run)
+
+        // Strava expects start_date_local as local time WITHOUT timezone
+        let localFormatter = DateFormatter()
+        localFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        localFormatter.locale = Locale(identifier: "en_US_POSIX")
+        let startDateLocal = localFormatter.string(from: run.startDate)
 
         let body: [String: Any] = [
             "name": name,
@@ -156,10 +170,8 @@ class StravaUploadService {
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
 
         // Build activity name and description
-        let miles = run.distanceMeters / 1609.344
-        let milesFormatted = String(format: "%.1f", miles)
+        let name = Self.activityName(for: run)
         let butterFormatted = String(format: "%.1f", run.totalButterBurnedTsp)
-        let name = "Butter Run - \(milesFormatted) mi (burned \(butterFormatted) pats)"
 
         var description = "Tracked with Butter Run"
         description += "\nButter burned: \(butterFormatted) pats"

@@ -134,7 +134,7 @@ jobs:
                 # UI tests excluded: require interactive simulator with location permission dialogs
                 "-only-testing:ButterRunTests",
                 "-enableCodeCoverage", "YES",
-                "-parallel-testing-enabled", "NO",
+                "-parallel-testing-enabled", "YES",
                 "-derivedDataPath", "./DerivedData",
                 "CODE_SIGNING_ALLOWED=NO",
                 "-resultBundlePath", "TestResults.xcresult");
