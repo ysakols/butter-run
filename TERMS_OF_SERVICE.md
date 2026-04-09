@@ -1,6 +1,6 @@
 # Terms of Service — Butter Run
 
-**Last updated:** April 7, 2026
+**Last updated:** April 9, 2026
 
 **IMPORTANT: PLEASE READ THESE TERMS OF SERVICE CAREFULLY BEFORE USING BUTTER RUN. BY TAPPING "I AGREE" OR USING THE APP, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS. IF YOU DO NOT AGREE, DO NOT USE THE APP.**
 
@@ -14,7 +14,7 @@ Your agreement is formed when you first tap "I Agree" during the App's initial s
 
 ## 2. Changes to Terms
 
-We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance) with at least thirty (30) days' notice before taking effect. Non-material changes (such as formatting or clarification) take effect upon posting. Your continued use of the App after the effective date of any changes constitutes acceptance of the revised Terms. If you do not agree to the revised Terms, you must immediately stop using the App and delete it from your device.
+We reserve the right to modify these Terms at any time. Material changes will be communicated through the App (e.g., an in-app prompt requiring renewed acceptance) with at least fourteen (14) days' notice before taking effect. Non-material changes (such as formatting or clarification) take effect upon posting. Your continued use of the App after the effective date of any changes constitutes acceptance of the revised Terms. If you do not agree to the revised Terms, you must immediately stop using the App and delete it from your device.
 
 ## 3. Description of the App
 
@@ -137,15 +137,15 @@ YOU ACKNOWLEDGE THAT THE DEVELOPER HAS NO OBLIGATION TO MAINTAIN, SUPPORT, UPGRA
 
 **TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:**
 
-### 8.1 No Liability for Damages
+### 9.1 No Liability for Damages
 
 IN NO EVENT SHALL THE DEVELOPER OR ANY RELEASED PARTY BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES OF ANY KIND, INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF PROFITS, GOODWILL, USE, DATA, HEALTH, BODILY INJURY, EMOTIONAL DISTRESS, OR OTHER INTANGIBLE LOSSES, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF OR INABILITY TO USE THE APP, REGARDLESS OF WHETHER SUCH DAMAGES ARE BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE AND GROSS NEGLIGENCE), STRICT LIABILITY, OR ANY OTHER LEGAL THEORY, AND REGARDLESS OF WHETHER THE DEVELOPER HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
-### 8.2 Maximum Liability Cap
+### 9.2 Maximum Liability Cap
 
 IF, NOTWITHSTANDING THE FOREGOING, THE DEVELOPER IS FOUND LIABLE FOR ANY CLAIM ARISING OUT OF OR RELATING TO THESE TERMS OR YOUR USE OF THE APP, THE DEVELOPER'S TOTAL CUMULATIVE LIABILITY SHALL NOT EXCEED THE LESSER OF: (A) FIFTY U.S. DOLLARS ($50.00); OR (B) THE TOTAL AMOUNT YOU PAID TO THE DEVELOPER FOR THE APP IN THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM.
 
-### 8.3 Essential Basis
+### 9.3 Essential Basis
 
 You acknowledge that the limitations of liability set forth in this Section reflect a fair and reasonable allocation of risk and are an essential basis of the bargain between you and the Developer. The App would not be provided without these limitations.
 
@@ -190,15 +190,19 @@ Notwithstanding the foregoing, either party may bring an individual action in sm
 
 ### 12.6 Arbitration Fees
 
-For claims of $10,000 or less, the Developer shall pay all arbitration filing and administration fees. For claims exceeding $10,000, the parties shall share fees equally, unless the arbitrator determines that sharing fees would be cost-prohibitive to you, in which case the Developer shall pay a greater share as determined by the arbitrator.
+Arbitration fees and costs shall be allocated in accordance with the arbitration provider's applicable consumer fee schedule. To the extent the provider's rules require the business to pay certain fees (such as arbitrator compensation and administrative costs beyond the consumer's initial filing fee), the Developer shall pay those fees. You shall be responsible for your own initial filing fee as set by the arbitration provider. Each party shall bear its own attorneys' fees unless applicable law or the arbitrator's award provides otherwise.
 
 ### 12.7 Opt-Out
 
-You may opt out of this arbitration agreement by sending written notice to the Developer within thirty (30) days of first accepting these Terms. The notice must include your name, address, and a clear statement that you wish to opt out of the arbitration clause. Send opt-out notices via the contact information in Section 24. If you opt out, you and the Developer agree to submit to the exclusive jurisdiction and venue of the state and federal courts located in California.
+You may opt out of this arbitration agreement by sending written notice to the Developer within thirty (30) days of first accepting these Terms. The notice must include your name, address, and a clear statement that you wish to opt out of the arbitration clause. Send opt-out notices via the contact information in Section 25. If you opt out, you and the Developer agree to submit to the exclusive jurisdiction and venue of the state and federal courts located in California.
 
 ### 12.8 Confidentiality
 
 All aspects of the arbitration proceeding, including the award, shall be strictly confidential unless otherwise required by law.
+
+### 12.9 Injunctive and Equitable Relief
+
+Notwithstanding anything to the contrary in this Section 12, the Developer may seek injunctive or other equitable relief in any court of competent jurisdiction to prevent the actual or threatened infringement, misappropriation, or violation of the Developer's intellectual property rights, data security, or to enforce the prohibited uses set forth in Section 6, without first engaging in the informal dispute resolution process or arbitration described above and without posting a bond or other security.
 
 ## 13. Statute of Limitations
 
@@ -267,7 +271,7 @@ The Developer shall not be liable for any failure or delay in performing obligat
 
 ## 19. Termination
 
-We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 12 (Dispute Resolution), 13 (Statute of Limitations), and 17 (Intellectual Property).
+We may terminate or suspend your access to the App at any time, without prior notice or liability, for any reason. Upon termination, your right to use the App will immediately cease. All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to Sections 5 (Assumption of Risk), 7 (Release and Waiver), 8 (Disclaimer of Warranties), 9 (Limitation of Liability), 10 (Indemnification), 12 (Dispute Resolution), 13 (Statute of Limitations), 17 (Intellectual Property), and 23 (Assignment).
 
 ## 20. Severability
 
@@ -281,14 +285,18 @@ These Terms, together with the Privacy Policy, constitute the entire agreement b
 
 The failure of the Developer to exercise or enforce any right or provision of these Terms shall not constitute a waiver of such right or provision. Any waiver of any provision of these Terms will be effective only if in writing and signed by the Developer.
 
-## 23. Governing Law
+## 23. Assignment
 
-These Terms shall be governed by and construed in accordance with the laws of the State of California, without regard to its conflict of law provisions. To the extent that arbitration does not apply (e.g., if you have opted out per Section 12.7), you consent to the exclusive jurisdiction of the state and federal courts located in California.
+The Developer may assign, transfer, or delegate any of its rights or obligations under these Terms without your consent, including in connection with a merger, acquisition, corporate restructuring, or sale of all or substantially all assets. You may not assign, transfer, or delegate any of your rights or obligations under these Terms without the Developer's prior written consent. Any attempted assignment in violation of this Section shall be null and void.
 
-## 24. Contact
+## 24. Governing Law
 
-If you have questions about these Terms of Service, wish to exercise your arbitration opt-out right under Section 12.7, or need to contact the Developer for any reason, please open an issue on the [Butter Run GitHub repository](https://github.com/ysakols/butter-run) or email spltr3app@gmail.com.
+These Terms shall be governed by and construed in accordance with the laws of the State of California, without regard to its conflict of law provisions. To the extent that arbitration does not apply (e.g., if you have opted out per Section 12.7), you consent to the exclusive jurisdiction of the state and federal courts located in California. This Section shall survive termination of these Terms.
 
-## 25. Acknowledgment
+## 25. Contact
 
-**BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS OF SERVICE, INCLUDING THE MEDICAL DISCLAIMER (SECTION 4), ASSUMPTION OF RISK (SECTION 5), PROHIBITED USES (SECTION 6), RELEASE AND WAIVER (SECTION 7), DISCLAIMER OF WARRANTIES (SECTION 8), LIMITATION OF LIABILITY (SECTION 9), INDEMNIFICATION (SECTION 10), NO GUARANTEED RESULTS (SECTION 11), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (SECTION 12), STATUTE OF LIMITATIONS (SECTION 13), AND APPLE-SPECIFIC TERMS (SECTION 15), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.**
+If you have questions about these Terms of Service, wish to exercise your arbitration opt-out right under Section 12.7, or need to contact the Developer for any reason, please email spltr3app@gmail.com.
+
+## 26. Acknowledgment
+
+**BY USING BUTTER RUN, YOU ACKNOWLEDGE THAT YOU HAVE READ AND UNDERSTOOD THESE TERMS OF SERVICE, INCLUDING THE MEDICAL DISCLAIMER (SECTION 4), ASSUMPTION OF RISK (SECTION 5), PROHIBITED USES (SECTION 6), RELEASE AND WAIVER (SECTION 7), DISCLAIMER OF WARRANTIES (SECTION 8), LIMITATION OF LIABILITY (SECTION 9), INDEMNIFICATION (SECTION 10), NO GUARANTEED RESULTS (SECTION 11), MANDATORY ARBITRATION AND CLASS ACTION WAIVER (SECTION 12), STATUTE OF LIMITATIONS (SECTION 13), APPLE-SPECIFIC TERMS (SECTION 15), AND ASSIGNMENT (SECTION 23), AND YOU VOLUNTARILY AGREE TO BE BOUND BY THEM.**
