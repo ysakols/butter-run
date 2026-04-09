@@ -123,7 +123,7 @@ jobs:
                 "-scheme", "ButterRun",
                 "-destination", "platform=iOS Simulator,id=$ENV{UDID}",
                 "-only-testing:ButterRunTests",
-                "-parallel-testing-enabled", "NO",
+                "-parallel-testing-enabled", "YES",
                 "-derivedDataPath", "./DerivedData",
                 "CODE_SIGNING_ALLOWED=NO",
                 "-resultBundlePath", "TestResults.xcresult");

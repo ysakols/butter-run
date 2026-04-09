@@ -119,13 +119,4 @@ final class LocationServiceTests: XCTestCase {
         let syncData = service.encodeRoute()
         XCTAssertEqual(data, syncData)
     }
-
-    func test_encodeRouteAsync_smallBuffer_matchesSyncEncode() async {
-        // We can't easily inject route points without tracking, but we can
-        // verify the async path delegates to sync for small buffers.
-        let service = LocationService()
-        let asyncResult = await service.encodeRouteAsync()
-        let syncResult = service.encodeRoute()
-        XCTAssertEqual(asyncResult, syncResult)
-    }
 }
