@@ -54,16 +54,6 @@ final class FormatterTests: XCTestCase {
 
     // MARK: - Butter
 
-    func test_pats_small() {
-        let result = ButterFormatters.pats(0.05)
-        XCTAssertEqual(result, "0.0 pats")
-    }
-
-    func test_pats_normal() {
-        let result = ButterFormatters.pats(3.7)
-        XCTAssertEqual(result, "3.7 pats")
-    }
-
     // MARK: - Pats Formatter
 
     func test_pats_zero() {

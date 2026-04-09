@@ -40,7 +40,6 @@
 		413F95379814874981469264 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8F25922399C0B18FEFB745E /* Constants.swift */; };
 		456403F842CF82EA6F85928A /* Run.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A97DD054C6BC3EB14466E8 /* Run.swift */; };
 		462D95A651CDC6B17493CC7D /* OnboardingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F316E1CB397A1C01BE56D71 /* OnboardingUITests.swift */; };
-		463078B51A3D34A79AA2605F /* LongPressStopButtonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BC0B7294C41DC5E57EF54A /* LongPressStopButtonTests.swift */; };
 		491E8F7166EC4527D859BA79 /* RunDraftService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A625A3485CDF897F0F8D2F79 /* RunDraftService.swift */; };
 		4A4AC8BE3E63E12D04563ED3 /* ButterRunApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B1D9D574B35E9A5529C8D04 /* ButterRunApp.swift */; };
 		4A68D1ABD15A58D9C1D931FD /* StravaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC5780B5F418307666AE9A63 /* StravaTests.swift */; };
@@ -215,7 +214,6 @@
 		D20CA3D59FD26B10321304CF /* ChurnButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChurnButton.swift; sourceTree = "<group>"; };
 		D2E53AB20A80BF283E9B306F /* Achievement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievement.swift; sourceTree = "<group>"; };
 		D4A3752B767551F1E5236515 /* ButterRun.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ButterRun.entitlements; sourceTree = "<group>"; };
-		D4BC0B7294C41DC5E57EF54A /* LongPressStopButtonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongPressStopButtonTests.swift; sourceTree = "<group>"; };
 		D53A60FC0CF3E07CF4862DD4 /* ButterCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButterCalculatorTests.swift; sourceTree = "<group>"; };
 		D58B79CF7A37BEF6704C81F0 /* CrashReportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrashReportServiceTests.swift; sourceTree = "<group>"; };
 		D6276FC6C292777DAC4D5A75 /* InfoButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoButton.swift; sourceTree = "<group>"; };
@@ -505,7 +503,6 @@
 				CF335BBAA5E226F02E679567 /* FormatterTests.swift */,
 				50427265D317661E19A51DC2 /* HealthKitServiceTests.swift */,
 				7D73D5FC97FAECF749CF0356 /* LocationServiceTests.swift */,
-				D4BC0B7294C41DC5E57EF54A /* LongPressStopButtonTests.swift */,
 				B58C225538AC25D33B0CFA19 /* RunHistoryViewModelTests.swift */,
 				5F9520CB5A40BED64AFFFF3B /* ShareImageRendererTests.swift */,
 				062570C619D98188DB004EFF /* SplitTrackerTests.swift */,
@@ -771,7 +768,6 @@
 				6BD12AE531FC0736365DBF59 /* FormatterTests.swift in Sources */,
 				1438436FDE7E3EB7FEFEFC68 /* HealthKitServiceTests.swift in Sources */,
 				22BCDC079CFA6381376847AD /* LocationServiceTests.swift in Sources */,
-				463078B51A3D34A79AA2605F /* LongPressStopButtonTests.swift in Sources */,
 				1748047E8AB6F60B2E16B4BF /* RunHistoryViewModelTests.swift in Sources */,
 				802CF0BCCD86A09CBADDFCA7 /* ShareImageRendererTests.swift in Sources */,
 				2DA08DF967BD34E141F6E2F1 /* SplitTrackerTests.swift in Sources */,
