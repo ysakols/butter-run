@@ -410,7 +410,7 @@ struct MainTabView: View {
                 .tag(3)
         }
         .tint(ButterTheme.gold)
-        .onChange(of: router.pending) { _, newValue in
+        .onChange(of: router.pending, initial: true) { _, newValue in
             if case .run = newValue {
                 selectedTab = 1
             }

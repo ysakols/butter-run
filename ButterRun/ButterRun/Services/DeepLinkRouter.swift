@@ -37,7 +37,11 @@ final class DeepLinkRouter {
 
     /// Builds a deep link URL for a specific run.
     static func url(forRunID id: UUID) -> URL {
-        URL(string: "\(scheme)://run/\(id.uuidString)")!
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = "run"
+        components.path = "/\(id.uuidString)"
+        return components.url!
     }
 
     /// Pure parsing function — extracts a destination from a URL without side effects.

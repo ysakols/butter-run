@@ -98,13 +98,10 @@ struct RunHistoryView: View {
                 RunDetailView(run: run, usesMiles: usesMiles)
             }
             .onChange(of: router.pending, initial: true) { _, newValue in
-                if case .run(let id) = newValue {
-                    _ = router.consume()
-                    navigationPath = NavigationPath()
-                    if let run = runs.first(where: { $0.id == id }) {
-                        navigationPath.append(run)
-                    }
-                }
+                handleDeepLink(newValue)
+            }
+            .onChange(of: runs.count) {
+                handleDeepLink(router.pending)
             }
             .sheet(isPresented: $showManualEntry) {
                 ManualRunEntryView()
@@ -133,6 +130,17 @@ struct RunHistoryView: View {
         }
         .onChange(of: runs.count) {
             viewModel.load(runs: runs)
+        }
+    }
+
+    private func handleDeepLink(_ destination: DeepLinkDestination?) {
+        guard case .run(let id) = destination else { return }
+        if let run = runs.first(where: { $0.id == id }) {
+            navigationPath = NavigationPath()
+            navigationPath.append(run)
+            Task { @MainActor in
+                _ = router.consume()
+            }
         }
     }
 
