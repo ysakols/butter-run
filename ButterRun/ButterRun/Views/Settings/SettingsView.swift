@@ -225,9 +225,9 @@ struct SettingsView: View {
             }
             .onChange(of: weightUnitSetting) { oldUnit, newUnit in
                 if oldUnit == "kg" && newUnit == "lbs" {
-                    weightDisplay = weightDisplay * 2.20462
+                    weightDisplay = (weightDisplay * 2.20462).rounded()
                 } else if oldUnit == "lbs" && newUnit == "kg" {
-                    weightDisplay = weightDisplay / 2.20462
+                    weightDisplay = (weightDisplay / 2.20462).rounded()
                 }
                 saveProfile()
             }
@@ -302,9 +302,9 @@ struct SettingsView: View {
         previousWeightKg = p.weightKg
         weightUnitSetting = p.weightUnit
         if weightUnitSetting == "lbs" {
-            weightDisplay = p.weightKg * 2.20462
+            weightDisplay = (p.weightKg * 2.20462).rounded()
         } else {
-            weightDisplay = p.weightKg
+            weightDisplay = p.weightKg.rounded()
         }
         usesMiles = p.usesMiles
         voiceFeedback = p.voiceFeedbackEnabled

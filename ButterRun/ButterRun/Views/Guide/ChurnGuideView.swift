@@ -61,6 +61,7 @@ struct ChurnGuideView: View {
                 description: "Tuck bags in. Leave slightly loose to bounce."
             )
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(ButterSpacing.cardPadding)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: ButterSpacing.cardCornerRadius))
         .overlay(RoundedRectangle(cornerRadius: ButterSpacing.cardCornerRadius).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))

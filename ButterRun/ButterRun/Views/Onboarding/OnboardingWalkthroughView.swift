@@ -161,9 +161,9 @@ struct OnboardingWalkthroughView: View {
                 }
                 .onChange(of: weightUnit) { oldUnit, newUnit in
                     if oldUnit == "kg" && newUnit == "lbs" {
-                        weightValue = weightValue * 2.20462
+                        weightValue = (weightValue * 2.20462).rounded()
                     } else if oldUnit == "lbs" && newUnit == "kg" {
-                        weightValue = weightValue / 2.20462
+                        weightValue = (weightValue / 2.20462).rounded()
                     }
                 }
 

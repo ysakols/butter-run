@@ -22,9 +22,10 @@ struct InfoButton: View {
                 Text(bodyText)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(ButterTheme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(12)
-            .frame(maxWidth: 260)
+            .frame(width: 260)
             .presentationCompactAdaptation(.popover)
         }
     }

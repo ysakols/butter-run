@@ -30,7 +30,7 @@ struct HomeView: View {
                             .font(.system(.title2, design: .rounded, weight: .bold))
                             .foregroundStyle(ButterTheme.textPrimary)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
+                            .padding(.horizontal, 20)
                     }
 
                     // Weekly summary card
@@ -56,6 +56,7 @@ struct HomeView: View {
                                 Text("Eat butter mid-run. Try to net zero.")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(ButterTheme.textSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                         .tint(ButterTheme.gold)
@@ -72,6 +73,7 @@ struct HomeView: View {
                                 Text("Track butter-churning progress with cream in your pack.")
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(ButterTheme.textSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                         .tint(ButterTheme.gold)
@@ -92,7 +94,7 @@ struct HomeView: View {
                         .foregroundStyle(ButterTheme.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
-                        .padding(.bottom, 16)
+                        .padding(.bottom, 32)
                 }
                 .padding(.top)
             }
