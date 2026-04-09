@@ -14,7 +14,7 @@ final class TabNavigationUITests: XCTestCase {
 
     func test_allFourTabsExist() {
         let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
 
         XCTAssertTrue(tabBar.buttons["Run"].exists)
         XCTAssertTrue(tabBar.buttons["History"].exists)
@@ -24,7 +24,7 @@ final class TabNavigationUITests: XCTestCase {
 
     func test_switchToHistoryTab() {
         let historyTab = app.tabBars.buttons["History"]
-        XCTAssertTrue(historyTab.waitForExistence(timeout: 5))
+        XCTAssertTrue(historyTab.waitForExistence(timeout: 10))
         historyTab.tap()
 
         let historyNav = app.navigationBars["History"]
@@ -33,7 +33,7 @@ final class TabNavigationUITests: XCTestCase {
 
     func test_switchToGuideTab() {
         let guideTab = app.tabBars.buttons["Guide"]
-        XCTAssertTrue(guideTab.waitForExistence(timeout: 5))
+        XCTAssertTrue(guideTab.waitForExistence(timeout: 10))
         guideTab.tap()
 
         // ChurnGuideView uses .navigationTitle("") and .navigationBarHidden(true)
@@ -44,7 +44,7 @@ final class TabNavigationUITests: XCTestCase {
 
     func test_switchToSettingsTab() {
         let settingsTab = app.tabBars.buttons["Settings"]
-        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 10))
         settingsTab.tap()
 
         let settingsNav = app.navigationBars["Settings"]

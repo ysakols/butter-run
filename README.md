@@ -2,17 +2,17 @@
 
 > Run it off. One pat at a time.
 
-A fun iOS run-tracking app where the core metric isn't calories — it's **teaspoons of butter**. Track your runs, watch the butter melt in real time, and try the **Butter Zero Challenge**: eat just enough butter during your run to finish at net zero.
+A fun iOS run-tracking app where the core metric isn't calories — it's **pats of butter**. Track your runs, watch the butter melt in real time, and try the **Butter Zero Challenge**: eat just enough butter during your run to finish at net zero.
 
 ## Features
 
 - **GPS Run Tracking** with real-time butter calculation
 - **Churn Tracker** — run with cream, track butter-churning progress through 5 stages via accelerometer
 - **Butter Zero Challenge** — log butter eaten, aim for net zero calories
-- **Voice Feedback** — "You just melted 5 teaspoons of butter!"
+- **Voice Feedback** — "5 pats of butter burned!"
 - **Share Cards** — shareable post-run images with churn results
 - **Run History** — all past runs with butter stats and splits
-- **Dark butter-themed UI** — gold-on-dark design with melting animations
+- **Light cream-themed UI** — warm gold-on-cream design
 
 ## The Math
 

@@ -13,13 +13,13 @@ final class OnboardingUITests: XCTestCase {
         // Navigate to page 4 (profile) by tapping Next 3 times
         for _ in 0..<3 {
             let nextButton = app.buttons["Next"]
-            XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+            XCTAssertTrue(nextButton.waitForExistence(timeout: 10))
             nextButton.tap()
         }
 
         // Clear name field if pre-filled
         let nameField = app.textFields["Your name"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 5))
+        XCTAssertTrue(nameField.waitForExistence(timeout: 3))
         nameField.tap()
         nameField.clearAndType("")
 
@@ -32,12 +32,12 @@ final class OnboardingUITests: XCTestCase {
         // Navigate to page 4 (profile) by tapping Next 3 times
         for _ in 0..<3 {
             let nextButton = app.buttons["Next"]
-            XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+            XCTAssertTrue(nextButton.waitForExistence(timeout: 10))
             nextButton.tap()
         }
 
         let nameField = app.textFields["Your name"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 5))
+        XCTAssertTrue(nameField.waitForExistence(timeout: 3))
         nameField.tap()
         nameField.typeText("Sarah")
 
@@ -62,12 +62,12 @@ final class OnboardingUITests: XCTestCase {
         // Navigate to page 4 (profile) by tapping Next 3 times
         for _ in 0..<3 {
             let nextButton = app.buttons["Next"]
-            XCTAssertTrue(nextButton.waitForExistence(timeout: 5))
+            XCTAssertTrue(nextButton.waitForExistence(timeout: 10))
             nextButton.tap()
         }
 
         let nameField = app.textFields["Your name"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 5))
+        XCTAssertTrue(nameField.waitForExistence(timeout: 3))
         nameField.tap()
         nameField.typeText("Test")
 

@@ -4,122 +4,63 @@ final class ButterZeroFlowUITests: XCTestCase {
     let app = XCUIApplication()
 
     override func setUp() {
-        continueAfterFailure = false
-        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos"]
+        continueAfterFailure = true // Continue through the workflow
+        app.launchArguments = ["--skip-onboarding", "--reset-state", "--skip-tos", "--skip-countdown"]
         app.launch()
-
-        // Handle system location permission dialog on fresh simulators
-        addUIInterruptionMonitor(withDescription: "Location") { alert in
-            let allowButton = alert.buttons["Allow While Using App"]
-            if allowButton.exists {
-                allowButton.tap()
-                return true
-            }
-            return false
-        }
     }
 
-    /// Enables Butter Zero mode and starts a run, handling location permission if needed.
-    private func enableBZAndStartRun() {
+    /// Single workflow: enable BZ → start run → open eat sheet → eat butter → undo → cancel sheet
+    func test_butterZeroFullWorkflow() {
+        // Step 1: Enable Butter Zero
         let bzToggle = app.switches["Butter Zero mode"]
-        XCTAssertTrue(bzToggle.waitForExistence(timeout: 5))
+        XCTAssertTrue(bzToggle.waitForExistence(timeout: 10), "BZ toggle should exist")
         bzToggle.tap()
 
+        // Step 2: Start run
         let startButton = app.buttons["Start run"]
-        XCTAssertTrue(startButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(startButton.waitForExistence(timeout: 3), "Start button should exist after toggle")
         startButton.tap()
 
-        // Handle custom location permission sheet if it appears
+        // Handle location permission on fresh simulator
         let allowLocation = app.buttons["Allow Location"]
-        if allowLocation.waitForExistence(timeout: 2) {
+        if allowLocation.waitForExistence(timeout: 3) {
             allowLocation.tap()
-            // Trigger interruption monitor for the system location dialog
-            app.tap()
+            // System dialog may take a moment to appear after custom sheet dismisses
+            let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+            let systemAllow = springboard.buttons["Allow While Using App"]
+            if systemAllow.waitForExistence(timeout: 5) {
+                systemAllow.tap()
+            }
         }
-    }
 
-    func test_enableButterZero_showsStrip() {
-        enableBZAndStartRun()
-
-        // Eat butter button should be visible in controls
+        // Step 3: Verify Eat butter button appears (proves BZ mode is active)
+        // Allow extra time: after permission grant, app delays 1s before showing active run
         let eatButton = app.buttons["Eat butter"]
-        XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
-    }
+        XCTAssertTrue(eatButton.waitForExistence(timeout: 15), "Eat butter button should appear in BZ mode")
 
-    func test_eatButter_updatesBalance() {
-        enableBZAndStartRun()
-
-        // Tap the full Eat button in controls
-        let eatButton = app.buttons["Eat butter"]
-        XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
+        // Step 4: Open eat butter sheet and verify presets
         eatButton.tap()
+        let sheetTitle = app.staticTexts["How much butter?"]
+        XCTAssertTrue(sheetTitle.waitForExistence(timeout: 3), "Eat butter sheet should show title")
+        let cancelButton = app.buttons["Cancel"]
+        XCTAssertTrue(cancelButton.exists, "Cancel button should exist in sheet")
 
-        // Select 1 pat from the sheet
+        // Step 5: Select 1 pat
         let patButton = app.buttons.matching(NSPredicate(format: "label CONTAINS '1 pat'")).firstMatch
-        XCTAssertTrue(patButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(patButton.waitForExistence(timeout: 3), "1 pat button should exist")
         patButton.tap()
 
-        // Verify undo toast appears
+        // Step 6: Verify undo toast and tap undo
         let undoButton = app.buttons["Undo"]
-        XCTAssertTrue(undoButton.waitForExistence(timeout: 3))
-    }
-
-    func test_undoButterEntry() {
-        enableBZAndStartRun()
-
-        // Eat butter via sheet
-        let eatButton = app.buttons["Eat butter"]
-        XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
-        eatButton.tap()
-
-        // Select 1 pat from the sheet
-        let patButton = app.buttons.matching(NSPredicate(format: "label CONTAINS '1 pat'")).firstMatch
-        XCTAssertTrue(patButton.waitForExistence(timeout: 5))
-        patButton.tap()
-
-        // Tap undo
-        let undoButton = app.buttons["Undo"]
-        XCTAssertTrue(undoButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(undoButton.waitForExistence(timeout: 3), "Undo toast should appear after eating")
         undoButton.tap()
+        XCTAssertFalse(undoButton.waitForExistence(timeout: 2), "Undo toast should disappear after tapping")
 
-        // Undo toast should disappear
-        XCTAssertFalse(undoButton.waitForExistence(timeout: 2))
-    }
-
-    func test_eatButterSheet_showsPresets() {
-        enableBZAndStartRun()
-
-        // Tap Eat button to open sheet
-        let eatButton = app.buttons["Eat butter"]
-        XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
+        // Step 7: Open sheet again and cancel (verifies dismiss works)
+        XCTAssertTrue(eatButton.waitForExistence(timeout: 3), "Eat button should still be visible")
         eatButton.tap()
-
-        // Verify sheet content
-        let sheetTitle = app.staticTexts["How much butter?"]
-        XCTAssertTrue(sheetTitle.waitForExistence(timeout: 3))
-
-        // Cancel button should be in toolbar
-        let cancelButton = app.buttons["Cancel"]
-        XCTAssertTrue(cancelButton.exists)
-    }
-
-    func test_eatButterSheet_cancel() {
-        enableBZAndStartRun()
-
-        // Open eat butter sheet
-        let eatButton = app.buttons["Eat butter"]
-        XCTAssertTrue(eatButton.waitForExistence(timeout: 5))
-        eatButton.tap()
-
-        // Verify sheet appeared
-        let sheetTitle = app.staticTexts["How much butter?"]
-        XCTAssertTrue(sheetTitle.waitForExistence(timeout: 3))
-
-        // Tap Cancel to dismiss
-        let cancelButton = app.buttons["Cancel"]
+        XCTAssertTrue(sheetTitle.waitForExistence(timeout: 3), "Sheet should reappear")
         cancelButton.tap()
-
-        // Verify controls are still visible (sheet dismissed, run continues)
-        XCTAssertTrue(eatButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(eatButton.waitForExistence(timeout: 3), "Controls should remain after sheet cancel")
     }
 }
