@@ -97,8 +97,10 @@ struct RunHistoryView: View {
             .navigationDestination(for: Run.self) { run in
                 RunDetailView(run: run, usesMiles: usesMiles)
             }
-            .onChange(of: router.pending, initial: true) {
-                if case .run(let id) = router.consume() {
+            .onChange(of: router.pending, initial: true) { _, newValue in
+                if case .run(let id) = newValue {
+                    _ = router.consume()
+                    navigationPath = NavigationPath()
                     if let run = runs.first(where: { $0.id == id }) {
                         navigationPath.append(run)
                     }
