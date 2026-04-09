@@ -24,31 +24,56 @@ struct RunHistoryView: View {
                     List {
                         // Summary header
                         Section {
-                            HStack(spacing: 24) {
-                                summaryItem(
-                                    value: String(format: "%.1f", viewModel.allTimeButterTsp),
-                                    unit: "pats",
-                                    label: "Total Butter"
-                                )
-                                summaryItem(
-                                    value: ButterFormatters.distance(
-                                        meters: viewModel.allTimeDistanceMeters,
-                                        usesMiles: usesMiles
-                                    ),
-                                    unit: "",
-                                    label: "Total Distance"
-                                )
-                                summaryItem(
-                                    value: "\(viewModel.allTimeRuns)",
-                                    unit: "",
-                                    label: "Runs"
-                                )
+                            VStack(spacing: 16) {
+                                Text("All Time")
+                                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                                    .foregroundStyle(ButterTheme.textSecondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                HStack(spacing: 0) {
+                                    summaryItem(
+                                        value: String(format: "%.1f", viewModel.allTimeButterTsp),
+                                        unit: "pats",
+                                        label: "Total Butter"
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                    Divider()
+                                        .frame(height: 32)
+                                    summaryItem(
+                                        value: ButterFormatters.distance(
+                                            meters: viewModel.allTimeDistanceMeters,
+                                            usesMiles: usesMiles
+                                        ),
+                                        unit: "",
+                                        label: "Total Distance"
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                    Divider()
+                                        .frame(height: 32)
+                                    summaryItem(
+                                        value: "\(viewModel.allTimeRuns)",
+                                        unit: "",
+                                        label: "Runs"
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                }
                             }
+                            .padding(.vertical, 8)
                             .listRowBackground(ButterTheme.surface)
                         }
 
                         // Run list
-                        Section("All Runs") {
+                        Section {
+                            // Log Manual Run at top for easy access
+                            Button {
+                                showManualEntry = true
+                            } label: {
+                                Label("Log Manual Run", systemImage: "plus.circle")
+                                    .font(.system(.body, design: .rounded, weight: .semibold))
+                                    .foregroundStyle(ButterTheme.gold)
+                            }
+                            .listRowBackground(ButterTheme.surface)
+
                             ForEach(runs.prefix(visibleCount), id: \.id) { run in
                                 NavigationLink {
                                     RunDetailView(run: run, usesMiles: usesMiles)
@@ -76,18 +101,9 @@ struct RunHistoryView: View {
                                 }
                                 .listRowBackground(ButterTheme.surface)
                             }
-                        }
-
-                        // Manual entry button
-                        Section {
-                            Button {
-                                showManualEntry = true
-                            } label: {
-                                Label("Log Manual Run", systemImage: "plus.circle")
-                                    .font(.system(.body, design: .rounded, weight: .semibold))
-                                    .foregroundStyle(ButterTheme.gold)
-                            }
-                            .listRowBackground(ButterTheme.surface)
+                        } header: {
+                            Text("All Runs")
+                                .padding(.top, 8)
                         }
                     }
                     .scrollContentBackground(.hidden)
@@ -162,12 +178,26 @@ struct RunRowView: View {
     let usesMiles: Bool
 
     var body: some View {
-        HStack {
+        HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(run.startDate, format: .dateTime.month().day().year())
                         .font(.system(.body, design: .rounded, weight: .semibold))
                         .foregroundStyle(ButterTheme.textPrimary)
+
+                    // Run type badges
+                    if run.isButterZeroChallenge {
+                        Image(systemName: "equal.circle.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(ButterTheme.success)
+                            .accessibilityLabel("Butter Zero run")
+                    }
+                    if run.churnResult != nil {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(ButterTheme.gold)
+                            .accessibilityLabel("Churn Tracker run")
+                    }
                     if run.isManualEntry {
                         Text("Manual")
                             .font(.system(.caption2, design: .rounded))
@@ -180,7 +210,7 @@ struct RunRowView: View {
 
                 HStack(spacing: 8) {
                     Text(ButterFormatters.distance(meters: run.distanceMeters, usesMiles: usesMiles))
-                    Text("•")
+                    Text("\u{00B7}")
                     Text(run.formattedDuration)
                 }
                 .font(.system(.caption, design: .rounded))
@@ -202,5 +232,6 @@ struct RunRowView: View {
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
     }
 }

@@ -48,8 +48,8 @@ final class ButterCalculatorTests: XCTestCase {
 
     func test_butterDescription_subTeaspoon() {
         let desc = ButterCalculator.butterDescription(tsp: 0.5)
-        XCTAssertTrue(desc.contains("0.5"))
-        XCTAssertTrue(desc.contains("pats"))
+        XCTAssertTrue(desc.contains("17"))
+        XCTAssertTrue(desc.contains("calories"))
     }
 
     func test_butterDescription_tablespoons() {

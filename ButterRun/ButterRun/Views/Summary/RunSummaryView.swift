@@ -72,27 +72,34 @@ struct RunSummaryView: View {
 
                     // Achievements unlocked
                     if !newAchievements.isEmpty {
-                        VStack(spacing: 8) {
-                            Text("Achievements Unlocked")
-                                .font(.system(.headline, design: .rounded, weight: .bold))
-                                .foregroundStyle(ButterTheme.textPrimary)
+                        Button {
+                            showAchievementOverlay = true
+                        } label: {
+                            VStack(spacing: 8) {
+                                Text("Achievements Unlocked")
+                                    .font(.system(.headline, design: .rounded, weight: .bold))
+                                    .foregroundStyle(ButterTheme.textPrimary)
 
-                            ForEach(newAchievements, id: \.self) { achievement in
-                                HStack(spacing: 12) {
-                                    Text(achievement.emoji)
-                                        .font(.system(size: 28))
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(achievement.displayName)
-                                            .font(.system(.body, design: .rounded, weight: .bold))
-                                            .foregroundStyle(ButterTheme.textPrimary)
-                                        Text(achievement.description)
-                                            .font(.system(.caption, design: .rounded))
+                                ForEach(newAchievements, id: \.self) { achievement in
+                                    HStack(spacing: 12) {
+                                        Text(achievement.emoji)
+                                            .font(.system(size: 28))
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(achievement.displayName)
+                                                .font(.system(.body, design: .rounded, weight: .bold))
+                                                .foregroundStyle(ButterTheme.textPrimary)
+                                            Text(achievement.description)
+                                                .font(.system(.caption, design: .rounded))
+                                                .foregroundStyle(ButterTheme.textSecondary)
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
                                             .foregroundStyle(ButterTheme.textSecondary)
                                     }
-                                    Spacer()
+                                    .padding(12)
+                                    .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
                                 }
-                                .padding(12)
-                                .background(ButterTheme.goldLight, in: RoundedRectangle(cornerRadius: 12))
                             }
                         }
                         .padding(.horizontal)
@@ -181,10 +188,6 @@ struct RunSummaryView: View {
                 let awards = service.checkAchievements(for: run, allRuns: allRunsList, context: modelContext)
                 if !awards.isEmpty {
                     newAchievements = awards
-                    // Show overlay after a short delay to let summary load
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        showAchievementOverlay = true
-                    }
                 }
 
                 // Auto-sync to HealthKit if enabled
