@@ -94,4 +94,30 @@ final class AchievementServiceTests: XCTestCase {
         // teaspoonToast should NOT be awarded again
         XCTAssertFalse(awards2.contains(.teaspoonToast))
     }
+
+    func test_patOnTheBack_awarded() {
+        let run = Run(startDate: .now)
+        run.totalButterBurnedTsp = 0.1  // Any amount > 0
+        context.insert(run)
+
+        let awards = service.checkAchievements(for: run, allRuns: [run], context: context)
+        XCTAssertTrue(awards.contains(.patOnTheBack), "Run with butterBurnedTsp > 0 should earn .patOnTheBack")
+    }
+
+    func test_butterFingers_awarded() {
+        let run = Run(startDate: .now)
+        run.totalButterBurnedTsp = 1.0
+        context.insert(run)
+
+        // Add 10 butter entries to the run
+        for _ in 0..<10 {
+            let entry = ButterEntry(serving: .pat)
+            entry.run = run
+            run.butterEntries.append(entry)
+            context.insert(entry)
+        }
+
+        let awards = service.checkAchievements(for: run, allRuns: [run], context: context)
+        XCTAssertTrue(awards.contains(.butterFingers), "Run with 10+ butter entries should earn .butterFingers")
+    }
 }

@@ -89,4 +89,49 @@ final class ChurnEstimatorTests: XCTestCase {
         let stage = ChurnStage.stage(forProgress: -0.5)
         XCTAssertEqual(stage, .liquid)
     }
+
+    // MARK: - Lifecycle Tests
+
+    func test_stop_returnsChurnResult() {
+        let estimator = ButterChurnEstimator()
+        let config = ChurnConfiguration(creamType: "heavy", creamCups: 1.0, isRoomTemp: false)
+        estimator.start(configuration: config)
+
+        // Feed some samples to accumulate agitation (windowSize = 20)
+        for i in 0..<20 {
+            let phase = Double(i) * .pi / 3.0
+            estimator.processSample(x: 0.1, y: sin(phase) * 0.8, z: 0.1)
+        }
+
+        let result = estimator.stop()
+        XCTAssertNotNil(result, "stop() should return a ChurnResult after start()")
+        XCTAssertEqual(result!.creamType, "heavy")
+        XCTAssertEqual(result!.creamCups, 1.0)
+        XCTAssertGreaterThanOrEqual(result!.finalProgress, 0.0)
+        XCTAssertLessThanOrEqual(result!.finalProgress, 1.0)
+        XCTAssertGreaterThanOrEqual(result!.totalAgitation, 0.0)
+        // finalStage should be a valid ChurnStage rawValue (0-4)
+        XCTAssertNotNil(ChurnStage(rawValue: result!.finalStage))
+    }
+
+    func test_initialState_isNotRunning() {
+        let estimator = ButterChurnEstimator()
+        XCTAssertEqual(estimator.progress, 0.0, "Initial progress should be 0")
+        XCTAssertEqual(estimator.currentStage, .liquid, "Initial stage should be .liquid")
+        XCTAssertFalse(estimator.isActive, "Estimator should not be active before start()")
+    }
+
+    func test_agitationThreshold_scalesWithCreamCups() {
+        let config1 = ChurnConfiguration(creamType: "heavy", creamCups: 1.0, isRoomTemp: false)
+        let config2 = ChurnConfiguration(creamType: "heavy", creamCups: 2.0, isRoomTemp: false)
+        let config3 = ChurnConfiguration(creamType: "heavy", creamCups: 0.5, isRoomTemp: false)
+
+        XCTAssertGreaterThan(config2.agitationThreshold, config1.agitationThreshold,
+                             "2 cups should require more agitation than 1 cup")
+        XCTAssertLessThan(config3.agitationThreshold, config1.agitationThreshold,
+                          "0.5 cups should require less agitation than 1 cup")
+        // Verify proportional scaling: threshold should be proportional to creamCups
+        XCTAssertEqual(config2.agitationThreshold, config1.agitationThreshold * 2.0, accuracy: 0.001,
+                       "Threshold should scale linearly with creamCups for the same cream type")
+    }
 }

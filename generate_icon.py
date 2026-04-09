@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Generate a 1024x1024 Butter Run app icon using Pillow."""
 
+import os
 from PIL import Image, ImageDraw
 
 SIZE = 1024
-OUT = "/home/user/butter-run/ButterRun/ButterRun/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(SCRIPT_DIR, "ButterRun", "ButterRun", "Assets.xcassets", "AppIcon.appiconset", "AppIcon.png")
 
 # Colors
 CREAM = (255, 253, 247)        # #FFFDF7

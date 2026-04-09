@@ -262,7 +262,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     // MARK: - PKCE Helpers
 
     /// Generate a cryptographically random code verifier (43-128 chars, RFC 7636).
-    private static func generateCodeVerifier() -> String {
+    static func generateCodeVerifier() -> String {
         var bytes = [UInt8](repeating: 0, count: 32)
         let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         precondition(status == errSecSuccess, "Failed to generate random bytes for PKCE code verifier")
@@ -270,7 +270,7 @@ class StravaAuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     }
 
     /// SHA256 hash of the verifier, base64url-encoded (RFC 7636 S256).
-    private static func generateCodeChallenge(from verifier: String) -> String {
+    static func generateCodeChallenge(from verifier: String) -> String {
         let data = Data(verifier.utf8)
         var hash = [UInt8](repeating: 0, count: 32)
         data.withUnsafeBytes { buf in
