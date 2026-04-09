@@ -174,11 +174,11 @@ Before initiating any formal dispute resolution proceeding, you agree to first c
 
 ### 12.2 Mandatory Binding Arbitration
 
-**ANY DISPUTE, CLAIM, OR CONTROVERSY ARISING OUT OF OR RELATING TO THESE TERMS OR YOUR USE OF THE APP, INCLUDING THE DETERMINATION OF THE SCOPE OR APPLICABILITY OF THIS AGREEMENT TO ARBITRATE (the "delegation clause"), SHALL BE DETERMINED BY BINDING ARBITRATION** administered by JAMS under its Streamlined Arbitration Rules and Procedures, or by any other mutually agreed-upon arbitration provider. The arbitration shall take place remotely via video conference unless both parties agree to an in-person hearing, in which case it shall take place in the State of California.
+**ANY DISPUTE, CLAIM, OR CONTROVERSY ARISING OUT OF OR RELATING TO THESE TERMS OR YOUR USE OF THE APP, INCLUDING THE DETERMINATION OF THE SCOPE OR APPLICABILITY OF THIS AGREEMENT TO ARBITRATE (the "delegation clause"), SHALL BE DETERMINED BY BINDING ARBITRATION** administered by JAMS under its Streamlined Arbitration Rules and Procedures, or by any other mutually agreed-upon arbitration provider. The Federal Arbitration Act (9 U.S.C. §§ 1–16) shall govern the interpretation, enforcement, and proceedings pursuant to this arbitration agreement. The arbitration shall take place remotely via video conference unless both parties agree to an in-person hearing, in which case it shall take place in the State of California.
 
 ### 12.3 CLASS ACTION WAIVER
 
-**YOU AND THE DEVELOPER AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS, CONSOLIDATED, OR REPRESENTATIVE ACTION OR PROCEEDING.** The arbitrator may not consolidate more than one person's claims and may not preside over any form of class, consolidated, or representative proceeding.
+**YOU AND THE DEVELOPER AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS, CONSOLIDATED, OR REPRESENTATIVE ACTION OR PROCEEDING.** The arbitrator may not consolidate more than one person's claims and may not preside over any form of class, consolidated, or representative proceeding. **If this class action waiver is found to be unenforceable, then the entirety of this arbitration agreement (Section 12) shall be null and void, and all disputes shall be resolved in court as set forth in Section 24.**
 
 ### 12.4 Mass Arbitration
 
@@ -194,7 +194,7 @@ Arbitration fees and costs shall be allocated in accordance with the arbitration
 
 ### 12.7 Opt-Out
 
-You may opt out of this arbitration agreement by sending written notice to the Developer within thirty (30) days of first accepting these Terms. The notice must include your name, address, and a clear statement that you wish to opt out of the arbitration clause. Send opt-out notices via the contact information in Section 25. If you opt out, you and the Developer agree to submit to the exclusive jurisdiction and venue of the state and federal courts located in California.
+You may opt out of this arbitration agreement by sending written notice (including via email) to the Developer within thirty (30) days of first accepting these Terms. The notice must include your name, address, and a clear statement that you wish to opt out of the arbitration clause. Send opt-out notices via the contact information in Section 25. If you opt out, you and the Developer agree to submit to the exclusive jurisdiction and venue of the state and federal courts located in California.
 
 ### 12.8 Confidentiality
 
