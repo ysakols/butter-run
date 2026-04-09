@@ -49,26 +49,32 @@ struct ManualRunEntryView: View {
 
                     HStack {
                         Text("Distance")
+                            .font(.system(.body, design: .rounded))
                             .foregroundStyle(ButterTheme.textPrimary)
-                        Spacer()
+                            .frame(width: 80, alignment: .leading)
                         TextField("0.0", value: $distanceValue, format: .number)
                             .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
+                            .frame(width: 100)
                             .keyboardType(.decimalPad)
                         Text(useMiles ? "mi" : "km")
+                            .font(.system(.body, design: .rounded))
                             .foregroundStyle(ButterTheme.textSecondary)
+                            .frame(width: 30, alignment: .leading)
                     }
 
                     HStack {
                         Text("Duration")
+                            .font(.system(.body, design: .rounded))
                             .foregroundStyle(ButterTheme.textPrimary)
-                        Spacer()
+                            .frame(width: 80, alignment: .leading)
                         TextField("0", value: $durationMinutes, format: .number)
                             .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
+                            .frame(width: 100)
                             .keyboardType(.decimalPad)
                         Text("min")
+                            .font(.system(.body, design: .rounded))
                             .foregroundStyle(ButterTheme.textSecondary)
+                            .frame(width: 30, alignment: .leading)
                     }
 
                     Picker("Units", selection: $useMiles) {

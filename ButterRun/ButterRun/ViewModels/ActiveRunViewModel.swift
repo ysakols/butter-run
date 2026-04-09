@@ -246,6 +246,7 @@ class ActiveRunViewModel {
         locationService.pauseTracking()
         if isChurnEnabled { churnEstimator.pause() }
         timer?.invalidate()
+        voiceService.announcePauseResume(paused: true)
     }
 
     func resumeRun() {
@@ -267,6 +268,7 @@ class ActiveRunViewModel {
         locationService.resumeTracking()
         if isChurnEnabled { churnEstimator.resume() }
         startTimer()
+        voiceService.announcePauseResume(paused: false)
     }
 
     private var finishedRun: Run?

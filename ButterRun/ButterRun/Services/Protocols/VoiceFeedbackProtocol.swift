@@ -14,5 +14,6 @@ protocol VoiceFeedback: AnyObject {
     func announceRunEnd(totalButterTsp: Double, netButter: Double?, isButterZero: Bool)
     func announceChurnStage(_ stageName: String)
     func announceAutoPause(paused: Bool)
+    func announcePauseResume(paused: Bool)
     func stop()
 }

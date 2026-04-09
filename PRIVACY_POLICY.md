@@ -74,7 +74,7 @@ Butter Run is not intended for children under 13. The App does not knowingly col
 
 ## Changes to This Policy
 
-We may update this policy from time to time. Material changes will be communicated through the App with at least thirty (30) days' notice. Changes will be reflected in the "Last updated" date above.
+We may update this policy from time to time. Material changes will be communicated through the App. Changes will be reflected in the "Last updated" date above.
 
 ## Contact
 
