@@ -1,6 +1,7 @@
 import XCTest
 @testable import ButterRun
 
+@MainActor
 final class StravaAuthServiceTests: XCTestCase {
 
     // MARK: - PKCE Code Verifier
