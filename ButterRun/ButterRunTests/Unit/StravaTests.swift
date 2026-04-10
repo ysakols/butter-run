@@ -4,6 +4,7 @@ import XCTest
 // NOTE: Activity name/description formatting logic is private to StravaUploadService.
 // These tests verify expected format conventions but do not call the actual methods.
 // TODO: Extract formatting as internal testable functions in StravaUploadService.
+@MainActor
 final class StravaTests: XCTestCase {
 
     // MARK: - StravaConfig Tests
