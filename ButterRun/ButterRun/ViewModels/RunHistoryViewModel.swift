@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-@MainActor @Observable
+@Observable
 class RunHistoryViewModel {
     var allTimeButterTsp: Double = 0
     var allTimeDistanceMeters: Double = 0

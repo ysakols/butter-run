@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-@MainActor @Observable
+@Observable
 class HomeViewModel {
     var weeklyButterPats: Double = 0
     var totalRuns: Int = 0

@@ -13,7 +13,7 @@ import UIKit
 /// states: `idle → running → paused → finished`. A 1-second timer drives ``updateMetrics()``
 /// which recalculates distance, speed, calories, butter burn, splits, and route encoding.
 /// Crash-recovery drafts are saved every 30 seconds via ``RunDraftService``.
-@MainActor @Observable
+@Observable
 class ActiveRunViewModel {
     // MARK: - Run State
     enum RunState {
