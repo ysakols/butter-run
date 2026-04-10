@@ -37,7 +37,7 @@ class UserProfile {
     ) {
         self.id = UUID()
         self.displayName = displayName
-        self.weightKg = weightKg
+        self.weightKg = max(1.0, weightKg)
         self.preferredUnit = preferredUnit
         self.voiceFeedbackEnabled = voiceFeedbackEnabled
         self.splitDistance = splitDistance

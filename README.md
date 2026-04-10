@@ -13,6 +13,12 @@ A fun iOS run-tracking app where the core metric isn't calories — it's **pats 
 - **Share Cards** — shareable post-run images with churn results
 - **Run History** — all past runs with butter stats and splits
 - **Light cream-themed UI** — warm gold-on-cream design
+- **Strava Integration** — share runs to Strava
+- **HealthKit Sync** — sync workouts with Apple Health
+- **Achievements** — unlock badges for butter milestones
+- **Crash Reporting** — automatic run draft recovery
+- **Manual Run Entry** — log runs after the fact
+- **Deep Linking** — open specific screens via URL
 
 ## The Math
 
@@ -38,7 +44,7 @@ Calorie burn uses MET-based formulas from the Compendium of Physical Activities.
 ### Prerequisites
 
 - Xcode 16 or later
-- iOS 17.0+ deployment target
+- iOS 18.0+ deployment target
 - An Apple Developer account (for device testing and HealthKit)
 
 ### Build & Run
@@ -64,7 +70,7 @@ python3 scripts/generate_xcodeproj.py
 
 ## Privacy
 
-Butter Run collects no data beyond what stays on your device. No analytics, no tracking, no network requests. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for details.
+Butter Run collects no data beyond what stays on your device. No analytics or tracking. All run data stays on your device. Optional integrations (Strava, Apple Health) transmit data only at your request. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for details.
 
 ## Design
 

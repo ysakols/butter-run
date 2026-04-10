@@ -57,7 +57,7 @@ class ButterEntry {
         self.id = UUID()
         self.timestamp = .now
         self.servingTypeRaw = serving.rawValue
-        self.teaspoonEquivalent = serving == .custom ? customTeaspoons : serving.teaspoonEquivalent
+        self.teaspoonEquivalent = serving == .custom ? max(0, customTeaspoons) : serving.teaspoonEquivalent
     }
 
     var servingType: ButterServing {

@@ -48,12 +48,21 @@ If you choose to connect your Strava account, the App will:
 
 Strava integration is entirely optional and user-initiated. You can disconnect Strava at any time from the App's Settings. Data transmitted to Strava is subject to [Strava's Privacy Policy](https://www.strava.com/legal/privacy).
 
+### Crash Reports
+
+If the app encounters an unexpected error, a crash report is generated and stored locally on your device. This report includes:
+- App version and build number
+- iOS version and device model
+- A technical stack trace
+
+Crash reports are **never transmitted automatically**. They are only shared if you explicitly choose to email them to our support address. You can delete pending crash reports at any time from the Settings screen.
+
 ## Data Not Collected
 
 Butter Run does **not** collect:
 - Email addresses or contact information (beyond what you voluntarily enter as your display name)
 - Device identifiers or fingerprints
-- Usage analytics or crash reports (beyond what Apple provides via App Store Connect)
+- Usage analytics; crash reports (only stored locally; shared only if you choose to email them)
 - Photos, contacts, or calendar data
 - Financial or payment information
 

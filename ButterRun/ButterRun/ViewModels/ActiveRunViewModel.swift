@@ -101,6 +101,8 @@ class ActiveRunViewModel {
     deinit {
         timer?.invalidate()
         audioDeactivationWork?.cancel()
+        pendingDraftTask?.cancel()
+        cancellables.removeAll()
     }
 
     // MARK: - Computed Properties
@@ -276,6 +278,14 @@ class ActiveRunViewModel {
     func stopRun() -> Run {
         // Idempotent: return existing run if already finished
         if state == .finished, let existing = finishedRun { return existing }
+
+        // Prevent stopping from idle state (no run in progress)
+        guard state == .running || state == .paused else {
+            let empty = Run(startDate: .now)
+            finishedRun = empty
+            state = .finished
+            return empty
+        }
 
         state = .finished
         timer?.invalidate()

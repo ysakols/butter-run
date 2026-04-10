@@ -117,7 +117,7 @@ enum CrashReportService {
             return
         }
 
-        let fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0o644)
+        let fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0o600)
         guard fd >= 0 else {
             signal(sig, SIG_DFL)
             raise(sig)

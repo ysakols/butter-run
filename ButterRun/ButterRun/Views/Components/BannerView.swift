@@ -1,16 +1,21 @@
 import SwiftUI
 
 struct BannerView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     enum BannerType {
         case warn, error, info, pause
 
-        var backgroundColor: Color {
-            switch self {
-            case .warn: return Color(hex: "FFF3E0")
-            case .error: return Color(hex: "FFE8E8")
-            case .info: return Color(hex: "E8F4FE")
-            case .pause: return ButterTheme.gold.opacity(0.15)
-            }
+        func backgroundColor(for colorScheme: ColorScheme) -> Color {
+            let base: Color = {
+                switch self {
+                case .warn: return Color(hex: "FFF3E0")
+                case .error: return Color(hex: "FFE8E8")
+                case .info: return Color(hex: "E8F4FE")
+                case .pause: return ButterTheme.gold.opacity(0.15)
+                }
+            }()
+            return colorScheme == .dark ? base.opacity(0.3) : base
         }
 
         var borderColor: Color {
@@ -47,7 +52,7 @@ struct BannerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(type.backgroundColor)
+        .background(type.backgroundColor(for: colorScheme))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)

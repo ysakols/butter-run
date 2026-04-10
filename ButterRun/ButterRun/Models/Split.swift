@@ -10,6 +10,7 @@ import SwiftData
 /// a full split unit. Splits are cascade-deleted with their parent ``Run``.
 @Model
 class Split {
+    var id: UUID = UUID()
     var index: Int
     var distanceMeters: Double
     var durationSeconds: Double

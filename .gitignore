@@ -27,3 +27,12 @@ playground.xcworkspace
 # Test results
 *.xcresult
 TestResults/
+
+# Environment and credentials
+.env*
+*.p12
+*.mobileprovision
+*.cer
+*.key
+*.pem
+credentials.*

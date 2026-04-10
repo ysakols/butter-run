@@ -35,6 +35,16 @@ jobs:
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
           xcodebuild -version
 
+      - name: Verify generated Xcode project is up to date
+        working-directory: .
+        run: |
+          python3 scripts/generate_xcodeproj.py
+          if ! git diff --quiet -- ButterRun/ButterRun.xcodeproj/project.pbxproj; then
+            echo "ERROR: project.pbxproj is out of date. Run scripts/generate_xcodeproj.py and commit."
+            git diff -- ButterRun/ButterRun.xcodeproj/project.pbxproj | head -50
+            exit 1
+          fi
+
       - name: Create CI build config
         run: |
           printf 'DEVELOPMENT_TEAM =\nBUNDLE_ID_PREFIX = com.butterrun.ci\nSTRAVA_CLIENT_ID =\nSTRAVA_CLIENT_SECRET =\n' > ButterRun.xcconfig
@@ -122,7 +132,9 @@ jobs:
                 "-project", "ButterRun.xcodeproj",
                 "-scheme", "ButterRun",
                 "-destination", "platform=iOS Simulator,id=$ENV{UDID}",
+                # UI tests excluded: require interactive simulator with location permission dialogs
                 "-only-testing:ButterRunTests",
+                "-enableCodeCoverage", "YES",
                 "-parallel-testing-enabled", "YES",
                 "-derivedDataPath", "./DerivedData",
                 "CODE_SIGNING_ALLOWED=NO",

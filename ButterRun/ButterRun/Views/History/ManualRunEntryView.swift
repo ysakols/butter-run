@@ -10,6 +10,7 @@ struct ManualRunEntryView: View {
     @State private var distanceValue: Double = 0
     @State private var durationMinutes: Double = 0
     @State private var useMiles = true
+    @State private var showSaveError = false
 
     private var profile: UserProfile? { profiles.first }
 
@@ -125,6 +126,11 @@ struct ManualRunEntryView: View {
                 }
             }
         }
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your data could not be saved. Please try again.")
+        }
         .onAppear {
             useMiles = profile?.usesMiles ?? true
         }
@@ -157,7 +163,12 @@ struct ManualRunEntryView: View {
         run.totalCaloriesBurned = butter * ButterCalculator.caloriesPerTeaspoon
 
         modelContext.insert(run)
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            showSaveError = true
+            return
+        }
         dismiss()
     }
 }

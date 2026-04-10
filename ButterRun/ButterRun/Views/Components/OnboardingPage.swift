@@ -1,20 +1,20 @@
 import SwiftUI
 
-struct OnboardingPage: View {
+struct OnboardingPage<Content: View>: View {
     let emoji: String
     let title: String
     let bodyText: String
     let pageIndex: Int
     let totalPages: Int
-    let content: AnyView?
+    let content: Content
 
-    init(emoji: String, title: String, body: String, pageIndex: Int, totalPages: Int, @ViewBuilder content: () -> some View = { EmptyView() }) {
+    init(emoji: String, title: String, body: String, pageIndex: Int, totalPages: Int, @ViewBuilder content: () -> Content) {
         self.emoji = emoji
         self.title = title
         self.bodyText = body
         self.pageIndex = pageIndex
         self.totalPages = totalPages
-        self.content = AnyView(content())
+        self.content = content()
     }
 
     var body: some View {
@@ -36,11 +36,9 @@ struct OnboardingPage: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 6)
 
-            if let content {
-                content
-                    .padding(.top, 16)
-                    .padding(.horizontal, 16)
-            }
+            content
+                .padding(.top, 16)
+                .padding(.horizontal, 16)
 
             Spacer()
 
