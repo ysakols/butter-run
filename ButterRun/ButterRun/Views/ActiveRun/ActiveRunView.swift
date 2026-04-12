@@ -20,6 +20,8 @@ struct ActiveRunView: View {
     @State private var showSummary = false
     @State private var showMap = false
     @State private var showUndoToast = false
+    @State private var showAutoPauseToast = false
+    @State private var showResumedToast = false
     @State private var showSaveError = false
     @State private var countdownValue: Int = 3
     @State private var isCountingDown = true
@@ -44,12 +46,6 @@ struct ActiveRunView: View {
                     BannerView(type: .warn, icon: "location.slash", text: "GPS signal weak — distance may be inaccurate")
                 } else if viewModel.gpsSignalState == .lost {
                     BannerView(type: .error, icon: "location.slash.fill", text: "GPS signal lost")
-                }
-
-                // Auto-pause banner
-                if viewModel.isAutoPaused {
-                    BannerView(type: .pause, icon: "pause.circle", text: "Auto-paused")
-                        .accessibilityLabel("Run auto-paused due to low speed")
                 }
 
                 // Hero metric
@@ -121,6 +117,28 @@ struct ActiveRunView: View {
                     .transition(.opacity)
                 }
 
+                if showAutoPauseToast {
+                    ToastView(
+                        text: "⏸ Auto-paused",
+                        autoDismissSeconds: 3600,
+                        isPresented: $showAutoPauseToast
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
+                if showResumedToast {
+                    ToastView(
+                        text: "▶ Resumed",
+                        autoDismissSeconds: 3,
+                        isPresented: $showResumedToast
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
                 // Controls
                 controlsSection
                     .padding(.bottom, 50)
@@ -141,6 +159,15 @@ struct ActiveRunView: View {
         }
         .onDisappear {
             countdownTask?.cancel()
+        }
+        .onChange(of: viewModel.isAutoPaused) { wasAutoPaused, isAutoPaused in
+            if isAutoPaused {
+                withAnimation { showAutoPauseToast = true }
+                showResumedToast = false
+            } else if wasAutoPaused {
+                showAutoPauseToast = false
+                withAnimation { showResumedToast = true }
+            }
         }
         .sheet(isPresented: $showEatButterSheet) {
             EatButterSheet { serving, customTsp in
@@ -228,11 +255,11 @@ struct ActiveRunView: View {
                 }
             } label: {
                 Circle()
-                    .fill(viewModel.state == .running ? ButterTheme.surfaceBorder : ButterTheme.success)
-                    .frame(width: 70, height: 70)
+                    .fill(viewModel.state == .running ? ButterTheme.gold : ButterTheme.success)
+                    .frame(width: 72, height: 72)
                     .overlay {
                         Image(systemName: viewModel.state == .running ? "pause.fill" : "play.fill")
-                            .font(.title2)
+                            .font(.system(size: 26, weight: .bold))
                             .foregroundStyle(.white)
                     }
             }
