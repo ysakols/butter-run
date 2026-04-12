@@ -38,7 +38,13 @@ struct HomeView: View {
                     WeeklyButterCard(
                         weeklyPats: viewModel.weeklyButterPats,
                         totalRuns: viewModel.totalRuns,
-                        lastRunSummary: viewModel.lastRunSummary
+                        lastRunSummary: viewModel.lastRunSummary,
+                        weeklyRuns: viewModel.weeklyRuns,
+                        weeklyDistance: ButterFormatters.distance(
+                            meters: viewModel.weeklyDistanceMeters,
+                            usesMiles: profile?.usesMiles ?? true
+                        ),
+                        weeklyDuration: formatDuration(viewModel.weeklyDurationSeconds)
                     )
                     .padding(.horizontal)
 
@@ -112,7 +118,7 @@ struct HomeView: View {
                         .foregroundStyle(ButterTheme.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
-                        .padding(.bottom, 32)
+                        .padding(.bottom, ButterSpacing.tabBarHeight + 16)
                 }
                 .padding(.top)
             }
@@ -176,12 +182,26 @@ struct HomeView: View {
             showActiveRun = true
         }
     }
+
+    /// Formats total weekly duration as "H:MM" or "Xm" (no seconds — not per-run precision).
+    private func formatDuration(_ seconds: Double) -> String {
+        let total = Int(seconds)
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        if hours > 0 {
+            return String(format: "%d:%02d", hours, minutes)
+        }
+        return String(format: "%dm", minutes)
+    }
 }
 
 struct WeeklyButterCard: View {
     let weeklyPats: Double
     let totalRuns: Int
     let lastRunSummary: String?
+    let weeklyRuns: Int
+    let weeklyDistance: String
+    let weeklyDuration: String
 
     var body: some View {
         VStack(spacing: 12) {
@@ -205,6 +225,45 @@ struct WeeklyButterCard: View {
                     InfoButton(title: "What's a pat?", bodyText: "≈ 1 tsp of butter (~34 cals). A fun way to track energy burned.")
                 }
                 Spacer()
+            }
+
+            if weeklyRuns > 0 {
+                HStack(spacing: 0) {
+                    VStack(spacing: 2) {
+                        Text("\(weeklyRuns)")
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundStyle(ButterTheme.textPrimary)
+                        Text("Runs")
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundStyle(ButterTheme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Divider().frame(height: 24)
+
+                    VStack(spacing: 2) {
+                        Text(weeklyDistance)
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundStyle(ButterTheme.textPrimary)
+                        Text("Distance")
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundStyle(ButterTheme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Divider().frame(height: 24)
+
+                    VStack(spacing: 2) {
+                        Text(weeklyDuration)
+                            .font(.system(.subheadline, design: .rounded, weight: .bold))
+                            .foregroundStyle(ButterTheme.textPrimary)
+                        Text("Time")
+                            .font(.system(.caption2, design: .rounded))
+                            .foregroundStyle(ButterTheme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 4)
             }
 
             if weeklyPats < 0.01 && totalRuns == 0 {
