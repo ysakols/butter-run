@@ -10,7 +10,11 @@ enum ShareCardMode {
 struct ShareImageRenderer {
     @MainActor
     static func render(run: Run, usesMiles: Bool, mode: ShareCardMode = .story) async -> UIImage? {
-        let view = ShareCardContent(run: run, usesMiles: usesMiles, mode: mode)
+        let mapSnapshot = await MapSnapshotService.renderSnapshot(
+            routeData: run.routePolyline,
+            size: CGSize(width: 1080, height: mode == .story ? 540 : 360)
+        )
+        let view = ShareCardContent(run: run, usesMiles: usesMiles, mode: mode, mapImage: mapSnapshot)
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3.0
 
@@ -53,6 +57,7 @@ struct ShareCardContent: View {
     let run: Run
     let usesMiles: Bool
     let mode: ShareCardMode
+    let mapImage: UIImage?
 
     private var cardWidth: CGFloat {
         switch mode {
@@ -94,7 +99,20 @@ struct ShareCardContent: View {
                     .tracking(2)
             }
 
-            Spacer(minLength: mode == .story ? 40 : 16)
+            Spacer(minLength: mode == .story ? 16 : 8)
+
+            if let mapImage {
+                Image(uiImage: mapImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: mode == .story ? 180 : 120)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
+
+            Spacer(minLength: mode == .story ? 24 : 8)
 
             // Hero section
             VStack(spacing: 8) {
