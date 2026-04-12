@@ -52,6 +52,12 @@ struct RunSummaryView: View {
                         Text(ButterCalculator.butterDescription(tsp: run.totalButterBurnedTsp))
                             .font(.system(.body, design: .rounded))
                             .foregroundStyle(ButterTheme.textSecondary)
+
+                        // Calorie math breakdown
+                        Text("\(Int(round(run.totalCaloriesBurned))) cal ÷ \(Int(ButterCalculator.caloriesPerTeaspoon)) cal/pat = \(String(format: "%.1f", run.totalButterBurnedTsp)) pats")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(ButterTheme.textSecondary.opacity(0.7))
+                            .padding(.top, 4)
                     }
                     .padding(.top, 24)
 
@@ -288,6 +294,12 @@ struct RunSummaryView: View {
                 value: String(format: "%.0f", run.totalCaloriesBurned),
                 label: "Calories"
             )
+            if run.bestPaceSecondsPerKm.isFinite {
+                statCard(
+                    value: ButterFormatters.pace(secondsPerKm: run.bestPaceSecondsPerKm, usesMiles: usesMiles),
+                    label: "Best Split"
+                )
+            }
             if run.elevationGainMeters > 0 {
                 let elevValue = usesMiles
                     ? String(format: "%.0f ft", run.elevationGainMeters * 3.28084)
