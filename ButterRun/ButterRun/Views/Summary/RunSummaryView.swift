@@ -232,16 +232,21 @@ struct RunSummaryView: View {
             ButterZeroScale(netPats: run.netButterTsp)
                 .padding(.horizontal, 8)
 
-            Text("Net Pats")
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(ButterTheme.textSecondary)
+            HStack(spacing: 4) {
+                Text("Net Pats")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(ButterTheme.textSecondary)
+                InfoButton(
+                    title: "Butter Zero",
+                    bodyText: "Eat butter during your run and try to burn exactly as many pats as you eat. Net Pats = eaten minus burned. Zero is perfect!"
+                )
+            }
         }
         .padding(20)
         .frame(maxWidth: .infinity)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Net pats: \(ButterFormatters.netPats(run.netButterTsp))")
+        .accessibilityElement(children: .contain)
     }
 
     private func churnResultSection(_ churn: ChurnResult) -> some View {
