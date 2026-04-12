@@ -83,7 +83,7 @@ struct RunHistoryView: View {
                                         .font(.system(.caption2, design: .rounded))
                                         .foregroundStyle(ButterTheme.textSecondary)
                                 } icon: {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                    Image(systemName: "water.waves")
                                         .font(.system(size: 12))
                                         .foregroundStyle(ButterTheme.gold)
                                 }
@@ -263,7 +263,7 @@ struct RunRowView: View {
                             .accessibilityLabel("Butter Zero run")
                     }
                     if run.churnResult != nil {
-                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Image(systemName: "water.waves")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(ButterTheme.gold)
                             .accessibilityLabel("Churn Tracker run")
