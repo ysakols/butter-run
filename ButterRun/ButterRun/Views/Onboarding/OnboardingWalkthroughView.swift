@@ -16,6 +16,7 @@ struct OnboardingWalkthroughView: View {
     @State private var weightText: String = ""
     @State private var weightUnit: String = Locale.current.measurementSystem == .us ? "lbs" : "kg"
     @State private var useMiles: Bool = Locale.current.measurementSystem == .us
+    @State private var locationManager = CLLocationManager()
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let totalPages = 4
@@ -366,9 +367,9 @@ struct OnboardingWalkthroughView: View {
         modelContext.insert(profile)
 
         // Request location permission early so it doesn't interrupt the first run
-        let status = CLLocationManager().authorizationStatus
+        let status = locationManager.authorizationStatus
         if status == .notDetermined {
-            CLLocationManager().requestWhenInUseAuthorization()
+            locationManager.requestWhenInUseAuthorization()
         }
     }
 }

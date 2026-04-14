@@ -16,12 +16,13 @@ class HomeViewModel {
 
         let oneWeekAgo = Calendar.current.date(byAdding: .day, value: -7, to: .now) ?? .now
         let weekRuns = runs.filter { $0.startDate >= oneWeekAgo }
-        weeklyButterPats = weekRuns.reduce(0) { $0 + $1.totalButterBurnedTsp }
-
-        // NEW: Weekly stats
+        let stats = weekRuns.reduce((pats: 0.0, dist: 0.0, dur: 0.0)) { acc, run in
+            (acc.pats + run.totalButterBurnedTsp, acc.dist + run.distanceMeters, acc.dur + run.durationSeconds)
+        }
+        weeklyButterPats = stats.pats
         weeklyRuns = weekRuns.count
-        weeklyDistanceMeters = weekRuns.reduce(0) { $0 + $1.distanceMeters }
-        weeklyDurationSeconds = weekRuns.reduce(0) { $0 + $1.durationSeconds }
+        weeklyDistanceMeters = stats.dist
+        weeklyDurationSeconds = stats.dur
 
         if let last = runs.sorted(by: { $0.startDate > $1.startDate }).first {
             let butter = String(format: "%.1f pats", last.totalButterBurnedTsp)

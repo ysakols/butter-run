@@ -12,7 +12,7 @@ struct ShareImageRenderer {
     static func render(run: Run, usesMiles: Bool, mode: ShareCardMode = .story) async -> UIImage? {
         let mapSnapshot = await MapSnapshotService.renderSnapshot(
             routeData: run.routePolyline,
-            size: CGSize(width: 1080, height: mode == .story ? 540 : 360)
+            size: CGSize(width: 360, height: mode == .story ? 180 : 120)
         )
         let view = ShareCardContent(run: run, usesMiles: usesMiles, mode: mode, mapImage: mapSnapshot)
         let renderer = ImageRenderer(content: view)
