@@ -150,11 +150,16 @@ struct ChurnGuideView: View {
                 GridItem(.flexible())
             ], spacing: 12) {
                 stageCell(emoji: "\u{1F4A7}", name: "Liquid", timing: "Start", highlight: false)
-                stageCell(emoji: "\u{1FAE7}", name: "Foamy", timing: "~2km", highlight: false)
+                stageCell(emoji: "\u{1F4A8}", name: "Foamy", timing: "~2km", highlight: false)
                 stageCell(emoji: "\u{2601}\u{FE0F}", name: "Whipped", timing: "~3km", highlight: false)
+            }
+
+            // Bottom row centered
+            HStack(spacing: 12) {
                 stageCell(emoji: "\u{1F538}", name: "Breaking", timing: "~5km", highlight: false)
                 stageCell(emoji: "\u{1F9C8}", name: "Butter!", timing: "6-10km", highlight: true)
             }
+            .padding(.horizontal, 24)
 
             Text("Squeeze bag every 2-3 km. Trails churn faster than roads.")
                 .font(.system(.caption2, design: .rounded))

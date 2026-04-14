@@ -4,23 +4,17 @@ struct OnboardingPage<Content: View>: View {
     let emoji: String
     let title: String
     let bodyText: String
-    let pageIndex: Int
-    let totalPages: Int
     let content: Content
 
-    init(emoji: String, title: String, body: String, pageIndex: Int, totalPages: Int, @ViewBuilder content: () -> Content) {
+    init(emoji: String, title: String, body: String, @ViewBuilder content: () -> Content) {
         self.emoji = emoji
         self.title = title
         self.bodyText = body
-        self.pageIndex = pageIndex
-        self.totalPages = totalPages
         self.content = content()
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
-
             Text(emoji)
                 .font(.system(size: 48))
 
@@ -39,24 +33,6 @@ struct OnboardingPage<Content: View>: View {
             content
                 .padding(.top, 16)
                 .padding(.horizontal, 16)
-
-            Spacer()
-
-            // Page dots
-            HStack(spacing: 6) {
-                ForEach(0..<totalPages, id: \.self) { i in
-                    if i == pageIndex {
-                        Capsule()
-                            .fill(ButterTheme.gold)
-                            .frame(width: 20, height: 7)
-                    } else {
-                        Circle()
-                            .fill(ButterTheme.textSecondary.opacity(0.3))
-                            .frame(width: 7, height: 7)
-                    }
-                }
-            }
-            .padding(.bottom, 16)
         }
     }
 }

@@ -52,6 +52,12 @@ struct RunSummaryView: View {
                         Text(ButterCalculator.butterDescription(tsp: run.totalButterBurnedTsp))
                             .font(.system(.body, design: .rounded))
                             .foregroundStyle(ButterTheme.textSecondary)
+
+                        // Calorie math breakdown
+                        Text("\(Int(round(run.totalCaloriesBurned))) cal ÷ \(Int(ButterCalculator.caloriesPerTeaspoon)) cal/pat = \(String(format: "%.1f", run.totalButterBurnedTsp)) pats")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(ButterTheme.textSecondary.opacity(0.7))
+                            .padding(.top, 4)
                     }
                     .padding(.top, 24)
 
@@ -226,16 +232,21 @@ struct RunSummaryView: View {
             ButterZeroScale(netPats: run.netButterTsp)
                 .padding(.horizontal, 8)
 
-            Text("Net Pats")
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(ButterTheme.textSecondary)
+            HStack(spacing: 4) {
+                Text("Net Pats")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(ButterTheme.textSecondary)
+                InfoButton(
+                    title: "Butter Zero",
+                    bodyText: "Eat butter during your run and try to burn exactly as many pats as you eat. Net Pats = eaten minus burned. Zero is perfect!"
+                )
+            }
         }
         .padding(20)
         .frame(maxWidth: .infinity)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Net pats: \(ButterFormatters.netPats(run.netButterTsp))")
+        .accessibilityElement(children: .contain)
     }
 
     private func churnResultSection(_ churn: ChurnResult) -> some View {
@@ -288,6 +299,12 @@ struct RunSummaryView: View {
                 value: String(format: "%.0f", run.totalCaloriesBurned),
                 label: "Calories"
             )
+            if run.bestPaceSecondsPerKm.isFinite {
+                statCard(
+                    value: ButterFormatters.pace(secondsPerKm: run.bestPaceSecondsPerKm, usesMiles: usesMiles),
+                    label: "Best Split"
+                )
+            }
             if run.elevationGainMeters > 0 {
                 let elevValue = usesMiles
                     ? String(format: "%.0f ft", run.elevationGainMeters * 3.28084)

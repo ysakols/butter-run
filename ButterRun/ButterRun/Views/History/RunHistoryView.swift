@@ -65,6 +65,46 @@ struct RunHistoryView: View {
                             .listRowBackground(ButterTheme.surface)
                         }
 
+                        // Icon legend
+                        Section {
+                            HStack(spacing: 16) {
+                                Label {
+                                    Text("Butter Zero")
+                                        .font(.system(.caption2, design: .rounded))
+                                        .foregroundStyle(ButterTheme.textSecondary)
+                                } icon: {
+                                    Image(systemName: "scalemass.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(ButterTheme.gold)
+                                }
+
+                                Label {
+                                    Text("Churn Tracker")
+                                        .font(.system(.caption2, design: .rounded))
+                                        .foregroundStyle(ButterTheme.textSecondary)
+                                } icon: {
+                                    Image(systemName: "water.waves")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(ButterTheme.gold)
+                                }
+
+                                Label {
+                                    Text("Manual Entry")
+                                        .font(.system(.caption2, design: .rounded))
+                                        .foregroundStyle(ButterTheme.textSecondary)
+                                } icon: {
+                                    Text("M")
+                                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                                        .foregroundStyle(ButterTheme.goldDim)
+                                        .padding(.horizontal, 3)
+                                        .padding(.vertical, 1)
+                                        .background(ButterTheme.goldDim.opacity(0.2), in: Capsule())
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .listRowBackground(ButterTheme.surface)
+                        }
+
                         // Run list
                         Section {
                             // Log Manual Run at top for easy access
@@ -217,13 +257,13 @@ struct RunRowView: View {
 
                     // Run type badges
                     if run.isButterZeroChallenge {
-                        Image(systemName: "equal.circle.fill")
+                        Image(systemName: "scalemass.fill")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(ButterTheme.success)
+                            .foregroundStyle(ButterTheme.gold)
                             .accessibilityLabel("Butter Zero run")
                     }
                     if run.churnResult != nil {
-                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Image(systemName: "water.waves")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(ButterTheme.gold)
                             .accessibilityLabel("Churn Tracker run")

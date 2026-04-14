@@ -94,6 +94,7 @@
 		C5D284F83657E0FBD69AFF1E /* ChurnButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20CA3D59FD26B10321304CF /* ChurnButton.swift */; };
 		C62F3B6811D29EAA395DEE88 /* ButterCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6984E1952CE66E1D6D66320 /* ButterCalculator.swift */; };
 		CD633420D6A61A7EF0A633C5 /* ShareImageRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB1564C955BB5ED23D9B2926 /* ShareImageRenderer.swift */; };
+		D36178846CB92DBA4ADC7A4B /* MapSnapshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE4F47B4B5AE77CEC86211C /* MapSnapshotService.swift */; };
 		D3BD60705FB3F7272F64BDAA /* InfoButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6276FC6C292777DAC4D5A75 /* InfoButton.swift */; };
 		D4B3126457E2405692980D31 /* RunDraftServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48974748029B3F6C20964ACB /* RunDraftServiceTests.swift */; };
 		DBB90BD74B05D5214730FBCD /* StravaIntegrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E4AF1A04EE3C3B3AE9457A /* StravaIntegrationView.swift */; };
@@ -229,6 +230,7 @@
 		DC93D2A68D82AF5CB3CD2A3D /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		E244230A667ABA79B42FBD0B /* LocationPermissionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermissionView.swift; sourceTree = "<group>"; };
 		E2FE0F1AA1F5113D0C521547 /* StravaUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StravaUploadService.swift; sourceTree = "<group>"; };
+		ECE4F47B4B5AE77CEC86211C /* MapSnapshotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSnapshotService.swift; sourceTree = "<group>"; };
 		EDAD06FEF0A8614B8A0D39A5 /* ButterChurnEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButterChurnEstimator.swift; sourceTree = "<group>"; };
 		EEB12D2020E76EEF8EDE8691 /* RunDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDetailView.swift; sourceTree = "<group>"; };
 		F2BAD918EC1EA379676F973B /* ContextualStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextualStrip.swift; sourceTree = "<group>"; };
@@ -321,6 +323,7 @@
 				3E7051E38064DBD2C4344733 /* HealthKitService.swift */,
 				5D9ACBCD75D3B074E7314EBE /* KeychainService.swift */,
 				A210E72639B40FF92F113F1F /* LocationService.swift */,
+				ECE4F47B4B5AE77CEC86211C /* MapSnapshotService.swift */,
 				7F040E71686C90357533F491 /* MotionService.swift */,
 				A625A3485CDF897F0F8D2F79 /* RunDraftService.swift */,
 				FB1564C955BB5ED23D9B2926 /* ShareImageRenderer.swift */,
@@ -710,6 +713,7 @@
 				F19D3A3110A141F1E68961E7 /* HealthKitService.swift in Sources */,
 				4C9D1367C00ED75D3B74E609 /* KeychainService.swift in Sources */,
 				33EA6BE0A193391543B998BB /* LocationService.swift in Sources */,
+				D36178846CB92DBA4ADC7A4B /* MapSnapshotService.swift in Sources */,
 				3E6B56FECCE27BB2EABDC390 /* MotionService.swift in Sources */,
 				93DF12CB3666A264D727F6DD /* HapticFeedbackProtocol.swift in Sources */,
 				6E2E1BAC1E3EA88F114E809F /* LocationTracking.swift in Sources */,

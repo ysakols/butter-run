@@ -10,7 +10,7 @@ struct LongPressStopButton: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let holdDuration: Double = 3.0
-    private let size: CGFloat = 56 // ButterSpacing.controlButtonSize
+    private let size: CGFloat = 52
 
     var body: some View {
         ZStack {
