@@ -123,6 +123,7 @@ struct HomeView: View {
                 .padding(.top)
             }
             .navigationTitle("")
+            .toolbar(.hidden, for: .navigationBar)
             .fullScreenCover(isPresented: $showActiveRun, onDismiss: {
                 churnConfig = nil
             }) {
@@ -143,7 +144,7 @@ struct HomeView: View {
                     churnConfig = config
                     showChurnSetup = false
                 }
-                .presentationDetents([.medium])
+                .presentationDetents([.fraction(0.7)])
             }
             .sheet(isPresented: $showLocationPermission, onDismiss: {
                 if pendingLocationAction {

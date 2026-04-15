@@ -33,7 +33,7 @@ struct ChurnGuideView: View {
             }
             .background(ButterTheme.background.ignoresSafeArea())
             .navigationTitle("")
-            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
@@ -206,6 +206,7 @@ struct ChurnGuideView: View {
             tipRow(emoji: "\u{23F1}\u{FE0F}", text: "Expect 45-60 min of running (6-10 km)")
             tipRow(emoji: "\u{1F321}\u{FE0F}", text: "Morning runs in cool weather work best")
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(ButterSpacing.cardPadding)
         .background(ButterTheme.surface, in: RoundedRectangle(cornerRadius: ButterSpacing.cardCornerRadius))
         .overlay(RoundedRectangle(cornerRadius: ButterSpacing.cardCornerRadius).strokeBorder(ButterTheme.surfaceBorder, lineWidth: 1))
