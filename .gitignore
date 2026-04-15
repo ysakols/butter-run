@@ -36,3 +36,4 @@ TestResults/
 *.key
 *.pem
 credentials.*
+.specs/
