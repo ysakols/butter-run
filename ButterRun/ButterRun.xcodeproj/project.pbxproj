@@ -86,6 +86,7 @@
 		ACD06BDCB07EA4465FD5F8B7 /* RunDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEB12D2020E76EEF8EDE8691 /* RunDetailView.swift */; };
 		AEAE80AED0EDB7141D63A5AA /* SheetHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38DD419EE41F65D83741A30C /* SheetHeader.swift */; };
 		AF1124896BC41804592E29B2 /* CrashReportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58B79CF7A37BEF6704C81F0 /* CrashReportServiceTests.swift */; };
+		AF457174CD3228E83B83D78B /* RunModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFA517C2E2CEA5031F70D92E /* RunModelTests.swift */; };
 		B46F1B2BDFECD37EEA2E1F4F /* HistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD676005A9F629B46ED292E2 /* HistoryRow.swift */; };
 		B6987DBF6C0E5A36C153880A /* RunSummaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0758AAB1E61C1946076F9515 /* RunSummaryViewModel.swift */; };
 		B84F9931B5BDAB92C998C068 /* ButterPatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5206F011C6E1C3FE2E60C7C5 /* ButterPatView.swift */; };
@@ -204,6 +205,7 @@
 		A6E2C5AAC82018D3BBC241C9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A8F25922399C0B18FEFB745E /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		A903CD014853F2C3761E84AD /* ChurnSetupSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChurnSetupSheet.swift; sourceTree = "<group>"; };
+		AFA517C2E2CEA5031F70D92E /* RunModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunModelTests.swift; sourceTree = "<group>"; };
 		B2CD4289E21C92A1A57786BB /* ButterRunUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ButterRunUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4FA202F2BED77C1A2BADAF1 /* StravaUploadServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StravaUploadServiceTests.swift; sourceTree = "<group>"; };
 		B58C225538AC25D33B0CFA19 /* RunHistoryViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunHistoryViewModelTests.swift; sourceTree = "<group>"; };
@@ -520,6 +522,7 @@
 				439558190AE69E2055B0792A /* KeychainServiceTests.swift */,
 				7D73D5FC97FAECF749CF0356 /* LocationServiceTests.swift */,
 				B58C225538AC25D33B0CFA19 /* RunHistoryViewModelTests.swift */,
+				AFA517C2E2CEA5031F70D92E /* RunModelTests.swift */,
 				5F9520CB5A40BED64AFFFF3B /* ShareImageRendererTests.swift */,
 				062570C619D98188DB004EFF /* SplitTrackerTests.swift */,
 				6FD2C95329CF4588434BDC76 /* StravaAuthServiceTests.swift */,
@@ -791,6 +794,7 @@
 				E4EAB7E179FD943C1F00353F /* KeychainServiceTests.swift in Sources */,
 				22BCDC079CFA6381376847AD /* LocationServiceTests.swift in Sources */,
 				1748047E8AB6F60B2E16B4BF /* RunHistoryViewModelTests.swift in Sources */,
+				AF457174CD3228E83B83D78B /* RunModelTests.swift in Sources */,
 				802CF0BCCD86A09CBADDFCA7 /* ShareImageRendererTests.swift in Sources */,
 				2DA08DF967BD34E141F6E2F1 /* SplitTrackerTests.swift in Sources */,
 				4F2737D19DEDF259764F2E4E /* StravaAuthServiceTests.swift in Sources */,

@@ -399,7 +399,7 @@ class ActiveRunViewModel {
 
     private func tick() {
         guard state == .running, let start = startDate else { return }
-        elapsedSeconds = Date.now.timeIntervalSince(start) - pausedDuration
+        elapsedSeconds = max(0, Date.now.timeIntervalSince(start) - pausedDuration)
 
         // Only call updateMetrics as fallback when no location update in last 2 seconds
         if let lastLoc = lastLocationUpdate, Date().timeIntervalSince(lastLoc) < 2 {

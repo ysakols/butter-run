@@ -51,8 +51,8 @@ class Run {
         self.endDate = nil
         self.distanceMeters = 0
         self.durationSeconds = 0
-        self.averagePaceSecondsPerKm = Double.infinity
-        self.bestPaceSecondsPerKm = Double.infinity
+        self.averagePaceSecondsPerKm = 0
+        self.bestPaceSecondsPerKm = 0
         self.totalCaloriesBurned = 0
         self.totalButterBurnedTsp = 0
         self.totalButterEatenTsp = 0

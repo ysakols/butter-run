@@ -299,7 +299,7 @@ struct RunSummaryView: View {
                 value: String(format: "%.0f", run.totalCaloriesBurned),
                 label: "Calories"
             )
-            if run.bestPaceSecondsPerKm.isFinite {
+            if run.bestPaceSecondsPerKm > 0 {
                 statCard(
                     value: ButterFormatters.pace(secondsPerKm: run.bestPaceSecondsPerKm, usesMiles: usesMiles),
                     label: "Best Split"

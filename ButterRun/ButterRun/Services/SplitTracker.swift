@@ -45,7 +45,7 @@ class SplitTracker: ObservableObject {
             let splitDuration = elapsedSeconds - splitStartElapsedSeconds
 
             let splitDistance = splitDistanceMeters
-            let paceSecondsPerKm = splitDuration / (splitDistance / 1000.0)
+            let paceSecondsPerKm = splitDuration > 0 ? splitDuration / (splitDistance / 1000.0) : 0
             let splitElevation = elevationGainMeters - splitStartElevationGain
 
             // Use the VM's accumulated butter burn for this split interval

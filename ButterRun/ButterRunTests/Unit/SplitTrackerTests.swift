@@ -81,6 +81,20 @@ final class SplitTrackerTests: XCTestCase {
         XCTAssertEqual(finalSplit!.butterBurnedTsp, 1.5, accuracy: 0.01)
     }
 
+    func test_splitPace_zeroDuration_doesNotProduceNaN() {
+        // Two boundary crossings at the same elapsedSeconds would divide by zero
+        // without the splitDuration > 0 guard. Verify pace is finite (clamped to 0).
+        let tracker = SplitTracker(splitDistanceMeters: 1000, weightKg: 70)
+        tracker.start()
+        tracker.update(totalDistanceMeters: 1000, elapsedSeconds: 300, elevationGainMeters: 0, currentSpeedMph: 6.0)
+        // Cross next boundary at the exact same elapsedSeconds — splitDuration = 0
+        tracker.update(totalDistanceMeters: 2000, elapsedSeconds: 300, elevationGainMeters: 0, currentSpeedMph: 6.0)
+        XCTAssertEqual(tracker.completedSplits.count, 2)
+        let secondPace = tracker.completedSplits[1].paceSecondsPerKm
+        XCTAssertTrue(secondPace.isFinite, "Pace must be finite, got \(secondPace)")
+        XCTAssertEqual(secondPace, 0)
+    }
+
     func test_finalSplit_tinyRemainder() {
         let tracker = SplitTracker(splitDistanceMeters: 1609.344, weightKg: 70)
         tracker.start()
